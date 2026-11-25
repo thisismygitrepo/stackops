@@ -76,7 +76,7 @@ def ask_bitwarden(session: str | None) -> BitwardenAnswer:
     if shutil.which("bw") is None:
         return {**blank, "status": "missing"}
     try:
-        answer: object = json.loads(bitwarden.run_command(bitwarden.build_bw_command(["status"], session)).stdout)
+        answer: object = json.loads(bitwarden.run_command(["bw", "status"], env=bitwarden.bw_environment(session)).stdout)
     except (bitwarden.VaultExit, OSError, ValueError):
         return blank
     if not isinstance(answer, dict):

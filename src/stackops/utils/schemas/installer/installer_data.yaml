@@ -197,7 +197,7 @@ installers:
           dnf: sudo dnf install -y git
           pacman: sudo pacman -S --needed --noconfirm git
         darwin: brew install git
-        windows: winget install --no-upgrade --name "Git" --Id "Git.Git" --source winget --scope user --accept-package-agreements --accept-source-agreements
+        windows: winget install --no-upgrade --name "Git" --Id "Git.Git" --source winget --accept-package-agreements --accept-source-agreements
       arm64:
         linux:
           apk: sudo apk add --no-cache git
@@ -205,7 +205,7 @@ installers:
           dnf: sudo dnf install -y git
           pacman: sudo pacman -S --needed --noconfirm git
         darwin: brew install git
-        windows: winget install --no-upgrade --name "Git" --Id "Git.Git" --source winget --scope user --accept-package-agreements --accept-source-agreements
+        windows: winget install --no-upgrade --name "Git" --Id "Git.Git" --source winget --accept-package-agreements --accept-source-agreements
   - appName: jq
     license: MIT License
     repoURL: https://github.com/jqlang/jq

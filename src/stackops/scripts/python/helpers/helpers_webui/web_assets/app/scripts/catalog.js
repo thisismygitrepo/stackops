@@ -69,6 +69,7 @@ export const TOOL_TITLES = {
   "devops vault stats": "What the vault holds", "devops vault validate": "Check the vault file", "devops vault add": "Add a secret", "devops vault rotate": "Replace a secret",
   "devops vault subset": "Copy part of the vault", "devops vault init": "Create a vault file", "devops vault path": "Where the vault is kept", "devops vault search": "Search the vault",
   "devops vault load": "Load secrets into a terminal", "devops vault bitwarden": "Bitwarden", "devops vault bitwarden search": "Find a Bitwarden login",
+  "devops vault bitwarden load": "Load a Bitwarden item into a terminal",
   "devops vault bitwarden login-and-unlock": "Unlock Bitwarden", "devops vault bitwarden sync": "Sync Bitwarden", "devops vault bitwarden clean-cache": "Clear the Bitwarden cache",
   "devops vault bitwarden export-session": "Hand the Bitwarden session to a terminal",
   "devops scripts run": "Run a script or a command", "devops scripts list": "Saved scripts", "devops scripts path": "Where scripts are kept", "devops scripts edit": "Edit a script",

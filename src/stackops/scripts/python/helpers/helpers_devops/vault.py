@@ -1,26 +1,20 @@
-"""Bitwarden vault search and login helpers.
+"""Bitwarden session, cache and login helpers.
 
 Features
-- Rich output (pretty printing)
-- Optional copy-to-clipboard (via `cb` CLI tool)
-- Uses tv fuzzy-finder to disambiguate multiple matches
 - Uses StackOps secrets selectors for Bitwarden login credentials
-- Safe subprocess usage (no shell=True where possible)
-- Persists the latest Bitwarden session token to a local file
+- Hands the session to `bw` through its environment, never on the command line
+- Persists the latest Bitwarden session token to a local encrypted file
 """
 
 import json
 import os
 import subprocess
-import sys
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Sequence
 
 from rich.console import Console
 from rich.markup import escape
-from rich.panel import Panel
 from rich.table import Table
 from stackops.secrets.models import Login
 from stackops.secrets.search import SecretsFileError, search_logins
@@ -138,14 +132,12 @@ def persist_session_token_to_cache(session: str) -> None:
     cache_set("BW_SESSION", session)
 
 
-def build_bw_command(args: Sequence[str], session: Optional[str] = None) -> list[str]:
-    """Build a bw command, placing the session option in the global option position."""
-    return ["bw"] + (["--session", session] if session else []) + list(args)
-
-
-def mask_session_args(args: Sequence[str]) -> list[str]:
-    """Return args with any `--session <token>` value masked for safe display."""
-    return ["***" if index > 0 and args[index - 1] == "--session" else arg for index, arg in enumerate(args)]
+def bw_environment(session: str | None) -> dict[str, str]:
+    """Environment for a bw process; the session travels as BW_SESSION so it never shows in the process list."""
+    environment = os.environ.copy()
+    if session:
+        environment["BW_SESSION"] = session
+    return environment
 
 
 def run_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None, check: bool = False) -> subprocess.CompletedProcess[str]:
@@ -153,10 +145,10 @@ def run_command(args: Sequence[str], *, env: Optional[dict[str, str]] = None, ch
     try:
         return subprocess.run(list(args), stdin=subprocess.DEVNULL, capture_output=True, text=True, env=env, check=check)
     except FileNotFoundError as exc:
-        err_console.print(f"[bold red]Command not found:[/bold red] {' '.join(mask_session_args(args))}")
+        err_console.print(f"[bold red]Command not found:[/bold red] {' '.join(args)}")
         raise VaultExit(code=1) from exc
     except subprocess.CalledProcessError as exc:
-        err_console.print(f"[bold red]Command failed:[/bold red] {' '.join(mask_session_args(args))}")
+        err_console.print(f"[bold red]Command failed:[/bold red] {' '.join(args)}")
         if exc.stderr:
             err_console.print("[red]stderr:[/red]", exc.stderr.strip())
         if exc.stdout:
@@ -173,9 +165,8 @@ def get_vault_status_field(status_payload: dict[str, Any], key: str) -> str | No
 
 def get_vault_status(session: Optional[str] = None) -> VaultStatus:
     """Return the bw vault status and authenticated account metadata when available."""
-    cmd = build_bw_command(["status"], session)
     try:
-        result = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
+        result = subprocess.run(["bw", "status"], stdin=subprocess.DEVNULL, capture_output=True, text=True, env=bw_environment(session), check=False)
         data = json.loads(result.stdout)
         status = data.get("status")
         return VaultStatus(
@@ -239,64 +230,6 @@ def get_item_notes(raw_item: dict[str, Any]) -> Optional[str]:
     """Return item notes when present."""
     notes = raw_item.get("notes")
     return notes if isinstance(notes, str) and notes else None
-
-
-def choose_entry_interactive(items: List[VaultItem]) -> VaultItem:
-    """Choose a vault item interactively using the tv fuzzy-finder with a preview panel."""
-    if not items:
-        raise ValueError("no items to choose from")
-
-    from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
-
-    def _preview(e: VaultItem) -> str:
-        login = e.raw.get("login", {}) or {}
-        uris = ", ".join(u.get("uri", "") for u in (login.get("uris") or []))
-        lines = [
-            f"Name:     {e.name}",
-            f"ID:       {e.id}",
-            f"Username: {e.username or '-'}",
-            f"Password: {'(set)' if e.password else '-'}",
-            f"TOTP:     {'(set)' if login.get('totp') else '-'}",
-            f"URLs:     {uris or '-'}",
-            f"Notes:    {'(set)' if get_item_notes(e.raw) else '-'}",
-        ]
-        return "\n".join(lines)
-
-    mapping: dict[str, VaultItem] = {f"{e.name} | {e.username or ''}": e for e in items}
-    preview_mapping: dict[str, str] = {k: _preview(e) for k, e in mapping.items()}
-
-    choice = choose_from_dict_with_preview(preview_mapping, extension="txt", multi=False, preview_size_percent=50.0)
-    if choice is None:
-        raise VaultExit(code=2)
-    return mapping[choice]
-
-
-def print_matches_table(items: Sequence[VaultItem]) -> None:
-    """Print search matches as a rich table without exposing secret values."""
-    table = Table(title=f"Vault matches ({len(items)})", show_header=True, header_style="bold")
-    table.add_column("Name", style="bold")
-    table.add_column("ID", style="dim")
-    table.add_column("Username")
-    table.add_column("URLs")
-    for item in items:
-        login = item.raw.get("login", {}) or {}
-        uris = ", ".join(str(u.get("uri", "")) for u in (login.get("uris") or []))
-        table.add_row(
-            escape(item.name),
-            item.id,
-            escape(item.username or "-"),
-            escape(uris or "-"),
-        )
-    console.print(table)
-
-
-def copy_to_clipboard(value: str, slot: int = 1) -> bool:
-    """Copy value to clipboard using `cb` CLI tool. Return True on success."""
-    try:
-        subprocess.run(["cb", f"cp{slot}", value], check=True, capture_output=True)
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
 
 
 def load_bitwarden_credentials(login_name: str, account_name: str | None = None) -> BitwardenCredentials:
@@ -405,193 +338,6 @@ def print_process_output(result: subprocess.CompletedProcess[str], *, stderr: bo
             printer(text)
 
 
-def search(
-    name: str | None,
-    copy: str | None,
-    sync: bool,
-    show: bool,
-    use_totp: bool,
-    username_slot: int,
-    password_slot: int,
-    totp_slot: int,
-    json_slot: int,
-    silent: bool,
-    json_output: bool,
-    raw_output: bool,
-    table_output: bool,
-    fresh: bool,
-    item_id: str | None,
-    all_matches: bool,
-    non_interactive: bool,
-) -> None:
-    """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
-
-    info = (lambda *a, **kw: None) if silent or table_output else err_console.print if json_output or raw_output else console.print
-    non_interactive = non_interactive or json_output or raw_output or not (sys.stdin.isatty() and sys.stdout.isatty())
-    copy = ("none" if non_interactive or table_output else "password") if copy is None else copy.lower()
-    if copy not in {"password", "username", "totp", "none"}:
-        err_console.print("[red]Invalid --copy value. Use 'password', 'username', 'totp', or 'none'.[/red]")
-        raise VaultExit(code=2)
-    if (json_output or raw_output or table_output) and copy != "none":
-        err_console.print("--copy must be none with --json, --raw, or --table.")
-        raise VaultExit(code=2)
-    if json_output and raw_output:
-        err_console.print("Choose either --json or --raw.")
-        raise VaultExit(code=2)
-    if name is not None and not name.strip() or item_id is not None and not item_id.strip():
-        err_console.print("The search name and --id must not be blank.")
-        raise VaultExit(code=2)
-    if item_id is not None and (name is not None or all_matches):
-        err_console.print("--id cannot be combined with a search name or --all-matches.")
-        raise VaultExit(code=2)
-    if all_matches and not (json_output or raw_output or table_output):
-        err_console.print("--all-matches requires --json, --raw, or --table.")
-        raise VaultExit(code=2)
-    if name is None and item_id is None and not all_matches:
-        err_console.print("Provide a search name, --id, or --all-matches.")
-        raise VaultExit(code=2)
-
-    if table_output and (raw_output or json_output):
-        err_console.print("[red]--table cannot be combined with --raw or --json.[/red]")
-        raise VaultExit(code=2)
-
-    # Try to load session from cache
-    session = load_session_token_from_cache()
-
-    if sync:
-        info("[blue]🔄 Syncing vault...[/blue]")
-        sync_cmd = build_bw_command(["sync"], session)
-        try:
-            sync_result = subprocess.run(sync_cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
-            if sync_result.returncode == 0:
-                info("[green]✅ Vault synced.[/green]")
-            else:
-                info(f"[yellow]⚠️  Sync failed (continuing anyway):[/yellow] {sync_result.stderr.strip() or sync_result.stdout.strip()}")
-        except FileNotFoundError:
-            info("[yellow]⚠️  bw not found — skipping sync.[/yellow]")
-
-    cache_key = f"""search::{json.dumps([name, item_id])}"""
-    raw = None
-    use_cached_search = not (fresh or sync)
-    if use_cached_search:
-        raw = cache_get(cache_key)
-        if raw:
-            info("[green]Loaded from cache.[/green]")
-
-    if not raw:
-        vault_status = get_vault_status(session)
-        ensure_vault_accessible(vault_status)
-        if vault_status.status == "unknown":
-            info("[yellow]⚠️  Could not determine vault status — proceeding anyway.[/yellow]")
-
-        info(f"🔍 Searching for credentials matching: [bold]{name}[/bold] ...")
-        if item_id is not None:
-            arguments = ["get", "item", item_id]
-        else:
-            arguments = ["list", "items"]
-            if name is not None:
-                arguments.extend(["--search", name])
-        cmd_args = build_bw_command(arguments, session)
-        info(f"[dim]$ {' '.join(mask_session_args(cmd_args))}[/dim]")
-        raw = run_bw_command(cmd_args)
-        cache_set(cache_key, raw)
-
-    items = parse_items(f"""[{raw}]""" if item_id is not None else raw)
-
-    if raw_output:
-        print(raw)
-        return
-    if json_output:
-        from stackops.scripts.python.helpers.helpers_devops.vault_search_output import print_credentials_json
-
-        print_credentials_json(items=items, session=session, use_totp=use_totp)
-        return
-
-    if not items:
-        err_console.print(f"[red]No entries found for:[/red] {name}")
-        raise VaultExit(code=1)
-
-    if table_output:
-        print_matches_table(items)
-        return
-
-    if len(items) == 1:
-        entry = items[0]
-        info(f"[green]Found:[/green] {entry.name}")
-    else:
-        if non_interactive:
-            err_console.print("Multiple credentials match. Use --id to select one, or --json/--table to list every match.")
-            raise VaultExit(code=2)
-        entry = choose_entry_interactive(items)
-        info(f"[green]Selected:[/green] {entry.name}")
-
-    notes_value = get_item_notes(entry.raw)
-    if copy != "none":
-        copy_to_clipboard(json.dumps(entry.raw), slot=json_slot)
-
-    if not silent:
-        tbl = Table(box=None, show_header=False)
-        tbl.add_column(justify="right", style="bold")
-        tbl.add_column()
-        tbl.add_row("Name:", entry.name)
-        tbl.add_row("ID:", entry.id)
-        tbl.add_row("Username:", entry.username or "-")
-        tbl.add_row("Password:", "********" if entry.password else "-")
-        tbl.add_row("Notes:", "(set)" if notes_value else "-")
-        console.print(Panel(tbl, title="Credential summary"))
-
-    totp_value: Optional[str] = None
-    show_credentials = show and not silent
-    if use_totp and (show_credentials or copy == "totp"):
-        login = entry.raw.get("login", {}) or {}
-        if login.get("totp"):
-            info("[blue]Fetching TOTP...[/blue]")
-            totp_cmd = build_bw_command(["get", "totp", entry.id], session)
-            try:
-                totp_value = run_bw_command(totp_cmd).strip()
-            except VaultExit:
-                info("[red]Failed to fetch TOTP.[/red]")
-
-    if show_credentials:
-        panel_rows = []
-        if entry.username:
-            panel_rows.append(("Username", entry.username))
-        if entry.password:
-            panel_rows.append(("Password", entry.password))
-        if totp_value:
-            panel_rows.append(("TOTP", totp_value))
-        if notes_value:
-            panel_rows.append(("Notes", notes_value))
-
-        if panel_rows:
-            out_tbl = Table(show_header=False, box=None)
-            out_tbl.add_column(style="bold", width=12)
-            out_tbl.add_column()
-            for left, right in panel_rows:
-                out_tbl.add_row(f"{left}:", right)
-            console.print(Panel(out_tbl, title="Credential (cleartext)"))
-        else:
-            console.print("[yellow]No credential fields available to display.[/yellow]")
-
-    if copy != "none":
-        if copy == "password":
-            copy_target_value, copy_slot = entry.password, password_slot
-        elif copy == "username":
-            copy_target_value, copy_slot = entry.username, username_slot
-        else:
-            copy_target_value, copy_slot = totp_value, totp_slot
-
-        if not copy_target_value:
-            err_console.print(f"[red]Cannot copy {copy}: field unavailable.[/red]")
-            raise VaultExit(code=1)
-        if not copy_to_clipboard(copy_target_value, slot=copy_slot):
-            err_console.print(f"[red]Failed to copy {copy} to the clipboard (slot {copy_slot}).[/red]")
-            raise VaultExit(code=1)
-        info(f"✅ [bold]{copy}[/bold] copied to clipboard (slot {copy_slot}).")
-
-    time.sleep(0.05)
-
-
 def sync() -> None:
     """Sync the Bitwarden vault with the server and drop stale cached search results."""
     session = load_session_token_from_cache()
@@ -601,7 +347,7 @@ def sync() -> None:
         console.print("[yellow]⚠️  Could not determine vault status — proceeding anyway.[/yellow]")
 
     console.print("[blue]🔄 Syncing vault...[/blue]")
-    sync_result = run_command(build_bw_command(["sync"], session))
+    sync_result = run_command(["bw", "sync"], env=bw_environment(session))
     if sync_result.returncode != 0:
         print_process_output(sync_result, stderr=True)
         err_console.print("[bold red]Vault sync failed.[/bold red]")
@@ -681,7 +427,9 @@ def login_and_unlock(account_name: str | None = None, *, login_name: str = DEFAU
 
 
 def export_session() -> None:
-    """Print an eval-able script exporting the cached BW_SESSION (validates it first)."""
+    """Define the cached BW_SESSION in the calling shell through the StackOps shell handoff (validates it first)."""
+    from stackops.scripts.python.helpers.helpers_devops import cli_config_secrets_actions as secret_actions
+
     session = load_session_token_from_cache()
     if not session:
         err_console.print(f"[bold red]No BW_SESSION saved in vault cache.[/bold red] Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] first.")
@@ -693,13 +441,11 @@ def export_session() -> None:
         err_console.print(f"Run [bold]{DEFAULT_LOGIN_COMMAND}[/bold] to re-authenticate and refresh the cached session.")
         raise VaultExit(code=1)
 
-    # Info goes to stderr so stdout stays a clean eval-able script.
+    secret_actions.write_env_handoff({"BW_SESSION": session}, verbose=False)
     account = escape(vault_status.user_email or "unknown account")
-    err_console.print(f"[green]🔓 Exporting BW_SESSION for account:[/green] [bold]{account}[/bold]")
+    console.print(f"[green]🔓 BW_SESSION is defined in this shell for account:[/green] [bold]{account}[/bold]")
     if vault_status.server_url:
-        err_console.print(f"[dim]Server:[/dim] {escape(vault_status.server_url)}")
-
-    print(f'export BW_SESSION="{session}"')
+        console.print(f"[dim]Server:[/dim] {escape(vault_status.server_url)}")
 
 
 def clean_cache() -> None:

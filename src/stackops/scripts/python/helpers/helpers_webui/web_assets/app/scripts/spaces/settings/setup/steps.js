@@ -103,10 +103,15 @@ export function describeStep(step, { value, done, activity, tools, agentPicker }
       };
     case "multiplexer": {
       const role = (chosen, used, what) => (chosen ? `${used} for ${what} is your choice` : `${used} for ${what} is the built-in default`);
+      // The step is set up once both defaults are the person's own choice. While only one of them is, the button names the other and opens
+      // the page on it. A bare "Choose" would lead to a page whose first default already reads "Your choice".
+      const unpicked = unread ? [] : [!value.session_multiplexer && "session", !value.agent_multiplexer && "agent"].filter(Boolean);
+      const label = done.multiplexer ? "Change" : unpicked.length === 1 ? `Choose for ${unpicked[0] === "session" ? "sessions" : "agents"}` : "Choose";
+      const href = unpicked.length === 1 ? `#/sessions/multiplexer/${unpicked[0]}` : "#/sessions/multiplexer";
       return {
         about: "The program that holds your terminal sessions, and the one agents are looked for in.",
         state: unread ? UNREAD : `${role(value.session_multiplexer, value.session_multiplexer_in_use, "sessions")}; ${role(value.agent_multiplexer, value.agent_multiplexer_in_use, "agents")}.`,
-        actions: unread ? [] : [main(h("a", { class: `btn small ${done.multiplexer ? "plain" : "primary"}`, href: "#/sessions/multiplexer" }, h("span", { text: done.multiplexer ? "Change" : "Choose" })))],
+        actions: unread ? [] : [main(h("a", { class: `btn small ${done.multiplexer ? "plain" : "primary"}`, href }, h("span", { text: label })))],
       };
     }
     case "data":

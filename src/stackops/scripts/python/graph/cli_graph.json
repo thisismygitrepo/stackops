@@ -8383,6 +8383,14 @@
                     "            \"--load\", \"-L\", help=\"After listing the matches, define their environment variables in the calling shell, as devops vault load does.\"",
                     "        ),",
                     "    ] = False,",
+                    "    copy_key: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(",
+                    "            \"--copy\",",
+                    "            \"-C\",",
+                    "            help=\"Copy the value of one environment key of the selection to the system clipboard. The clipboard is cleared soon after, unless something else was copied by then.\",",
+                    "        ),",
+                    "    ] = None,",
                     "    custom_path: Annotated[",
                     "        Path | None,",
                     "        typer.Option(",
@@ -8477,6 +8485,28 @@
                           "-L"
                         ],
                         "help": "After listing the matches, define their environment variables in the calling shell, as devops vault load does."
+                      }
+                    },
+                    {
+                      "name": "copy_key",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--copy', '-C', help='Copy the value of one environment key of the selection to the system clipboard. The clipboard is cleared soon after, unless something else was copied by then.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--copy",
+                          "-C"
+                        ],
+                        "long_flags": [
+                          "--copy"
+                        ],
+                        "short_flags": [
+                          "-C"
+                        ],
+                        "help": "Copy the value of one environment key of the selection to the system clipboard. The clipboard is cleared soon after, unless something else was copied by then."
                       }
                     },
                     {
@@ -10585,7 +10615,7 @@
                     "name": "search",
                     "fullPath": "devops vault bitwarden search",
                     "shortPath": "d v b s",
-                    "help": "🔎 <s> Retrieve credentials from Bitwarden CLI and optionally copy them to the clipboard.",
+                    "help": "🔎 <s> Inspect matching Bitwarden items; add --copy or --load to also deliver them.",
                     "source": {
                       "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
                       "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
@@ -10594,35 +10624,32 @@
                     "signature": {
                       "raw_lines": [
                         "def search(",
-                        "    name: Annotated[str | None, typer.Argument(help=\"Credential name or substring; omit with --id or --all-matches.\")] = None,",
+                        "    name: Annotated[str | None, typer.Argument(help=\"Item name or substring; omit with --id, --interactive, or --all-matches.\")] = None,",
                         "    copy: Annotated[",
-                        "        str | None,",
+                        "        BitwardenCopyField | None,",
                         "        typer.Option(",
                         "            \"--copy\",",
-                        "            \"-c\",",
-                        "            show_default=True,",
-                        "            help=\"Field to copy: password, username, totp, or none. Defaults to password interactively and none otherwise. JSON/raw output never copies.\",",
-                        "            show_choices=True,",
+                        "            \"-C\",",
                         "            case_sensitive=False,",
+                        "            help=\"Copy one field of the selected item to the system clipboard: password, username, or totp. The clipboard is cleared soon after, unless something else was copied by then.\",",
                         "        ),",
                         "    ] = None,",
-                        "    sync: Annotated[bool, typer.Option(\"--sync\", \"-S\", help=\"Sync vault with server before searching and bypass the local search cache\")] = False,",
-                        "    show: Annotated[bool, typer.Option(\"--show\", \"-s\", help=\"Show credentials in terminal (insecure)\")] = False,",
-                        "    no_totp: Annotated[bool, typer.Option(\"--no-totp\", \"-t\", help=\"Skip fetching TOTP\")] = False,",
-                        "    username_slot: Annotated[int, typer.Option(\"--username-slot\", \"-u\", help=\"Clipboard slot for username\")] = 0,",
-                        "    password_slot: Annotated[int, typer.Option(\"--password-slot\", \"-p\", help=\"Clipboard slot for password\")] = 1,",
-                        "    totp_slot: Annotated[int, typer.Option(\"--totp-slot\", \"-P\", help=\"Clipboard slot for TOTP\")] = 2,",
-                        "    json_slot: Annotated[int, typer.Option(\"--json-slot\", \"-J\", help=\"Clipboard slot for full JSON result\")] = 3,",
-                        "    silent: Annotated[bool, typer.Option(\"--silent\", \"-q\", help=\"Suppress all progress/status output; only the final result is printed\")] = False,",
-                        "    json_output: Annotated[bool, typer.Option(\"--json\", \"--json-output\", \"-j\", help=\"Print all matching credentials as a JSON array, including notes, without selection or clipboard writes.\")] = False,",
-                        "    raw_output: Annotated[bool, typer.Option(\"--raw\", \"-r\", help=\"Output raw search results JSON exactly as returned by bw\")] = False,",
-                        "    table_output: Annotated[",
-                        "        bool, typer.Option(\"--table\", \"-l\", help=\"Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)\")",
+                        "    load_environment: Annotated[",
+                        "        bool,",
+                        "        typer.Option(\"--load\", \"-L\", help=\"After listing, define the selected item's custom fields as environment variables in the calling shell, as devops vault bitwarden load does.\"),",
                         "    ] = False,",
-                        "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass cache and query Bitwarden directly\")] = False,",
-                        "    item_id: Annotated[str | None, typer.Option(\"--id\", \"-I\", help=\"Retrieve one exact Bitwarden item ID instead of searching by name.\")] = None,",
-                        "    all_matches: Annotated[bool, typer.Option(\"--all-matches\", \"-a\", help=\"Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault.\")] = False,",
-                        "    non_interactive: Annotated[bool, typer.Option(\"--non-interactive\", \"-N\", help=\"Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.\")] = False,",
+                        "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose the item with a TV fuzzy picker. The name pre-filters the list.\")] = False,",
+                        "    all_matches: Annotated[bool, typer.Option(\"--all-matches\", \"-a\", help=\"Select every matching item; allows omitting the name to list the whole vault.\")] = False,",
+                        "    item_id: Annotated[str | None, typer.Option(\"--id\", \"-I\", help=\"Select one exact Bitwarden item ID instead of searching by name.\")] = None,",
+                        "    json_output: Annotated[",
+                        "        bool, typer.Option(\"--json\", \"-j\", help=\"Print the selected items as a JSON array, including secret values and notes. Cannot be combined with --copy, --load, --show, or --interactive.\")",
+                        "    ] = False,",
+                        "    raw_output: Annotated[bool, typer.Option(\"--raw\", \"-r\", help=\"Print the selected items as JSON exactly as returned by bw, including secret values.\")] = False,",
+                        "    show: Annotated[bool, typer.Option(\"--show\", \"-w\", help=\"Show the selected item's credentials in the terminal (insecure).\")] = False,",
+                        "    no_totp: Annotated[bool, typer.Option(\"--no-totp\", \"-o\", help=\"Skip fetching TOTP codes for --json and --show.\")] = False,",
+                        "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass the local search cache and query Bitwarden directly.\")] = False,",
+                        "    sync: Annotated[bool, typer.Option(\"--sync\", \"-y\", help=\"Sync the vault with the server before searching and bypass the local search cache.\")] = False,",
+                        "    silent: Annotated[bool, typer.Option(\"--silent\", \"-q\", help=\"Suppress progress and hints; only results are printed.\")] = False,",
                         ") -> None:"
                       ],
                       "name": "search",
@@ -10633,323 +10660,79 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Credential name or substring; omit with --id or --all-matches.')]",
+                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Item name or substring; omit with --id, --interactive, or --all-matches.')]",
                           "typer": {
                             "kind": "argument",
                             "param_decls": [],
                             "long_flags": [],
                             "short_flags": [],
-                            "help": "Credential name or substring; omit with --id or --all-matches."
+                            "help": "Item name or substring; omit with --id, --interactive, or --all-matches."
                           }
                         },
                         {
                           "name": "copy",
                           "kind": "positional_or_keyword",
-                          "type": "str | None",
+                          "type": "BitwardenCopyField | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--copy', '-c', show_default=True, help='Field to copy: password, username, totp, or none. Defaults to password interactively and none otherwise. JSON/raw output never copies.', show_choices=True, case_sensitive=False)]",
+                          "annotation_raw": "Annotated[BitwardenCopyField | None, typer.Option('--copy', '-C', case_sensitive=False, help='Copy one field of the selected item to the system clipboard: password, username, or totp. The clipboard is cleared soon after, unless something else was copied by then.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
                               "--copy",
-                              "-c"
+                              "-C"
                             ],
                             "long_flags": [
                               "--copy"
                             ],
                             "short_flags": [
-                              "-c"
+                              "-C"
                             ],
-                            "help": "Field to copy: password, username, totp, or none. Defaults to password interactively and none otherwise. JSON/raw output never copies."
+                            "help": "Copy one field of the selected item to the system clipboard: password, username, or totp. The clipboard is cleared soon after, unless something else was copied by then."
                           }
                         },
                         {
-                          "name": "sync",
+                          "name": "load_environment",
                           "kind": "positional_or_keyword",
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--sync', '-S', help='Sync vault with server before searching and bypass the local search cache')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--load', '-L', help=\"After listing, define the selected item's custom fields as environment variables in the calling shell, as devops vault bitwarden load does.\")]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--sync",
-                              "-S"
+                              "--load",
+                              "-L"
                             ],
                             "long_flags": [
-                              "--sync"
+                              "--load"
                             ],
                             "short_flags": [
-                              "-S"
+                              "-L"
                             ],
-                            "help": "Sync vault with server before searching and bypass the local search cache"
+                            "help": "After listing, define the selected item's custom fields as environment variables in the calling shell, as devops vault bitwarden load does."
                           }
                         },
                         {
-                          "name": "show",
+                          "name": "interactive",
                           "kind": "positional_or_keyword",
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--show', '-s', help='Show credentials in terminal (insecure)')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose the item with a TV fuzzy picker. The name pre-filters the list.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--show",
-                              "-s"
+                              "--interactive",
+                              "-i"
                             ],
                             "long_flags": [
-                              "--show"
+                              "--interactive"
                             ],
                             "short_flags": [
-                              "-s"
+                              "-i"
                             ],
-                            "help": "Show credentials in terminal (insecure)"
-                          }
-                        },
-                        {
-                          "name": "no_totp",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--no-totp', '-t', help='Skip fetching TOTP')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--no-totp",
-                              "-t"
-                            ],
-                            "long_flags": [
-                              "--no-totp"
-                            ],
-                            "short_flags": [
-                              "-t"
-                            ],
-                            "help": "Skip fetching TOTP"
-                          }
-                        },
-                        {
-                          "name": "username_slot",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 0,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--username-slot', '-u', help='Clipboard slot for username')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--username-slot",
-                              "-u"
-                            ],
-                            "long_flags": [
-                              "--username-slot"
-                            ],
-                            "short_flags": [
-                              "-u"
-                            ],
-                            "help": "Clipboard slot for username"
-                          }
-                        },
-                        {
-                          "name": "password_slot",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 1,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--password-slot', '-p', help='Clipboard slot for password')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--password-slot",
-                              "-p"
-                            ],
-                            "long_flags": [
-                              "--password-slot"
-                            ],
-                            "short_flags": [
-                              "-p"
-                            ],
-                            "help": "Clipboard slot for password"
-                          }
-                        },
-                        {
-                          "name": "totp_slot",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 2,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--totp-slot', '-P', help='Clipboard slot for TOTP')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--totp-slot",
-                              "-P"
-                            ],
-                            "long_flags": [
-                              "--totp-slot"
-                            ],
-                            "short_flags": [
-                              "-P"
-                            ],
-                            "help": "Clipboard slot for TOTP"
-                          }
-                        },
-                        {
-                          "name": "json_slot",
-                          "kind": "positional_or_keyword",
-                          "type": "int",
-                          "default": 3,
-                          "required": false,
-                          "annotation_raw": "Annotated[int, typer.Option('--json-slot', '-J', help='Clipboard slot for full JSON result')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--json-slot",
-                              "-J"
-                            ],
-                            "long_flags": [
-                              "--json-slot"
-                            ],
-                            "short_flags": [
-                              "-J"
-                            ],
-                            "help": "Clipboard slot for full JSON result"
-                          }
-                        },
-                        {
-                          "name": "silent",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--silent', '-q', help='Suppress all progress/status output; only the final result is printed')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--silent",
-                              "-q"
-                            ],
-                            "long_flags": [
-                              "--silent"
-                            ],
-                            "short_flags": [
-                              "-q"
-                            ],
-                            "help": "Suppress all progress/status output; only the final result is printed"
-                          }
-                        },
-                        {
-                          "name": "json_output",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--json', '--json-output', '-j', help='Print all matching credentials as a JSON array, including notes, without selection or clipboard writes.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--json",
-                              "--json-output",
-                              "-j"
-                            ],
-                            "long_flags": [
-                              "--json",
-                              "--json-output"
-                            ],
-                            "short_flags": [
-                              "-j"
-                            ],
-                            "help": "Print all matching credentials as a JSON array, including notes, without selection or clipboard writes."
-                          }
-                        },
-                        {
-                          "name": "raw_output",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--raw', '-r', help='Output raw search results JSON exactly as returned by bw')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--raw",
-                              "-r"
-                            ],
-                            "long_flags": [
-                              "--raw"
-                            ],
-                            "short_flags": [
-                              "-r"
-                            ],
-                            "help": "Output raw search results JSON exactly as returned by bw"
-                          }
-                        },
-                        {
-                          "name": "table_output",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--table', '-l', help='Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--table",
-                              "-l"
-                            ],
-                            "long_flags": [
-                              "--table"
-                            ],
-                            "short_flags": [
-                              "-l"
-                            ],
-                            "help": "Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)"
-                          }
-                        },
-                        {
-                          "name": "fresh",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--fresh', '-f', help='Bypass cache and query Bitwarden directly')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--fresh",
-                              "-f"
-                            ],
-                            "long_flags": [
-                              "--fresh"
-                            ],
-                            "short_flags": [
-                              "-f"
-                            ],
-                            "help": "Bypass cache and query Bitwarden directly"
-                          }
-                        },
-                        {
-                          "name": "item_id",
-                          "kind": "positional_or_keyword",
-                          "type": "str | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--id', '-I', help='Retrieve one exact Bitwarden item ID instead of searching by name.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--id",
-                              "-I"
-                            ],
-                            "long_flags": [
-                              "--id"
-                            ],
-                            "short_flags": [
-                              "-I"
-                            ],
-                            "help": "Retrieve one exact Bitwarden item ID instead of searching by name."
+                            "help": "Choose the item with a TV fuzzy picker. The name pre-filters the list."
                           }
                         },
                         {
@@ -10958,7 +10741,7 @@
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Select every matching item; allows omitting the name to list the whole vault.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -10971,43 +10754,411 @@
                             "short_flags": [
                               "-a"
                             ],
-                            "help": "Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault."
+                            "help": "Select every matching item; allows omitting the name to list the whole vault."
                           }
                         },
                         {
-                          "name": "non_interactive",
+                          "name": "item_id",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--id', '-I', help='Select one exact Bitwarden item ID instead of searching by name.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--id",
+                              "-I"
+                            ],
+                            "long_flags": [
+                              "--id"
+                            ],
+                            "short_flags": [
+                              "-I"
+                            ],
+                            "help": "Select one exact Bitwarden item ID instead of searching by name."
+                          }
+                        },
+                        {
+                          "name": "json_output",
                           "kind": "positional_or_keyword",
                           "type": "bool",
                           "default": false,
                           "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--non-interactive', '-N', help='Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.')]",
+                          "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print the selected items as a JSON array, including secret values and notes. Cannot be combined with --copy, --load, --show, or --interactive.')]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
-                              "--non-interactive",
-                              "-N"
+                              "--json",
+                              "-j"
                             ],
                             "long_flags": [
-                              "--non-interactive"
+                              "--json"
                             ],
                             "short_flags": [
-                              "-N"
+                              "-j"
                             ],
-                            "help": "Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal."
+                            "help": "Print the selected items as a JSON array, including secret values and notes. Cannot be combined with --copy, --load, --show, or --interactive."
+                          }
+                        },
+                        {
+                          "name": "raw_output",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--raw', '-r', help='Print the selected items as JSON exactly as returned by bw, including secret values.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--raw",
+                              "-r"
+                            ],
+                            "long_flags": [
+                              "--raw"
+                            ],
+                            "short_flags": [
+                              "-r"
+                            ],
+                            "help": "Print the selected items as JSON exactly as returned by bw, including secret values."
+                          }
+                        },
+                        {
+                          "name": "show",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--show', '-w', help=\"Show the selected item's credentials in the terminal (insecure).\")]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--show",
+                              "-w"
+                            ],
+                            "long_flags": [
+                              "--show"
+                            ],
+                            "short_flags": [
+                              "-w"
+                            ],
+                            "help": "Show the selected item's credentials in the terminal (insecure)."
+                          }
+                        },
+                        {
+                          "name": "no_totp",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--no-totp', '-o', help='Skip fetching TOTP codes for --json and --show.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--no-totp",
+                              "-o"
+                            ],
+                            "long_flags": [
+                              "--no-totp"
+                            ],
+                            "short_flags": [
+                              "-o"
+                            ],
+                            "help": "Skip fetching TOTP codes for --json and --show."
+                          }
+                        },
+                        {
+                          "name": "fresh",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--fresh', '-f', help='Bypass the local search cache and query Bitwarden directly.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--fresh",
+                              "-f"
+                            ],
+                            "long_flags": [
+                              "--fresh"
+                            ],
+                            "short_flags": [
+                              "-f"
+                            ],
+                            "help": "Bypass the local search cache and query Bitwarden directly."
+                          }
+                        },
+                        {
+                          "name": "sync",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--sync', '-y', help='Sync the vault with the server before searching and bypass the local search cache.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--sync",
+                              "-y"
+                            ],
+                            "long_flags": [
+                              "--sync"
+                            ],
+                            "short_flags": [
+                              "-y"
+                            ],
+                            "help": "Sync the vault with the server before searching and bypass the local search cache."
+                          }
+                        },
+                        {
+                          "name": "silent",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--silent', '-q', help='Suppress progress and hints; only results are printed.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--silent",
+                              "-q"
+                            ],
+                            "long_flags": [
+                              "--silent"
+                            ],
+                            "short_flags": [
+                              "-q"
+                            ],
+                            "help": "Suppress progress and hints; only results are printed."
                           }
                         }
                       ],
                       "return": "None"
                     },
                     "typer": {
-                      "no_args_is_help": true
+                      "no_args_is_help": true,
+                      "epilog": "Examples:\n  devops vault bitwarden search github\n  devops vault bitwarden search github --copy password\n  devops vault bitwarden search --interactive --copy totp\n  devops vault bitwarden search --load github-token\n  devops vault bitwarden search --all-matches --json mail\n\nSearch lists matching items without secret values and does nothing else.\nAdd --copy/-C to put one field on the system clipboard, --load/-L to define the item's variables in the calling shell, or --show/-w to print credentials.\nThe name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.\nUse --json to print the selected items as JSON, including values.\n"
                     },
-                    "doc": "Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard.",
+                    "doc": "Inspect Bitwarden (`bw`) items without exposing secrets; copying, loading and showing are explicit.",
                     "aliases": [
                       {
                         "name": "s",
                         "hidden": true,
                         "help": "Alias for search."
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "command",
+                    "name": "load",
+                    "fullPath": "devops vault bitwarden load",
+                    "shortPath": "d v b L",
+                    "help": "🔐 <L> Load a Bitwarden item's custom fields into environment variables.",
+                    "source": {
+                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
+                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
+                      "callable": "load"
+                    },
+                    "signature": {
+                      "raw_lines": [
+                        "def load(",
+                        "    name: Annotated[str | None, typer.Argument(help=\"Item name or substring; omit with --id, --interactive, or --all-matches.\")] = None,",
+                        "    command: Annotated[str | None, typer.Option(\"--command\", \"-c\", help=\"Run a quoted command with the selected environment. Parsed as arguments, without a shell.\")] = None,",
+                        "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose the item with a TV fuzzy picker. The name pre-filters the list.\")] = False,",
+                        "    all_matches: Annotated[",
+                        "        bool, typer.Option(\"--all-matches\", \"-a\", help=\"Select every matching item. Loading fails if items assign different values to one environment variable.\")",
+                        "    ] = False,",
+                        "    item_id: Annotated[str | None, typer.Option(\"--id\", \"-I\", help=\"Select one exact Bitwarden item ID instead of searching by name.\")] = None,",
+                        "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass the local search cache and query Bitwarden directly.\")] = False,",
+                        "    sync: Annotated[bool, typer.Option(\"--sync\", \"-y\", help=\"Sync the vault with the server before searching and bypass the local search cache.\")] = False,",
+                        "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected items and env var keys without secret values.\")] = False,",
+                        ") -> None:"
+                      ],
+                      "name": "load",
+                      "parameters": [
+                        {
+                          "name": "name",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Argument(help='Item name or substring; omit with --id, --interactive, or --all-matches.')]",
+                          "typer": {
+                            "kind": "argument",
+                            "param_decls": [],
+                            "long_flags": [],
+                            "short_flags": [],
+                            "help": "Item name or substring; omit with --id, --interactive, or --all-matches."
+                          }
+                        },
+                        {
+                          "name": "command",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--command', '-c', help='Run a quoted command with the selected environment. Parsed as arguments, without a shell.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--command",
+                              "-c"
+                            ],
+                            "long_flags": [
+                              "--command"
+                            ],
+                            "short_flags": [
+                              "-c"
+                            ],
+                            "help": "Run a quoted command with the selected environment. Parsed as arguments, without a shell."
+                          }
+                        },
+                        {
+                          "name": "interactive",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose the item with a TV fuzzy picker. The name pre-filters the list.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--interactive",
+                              "-i"
+                            ],
+                            "long_flags": [
+                              "--interactive"
+                            ],
+                            "short_flags": [
+                              "-i"
+                            ],
+                            "help": "Choose the item with a TV fuzzy picker. The name pre-filters the list."
+                          }
+                        },
+                        {
+                          "name": "all_matches",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Select every matching item. Loading fails if items assign different values to one environment variable.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--all-matches",
+                              "-a"
+                            ],
+                            "long_flags": [
+                              "--all-matches"
+                            ],
+                            "short_flags": [
+                              "-a"
+                            ],
+                            "help": "Select every matching item. Loading fails if items assign different values to one environment variable."
+                          }
+                        },
+                        {
+                          "name": "item_id",
+                          "kind": "positional_or_keyword",
+                          "type": "str | None",
+                          "default": null,
+                          "required": false,
+                          "annotation_raw": "Annotated[str | None, typer.Option('--id', '-I', help='Select one exact Bitwarden item ID instead of searching by name.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--id",
+                              "-I"
+                            ],
+                            "long_flags": [
+                              "--id"
+                            ],
+                            "short_flags": [
+                              "-I"
+                            ],
+                            "help": "Select one exact Bitwarden item ID instead of searching by name."
+                          }
+                        },
+                        {
+                          "name": "fresh",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--fresh', '-f', help='Bypass the local search cache and query Bitwarden directly.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--fresh",
+                              "-f"
+                            ],
+                            "long_flags": [
+                              "--fresh"
+                            ],
+                            "short_flags": [
+                              "-f"
+                            ],
+                            "help": "Bypass the local search cache and query Bitwarden directly."
+                          }
+                        },
+                        {
+                          "name": "sync",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--sync', '-y', help='Sync the vault with the server before searching and bypass the local search cache.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--sync",
+                              "-y"
+                            ],
+                            "long_flags": [
+                              "--sync"
+                            ],
+                            "short_flags": [
+                              "-y"
+                            ],
+                            "help": "Sync the vault with the server before searching and bypass the local search cache."
+                          }
+                        },
+                        {
+                          "name": "verbose",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--verbose', '-v', help='Print the selected items and env var keys without secret values.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--verbose",
+                              "-v"
+                            ],
+                            "long_flags": [
+                              "--verbose"
+                            ],
+                            "short_flags": [
+                              "-v"
+                            ],
+                            "help": "Print the selected items and env var keys without secret values."
+                          }
+                        }
+                      ],
+                      "return": "None"
+                    },
+                    "typer": {
+                      "no_args_is_help": true,
+                      "epilog": "Examples:\n  devops vault bitwarden load github-token\n  devops vault bitwarden load --command 'gh auth status' github-token\n  devops vault bitwarden load --interactive\n\nEach custom field of the item becomes one environment variable: the field name is the variable name.\nA linked custom field takes the login's username or password as its value.\nLoad prepares the variables for the calling shell, or with --command runs one program with them.\nThe name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.\n"
+                    },
+                    "doc": "Load a Bitwarden item's custom fields into environment variables.",
+                    "aliases": [
+                      {
+                        "name": "L",
+                        "hidden": true,
+                        "help": "Alias for load."
                       }
                     ]
                   },
@@ -11100,7 +11251,7 @@
                     "name": "export-session",
                     "fullPath": "devops vault bitwarden export-session",
                     "shortPath": "d v b e",
-                    "help": "🔓 <e> Print shell code exporting the saved BW_SESSION (usage: eval \"$(devops vault bitwarden export-session)\").",
+                    "help": "🔓 <e> Define the saved BW_SESSION in the calling shell, the way load defines variables.",
                     "source": {
                       "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_vault.py",
                       "module": "stackops.scripts.python.helpers.helpers_devops.cli_vault",
@@ -11114,7 +11265,7 @@
                       "parameters": [],
                       "return": "None"
                     },
-                    "doc": "Print an eval-able script exporting the saved BW_SESSION for the current shell.",
+                    "doc": "Define the saved BW_SESSION in the calling shell.",
                     "aliases": [
                       {
                         "name": "e",

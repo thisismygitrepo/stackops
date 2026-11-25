@@ -27,7 +27,7 @@ else {
 
 winget install --no-upgrade --name "Powershell"                   --Id "Microsoft.PowerShell"       --source winget --scope user --accept-package-agreements --accept-source-agreements  # powershell require admin
 winget install --no-upgrade --name "Windows Terminal"             --Id "Microsoft.WindowsTerminal"  --source winget --scope user --accept-package-agreements --accept-source-agreements  # Terminal is is installed by default on W 11
-winget install --no-upgrade --name "Git"                          --Id "Git.Git"                    --source winget --scope user --accept-package-agreements --accept-source-agreements
+winget install --no-upgrade --name "Git"                          --Id "Git.Git"                    --source winget --accept-package-agreements --accept-source-agreements  # no --scope: it would hide a machine-wide Git from the already-installed check
 powershell -c "irm bun.sh/install.ps1|iex"
 
 # Install-Module -Name Terminal-Icons -Repository PSGallery -Force -AcceptLicense -PassThru -Confirm  # -RequiredVersion 2.5.10

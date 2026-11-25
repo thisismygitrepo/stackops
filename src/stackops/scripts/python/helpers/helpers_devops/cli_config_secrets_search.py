@@ -22,6 +22,14 @@ def search(
             "--load", "-L", help="After listing the matches, define their environment variables in the calling shell, as devops vault load does."
         ),
     ] = False,
+    copy_key: Annotated[
+        str | None,
+        typer.Option(
+            "--copy",
+            "-C",
+            help="Copy the value of one environment key of the selection to the system clipboard. The clipboard is cleared soon after, unless something else was copied by then.",
+        ),
+    ] = None,
     custom_path: Annotated[
         Path | None,
         typer.Option(
@@ -85,7 +93,7 @@ def search(
         preview_secrets=preview_secrets, login_name=login_name, secret_name=secret_name, tags=tags, login_tags=login_tags,
         secret_tags=secret_tags, scopes=scopes, keys=keys,
     )
-    search_secrets(request, json_output=json_output, verbose=verbose, load_environment=load_environment)
+    search_secrets(request, json_output=json_output, verbose=verbose, load_environment=load_environment, copy_key=copy_key)
 
 
 def load(

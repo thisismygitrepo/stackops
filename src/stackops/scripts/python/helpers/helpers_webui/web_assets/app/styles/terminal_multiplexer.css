@@ -12,6 +12,9 @@
 .mux-default.warn { border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
 .mux-default.warn::before { background: radial-gradient(440px 210px at 0% 0%, color-mix(in srgb, var(--warn) 16%, transparent), transparent 70%); }
 .mux-default > * { position: relative; }
+/* The default the address named, marked once as the page lands on it. */
+.mux-default.spot { animation: mux-spot 1.6s var(--smooth); }
+@keyframes mux-spot { 0%, 45% { border-color: var(--violet); box-shadow: var(--ring); } }
 .mux-default-name { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 2px; }
 .mux-default-name strong { font-size: 28px; font-weight: 760; letter-spacing: -0.035em; line-height: 1.1; }
 .mux-default.warn .avatar { filter: grayscale(1); opacity: 0.6; }

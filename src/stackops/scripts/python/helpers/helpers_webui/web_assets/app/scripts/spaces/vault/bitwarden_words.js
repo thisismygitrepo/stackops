@@ -7,7 +7,7 @@ export const UNLOCK_PATH = "devops vault bitwarden login-and-unlock";
 export const FIND_PATH = "devops vault bitwarden search";
 export const SYNC_PATH = "devops vault bitwarden sync";
 export const CLEAN_PATH = "devops vault bitwarden clean-cache";
-export const BITWARDEN_PATHS = [UNLOCK_PATH, FIND_PATH, SYNC_PATH, CLEAN_PATH, "devops vault bitwarden export-session"];
+export const BITWARDEN_PATHS = [UNLOCK_PATH, FIND_PATH, "devops vault bitwarden load", SYNC_PATH, CLEAN_PATH, "devops vault bitwarden export-session"];
 export const APPS_ADDRESS = "#/apps/bw";
 // The values Unlock reads from the vault, under a login called `bitwarden`.
 export const KEY_NAMES = ["BW_CLIENTID", "BW_CLIENTSECRET", "BW_PASSWORD"];

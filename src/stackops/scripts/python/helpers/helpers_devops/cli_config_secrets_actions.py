@@ -115,8 +115,8 @@ def write_env_handoff(key_values: Mapping[str, object], *, verbose: bool) -> Non
     env_path = op_program_path.with_name(f"{op_program_path.stem}{env_suffix}")
     if env_path.exists():
         _fail(f"Cannot write secrets env file because it already exists: {env_path}")
-    env_path.write_text(_render_env_file(key_values=key_values, powershell=powershell), encoding="utf-8")
-    _chmod_private(env_path, 0o600)
+    with os.fdopen(os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8") as env_file:
+        env_file.write(_render_env_file(key_values=key_values, powershell=powershell))
     op_program_path.write_text(
         _render_loader_file(env_path=env_path, env_var_names=tuple(key_values), powershell=powershell, verbose=verbose), encoding="utf-8"
     )

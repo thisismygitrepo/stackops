@@ -2,7 +2,31 @@ from typing import Annotated
 
 import typer
 
+from stackops.scripts.python.helpers.helpers_devops.vault_constants import BitwardenCopyField
+
 DEFAULT_BITWARDEN_LOGIN_NAME = "bitwarden"
+BITWARDEN_SEARCH_EPILOG = """Examples:
+  devops vault bitwarden search github
+  devops vault bitwarden search github --copy password
+  devops vault bitwarden search --interactive --copy totp
+  devops vault bitwarden search --load github-token
+  devops vault bitwarden search --all-matches --json mail
+
+Search lists matching items without secret values and does nothing else.
+Add --copy/-C to put one field on the system clipboard, --load/-L to define the item's variables in the calling shell, or --show/-w to print credentials.
+The name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.
+Use --json to print the selected items as JSON, including values.
+"""
+BITWARDEN_LOAD_EPILOG = """Examples:
+  devops vault bitwarden load github-token
+  devops vault bitwarden load --command 'gh auth status' github-token
+  devops vault bitwarden load --interactive
+
+Each custom field of the item becomes one environment variable: the field name is the variable name.
+A linked custom field takes the login's username or password as its value.
+Load prepares the variables for the calling shell, or with --command runs one program with them.
+The name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.
+"""
 
 
 def _raise_typer_exit(exc: Exception) -> None:
@@ -11,58 +35,69 @@ def _raise_typer_exit(exc: Exception) -> None:
 
 
 def search(
-    name: Annotated[str | None, typer.Argument(help="Credential name or substring; omit with --id or --all-matches.")] = None,
+    name: Annotated[str | None, typer.Argument(help="Item name or substring; omit with --id, --interactive, or --all-matches.")] = None,
     copy: Annotated[
-        str | None,
+        BitwardenCopyField | None,
         typer.Option(
             "--copy",
-            "-c",
-            show_default=True,
-            help="Field to copy: password, username, totp, or none. Defaults to password interactively and none otherwise. JSON/raw output never copies.",
-            show_choices=True,
+            "-C",
             case_sensitive=False,
+            help="Copy one field of the selected item to the system clipboard: password, username, or totp. The clipboard is cleared soon after, unless something else was copied by then.",
         ),
     ] = None,
-    sync: Annotated[bool, typer.Option("--sync", "-S", help="Sync vault with server before searching and bypass the local search cache")] = False,
-    show: Annotated[bool, typer.Option("--show", "-s", help="Show credentials in terminal (insecure)")] = False,
-    no_totp: Annotated[bool, typer.Option("--no-totp", "-t", help="Skip fetching TOTP")] = False,
-    username_slot: Annotated[int, typer.Option("--username-slot", "-u", help="Clipboard slot for username")] = 0,
-    password_slot: Annotated[int, typer.Option("--password-slot", "-p", help="Clipboard slot for password")] = 1,
-    totp_slot: Annotated[int, typer.Option("--totp-slot", "-P", help="Clipboard slot for TOTP")] = 2,
-    json_slot: Annotated[int, typer.Option("--json-slot", "-J", help="Clipboard slot for full JSON result")] = 3,
-    silent: Annotated[bool, typer.Option("--silent", "-q", help="Suppress all progress/status output; only the final result is printed")] = False,
-    json_output: Annotated[bool, typer.Option("--json", "--json-output", "-j", help="Print all matching credentials as a JSON array, including notes, without selection or clipboard writes.")] = False,
-    raw_output: Annotated[bool, typer.Option("--raw", "-r", help="Output raw search results JSON exactly as returned by bw")] = False,
-    table_output: Annotated[
-        bool, typer.Option("--table", "-l", help="Print all matches as a rich table instead of interactive selection (never exposes secrets, never copies)")
+    load_environment: Annotated[
+        bool,
+        typer.Option("--load", "-L", help="After listing, define the selected item's custom fields as environment variables in the calling shell, as devops vault bitwarden load does."),
     ] = False,
-    fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass cache and query Bitwarden directly")] = False,
-    item_id: Annotated[str | None, typer.Option("--id", "-I", help="Retrieve one exact Bitwarden item ID instead of searching by name.")] = None,
-    all_matches: Annotated[bool, typer.Option("--all-matches", "-a", help="Return all matches with --json, --raw, or --table; allows omitting the name to list the whole vault.")] = False,
-    non_interactive: Annotated[bool, typer.Option("--non-interactive", "-N", help="Never open a picker; ambiguous text results fail. Implied by JSON/raw output and when input or output is not a terminal.")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose the item with a TV fuzzy picker. The name pre-filters the list.")] = False,
+    all_matches: Annotated[bool, typer.Option("--all-matches", "-a", help="Select every matching item; allows omitting the name to list the whole vault.")] = False,
+    item_id: Annotated[str | None, typer.Option("--id", "-I", help="Select one exact Bitwarden item ID instead of searching by name.")] = None,
+    json_output: Annotated[
+        bool, typer.Option("--json", "-j", help="Print the selected items as a JSON array, including secret values and notes. Cannot be combined with --copy, --load, --show, or --interactive.")
+    ] = False,
+    raw_output: Annotated[bool, typer.Option("--raw", "-r", help="Print the selected items as JSON exactly as returned by bw, including secret values.")] = False,
+    show: Annotated[bool, typer.Option("--show", "-w", help="Show the selected item's credentials in the terminal (insecure).")] = False,
+    no_totp: Annotated[bool, typer.Option("--no-totp", "-o", help="Skip fetching TOTP codes for --json and --show.")] = False,
+    fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass the local search cache and query Bitwarden directly.")] = False,
+    sync: Annotated[bool, typer.Option("--sync", "-y", help="Sync the vault with the server before searching and bypass the local search cache.")] = False,
+    silent: Annotated[bool, typer.Option("--silent", "-q", help="Suppress progress and hints; only results are printed.")] = False,
 ) -> None:
-    """Retrieve credentials from Bitwarden (`bw`) and optionally copy them to the clipboard."""
-    from stackops.scripts.python.helpers.helpers_devops import vault
+    """Inspect Bitwarden (`bw`) items without exposing secrets; copying, loading and showing are explicit."""
+    from stackops.scripts.python.helpers.helpers_devops import vault, vault_search
 
     try:
-        vault.search(
-            name=name,
-            copy=copy,
-            sync=sync,
-            show=show,
-            use_totp=not no_totp,
-            username_slot=username_slot,
-            password_slot=password_slot,
-            totp_slot=totp_slot,
-            json_slot=json_slot,
-            silent=silent,
+        vault_search.search(
+            vault_search.ItemQuery(name=name, item_id=item_id, interactive=interactive, all_matches=all_matches, fresh=fresh, sync=sync, silent=silent),
             json_output=json_output,
             raw_output=raw_output,
-            table_output=table_output,
-            fresh=fresh,
-            item_id=item_id,
-            all_matches=all_matches,
-            non_interactive=non_interactive,
+            copy_field=copy,
+            load_environment=load_environment,
+            show=show,
+            use_totp=not no_totp,
+        )
+    except vault.VaultExit as exc:
+        _raise_typer_exit(exc)
+
+
+def load(
+    name: Annotated[str | None, typer.Argument(help="Item name or substring; omit with --id, --interactive, or --all-matches.")] = None,
+    command: Annotated[str | None, typer.Option("--command", "-c", help="Run a quoted command with the selected environment. Parsed as arguments, without a shell.")] = None,
+    interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Choose the item with a TV fuzzy picker. The name pre-filters the list.")] = False,
+    all_matches: Annotated[
+        bool, typer.Option("--all-matches", "-a", help="Select every matching item. Loading fails if items assign different values to one environment variable.")
+    ] = False,
+    item_id: Annotated[str | None, typer.Option("--id", "-I", help="Select one exact Bitwarden item ID instead of searching by name.")] = None,
+    fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass the local search cache and query Bitwarden directly.")] = False,
+    sync: Annotated[bool, typer.Option("--sync", "-y", help="Sync the vault with the server before searching and bypass the local search cache.")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Print the selected items and env var keys without secret values.")] = False,
+) -> None:
+    """Load a Bitwarden item's custom fields into environment variables."""
+    from stackops.scripts.python.helpers.helpers_devops import vault, vault_search
+
+    try:
+        vault_search.load(
+            vault_search.ItemQuery(name=name, item_id=item_id, interactive=interactive, all_matches=all_matches, fresh=fresh, sync=sync, silent=not verbose),
+            command=command,
         )
     except vault.VaultExit as exc:
         _raise_typer_exit(exc)
@@ -87,7 +122,7 @@ def login_and_unlock(
 
 
 def export_session() -> None:
-    """Print an eval-able script exporting the saved BW_SESSION for the current shell."""
+    """Define the saved BW_SESSION in the calling shell."""
     from stackops.scripts.python.helpers.helpers_devops import vault
 
     try:
@@ -125,8 +160,13 @@ def get_app() -> typer.Typer:
         add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
-    app.command("search", no_args_is_help=True, help="🔎 <s> Retrieve credentials from Bitwarden CLI and optionally copy them to the clipboard.")(search)
-    app.command("s", no_args_is_help=True, help="Alias for search.", hidden=True)(search)
+    app.command(
+        "search", no_args_is_help=True, help="🔎 <s> Inspect matching Bitwarden items; add --copy or --load to also deliver them.", epilog=BITWARDEN_SEARCH_EPILOG
+    )(search)
+    app.command("s", no_args_is_help=True, help="Alias for search.", epilog=BITWARDEN_SEARCH_EPILOG, hidden=True)(search)
+
+    app.command("load", no_args_is_help=True, help="🔐 <L> Load a Bitwarden item's custom fields into environment variables.", epilog=BITWARDEN_LOAD_EPILOG)(load)
+    app.command("L", no_args_is_help=True, help="Alias for load.", epilog=BITWARDEN_LOAD_EPILOG, hidden=True)(load)
 
     app.command(
         "login-and-unlock",
@@ -137,7 +177,7 @@ def get_app() -> typer.Typer:
 
     app.command(
         "export-session",
-        help="""🔓 <e> Print shell code exporting the saved BW_SESSION (usage: eval "$(devops vault bitwarden export-session)").""",
+        help="🔓 <e> Define the saved BW_SESSION in the calling shell, the way load defines variables.",
     )(export_session)
     app.command("e", help="Alias for export-session.", hidden=True)(export_session)
 

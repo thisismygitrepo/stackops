@@ -1,7 +1,7 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
 import { markStale, staleKeeper } from "../../data.js";
-import { rise } from "../../motion.js";
+import { replay, rise } from "../../motion.js";
 import { backLink, editButton } from "../../space_kit.js";
 import { button, notice, sectionHead, skeleton } from "../../widgets.js";
 import { plural, titleOf } from "../../words.js";
@@ -24,6 +24,7 @@ export function open(_context, { preset }) {
 
 // Sessions › Multiplexer, at #/sessions/multiplexer: the two defaults as they stand, and every multiplexer as a card that one click picks.
 // The overview arrives first; what is running in each multiplexer is asked for one at a time and fills in as it comes.
+// #/sessions/multiplexer/session and …/agent land on that default: the address whoever sends someone here to pick the one still unpicked uses.
 export function createPart({ activity, tools }) {
   const { platform } = state.boot;
   // What is running in each multiplexer, by name. An answer stays on show while the next one is on its way.
@@ -35,6 +36,7 @@ export function createPart({ activity, tools }) {
   let ticket = 0;
   let saving = false;
   let risen = false;
+  let spot = "";
 
   const defaults = h("div", { class: "mux-defaults" }, skeleton(2, "card"));
   const grid = h("div", { class: "mux-grid" }, skeleton(5, "card"));
@@ -73,6 +75,16 @@ export function createPart({ activity, tools }) {
     lead.replaceChildren(...(multiplexers.some((item) => item.installed) ? [] : [notice({ glyph: "layers", title: "No multiplexer is installed", body: "Nothing on this machine can hold a session yet. Install one of these and it can be picked here.", action: install })]));
     if (!risen) rise(grid);
     risen = true;
+    if (spot) land();
+  }
+
+  // The default the address names: marked once, with the keyboard on the button that makes it the person's own choice where it has one.
+  function land() {
+    const tile = tiles[ROLE_IDS.indexOf(spot)].element;
+    spot = "";
+    tile.scrollIntoView({ block: "nearest" });
+    replay(tile, "spot");
+    tile.querySelector(".mux-pick:enabled")?.focus({ preventScroll: true });
   }
 
   function fail(error) {
@@ -160,11 +172,13 @@ export function createPart({ activity, tools }) {
   const keeper = staleKeeper(element, load);
   return {
     element,
-    show() {
+    show(rest) {
       const changed = Object.keys(marked).length + Object.keys(proposed).length > 0;
       marked = proposed;
       proposed = {};
+      spot = ROLE_IDS.includes(rest[0]) ? rest[0] : "";
       if (overview && changed) paint();
+      else if (overview && spot) land();
       // A page that is still loading marks the button when its cards arrive, and leaves the keyboard where it is.
       element.querySelector(".mux-pick.suggested")?.focus();
       keeper.ensure();

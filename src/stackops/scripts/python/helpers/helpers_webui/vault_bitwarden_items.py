@@ -70,7 +70,7 @@ def read_bitwarden_items(fresh: bool) -> BitwardenItemsView | BitwardenProblem:
         if standing != "unlocked":
             return BitwardenProblem(status=409, message=WAYS_FORWARD[standing], reason=standing)
         try:
-            listing = bitwarden.run_command(bitwarden.build_bw_command(["list", "items"], session))
+            listing = bitwarden.run_command(["bw", "list", "items"], env=bitwarden.bw_environment(session))
         except bitwarden.VaultExit:
             return BitwardenProblem(status=409, message=WAYS_FORWARD["missing"], reason="missing")
         if listing.returncode != 0:
@@ -121,7 +121,7 @@ def read_bitwarden_value(body: object) -> BitwardenValue | BitwardenProblem:
     match field:
         case "code":
             try:
-                answer = bitwarden.run_command(bitwarden.build_bw_command(["get", "totp", item_id], cache.get("BW_SESSION")))
+                answer = bitwarden.run_command(["bw", "get", "totp", item_id], env=bitwarden.bw_environment(cache.get("BW_SESSION")))
             except bitwarden.VaultExit:
                 return BitwardenProblem(status=409, message=WAYS_FORWARD["missing"], reason="missing")
             if answer.returncode != 0 or answer.stdout.strip() == "":
