@@ -1,8 +1,4 @@
 /* Sessions › Multiplexer: the two defaults as they stand, then one card for each multiplexer StackOps can work with. */
-.mux-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.mux-back svg { transition: transform 0.3s var(--spring); }
-.mux-back:hover { color: var(--violet); }
-.mux-back:hover svg { transform: translateX(-3px); }
 .mux.loading .mux-again svg { animation: spin 0.9s linear infinite; }
 .mux .notice { margin-bottom: 14px; }
 /* Read by a screen reader, where the tick and the cross beside it are only pictures. */

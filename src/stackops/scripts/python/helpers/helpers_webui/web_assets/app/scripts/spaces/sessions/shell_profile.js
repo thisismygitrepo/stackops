@@ -1,7 +1,8 @@
-import { h, icon } from "/assets/scripts/dom.js";
+import { h } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
 import { staleKeeper } from "../../data.js";
 import { replay, rise } from "../../motion.js";
+import { backLink } from "../../space_kit.js";
 import { button, callout, notice, sectionHead, skeleton } from "../../widgets.js";
 import { createActions } from "./shell_profile/actions.js";
 import { explainSection } from "./shell_profile/explain.js";
@@ -90,7 +91,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "shellprof-back", href: "#/sessions" }, icon("back", 14), h("span", { text: "Sessions" })), h("h1", { text: "Shell profile" }), h("p", { text: "A shell reads its profile each time a terminal opens. One line in that file loads StackOps' short commands, prompt and history search." })),
+      h("div", { class: "view-title" }, backLink("#/sessions", "Sessions"), h("h1", { text: "Shell profile" }), h("p", { text: "A shell reads its profile each time a terminal opens. One line in that file loads StackOps' short commands, prompt and history search." })),
       h(
         "div",
         { class: "view-actions" },

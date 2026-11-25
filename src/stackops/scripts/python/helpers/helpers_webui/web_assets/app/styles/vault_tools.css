@@ -1,8 +1,4 @@
 /* The Vault page's tool views: the vault file page, the copy sheet and the Bitwarden page. What all three share comes first. */
-.vault-tools-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.vault-tools-back svg { transition: transform 0.3s var(--spring); }
-.vault-tools-back:hover { color: var(--violet); }
-.vault-tools-back:hover svg { transform: translateX(-3px); }
 .vault-tools-mark { --tone: var(--ink-faint); display: inline-grid; flex: none; place-items: center; width: 24px; height: 24px; color: var(--tone); background: color-mix(in srgb, var(--tone) 15%, transparent); border-radius: 50%; }
 .vault-tools-mark.good { --tone: var(--good); }
 .vault-tools-mark.warn { --tone: var(--warn); }

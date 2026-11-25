@@ -29,7 +29,10 @@
 
 .prompt-reader { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 20px; }
 .prompt-head { display: flex; align-items: center; gap: 14px; padding: 18px 18px 12px 20px; }
-.prompt-back { display: none; margin: 0 -4px 0 -6px; }
+/* The way back to the list while the list and the reader take turns in a narrow window. The readers of scripts and logins use it too. */
+.prompt-back { display: none; width: 38px; height: 38px; color: var(--ink); background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 999px; }
+.prompt-back svg { width: 18px; height: 18px; color: var(--violet); }
+.prompt-back:hover { background: var(--panel-solid); border-color: var(--violet); }
 .prompt-title { display: grid; flex: 1; gap: 2px; min-width: 0; }
 .prompt-title .overline { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .prompt-title h2 { font-size: 22px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.2; overflow-wrap: anywhere; }

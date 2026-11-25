@@ -1,7 +1,3 @@
-.windows-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.windows-back svg { transition: transform 0.3s var(--spring); }
-.windows-back:hover { color: var(--violet); }
-.windows-back:hover svg { transform: translateX(-3px); }
 .windows-stamp { display: inline-flex; align-items: center; align-self: center; gap: 8px; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .windows-dot { width: 8px; height: 8px; background: var(--good); border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 22%, transparent); }
 .windows-dot.stale { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 22%, transparent); }

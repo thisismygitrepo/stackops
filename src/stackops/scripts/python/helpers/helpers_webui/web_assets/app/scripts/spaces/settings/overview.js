@@ -23,7 +23,7 @@ function capsule({ href, onclick, emoji, name, title }) {
 // Settings, at #/settings: where the settings files, the guided setup and the packaged files stand, each on a card that opens its own view.
 export function createOverview({ tools }) {
   const filesLine = h("p", { text: "Reading this machine…" });
-  const filesMap = h("div", { class: "settings-ov-map" }, skeleton(9, "row"));
+  const filesMap = h("div", { class: "settings-ov-map" }, skeleton(11, "row"));
   const filesBoard = h(
     "section",
     { class: "settings-ov-files" },
@@ -65,7 +65,7 @@ export function createOverview({ tools }) {
       return unread(filesLine, failure);
     }
     if (!value) return;
-    const standings = value.files.map((file) => [file, standingOf(file, value.checks.get(file.kind))]);
+    const standings = value.files.map((file) => [file, standingOf(file, value.checks.get(file.id))]);
     const count = (test) => standings.filter(([, standing]) => test(standing)).length;
     const waiting = count((standing) => standing.id === "checking");
     const trouble = count(needsAttention);
@@ -78,9 +78,9 @@ export function createOverview({ tools }) {
       ...standings.map(([file, standing]) =>
         h(
           "a",
-          { class: `settings-ov-file ${standing.id}`, href: `${FILES_HASH}/${file.kind}` },
-          emojiTile(FILES[file.kind].emoji, file.kind, 34),
-          h("span", { class: "settings-ov-file-text" }, h("strong", { text: FILES[file.kind].title }), h("span", { text: standing.label })),
+          { class: `settings-ov-file ${standing.id}`, href: `${FILES_HASH}/${file.id}` },
+          emojiTile(FILES[file.id].emoji, file.id, 34),
+          h("span", { class: "settings-ov-file-text" }, h("strong", { text: FILES[file.id].title }), h("span", { text: standing.label })),
           h("i", { class: `settings-dot ${standing.id}` }),
         ),
       ),

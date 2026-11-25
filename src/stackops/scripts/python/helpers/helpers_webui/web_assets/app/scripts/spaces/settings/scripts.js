@@ -2,6 +2,7 @@ import { h, icon, toast } from "/assets/scripts/dom.js";
 import { query } from "../../data.js";
 import { replay } from "../../motion.js";
 import { confirmAction } from "../../overlays.js";
+import { backLink } from "../../space_kit.js";
 import { button, callout, copyChip, emojiTile, notice, outputActions, segmented, skeleton } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { explainScript } from "./scripts/explain.js";
@@ -107,7 +108,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "part-back", href: HASH }, icon("back", 14), h("span", { text: "Settings" })), h("h1", { text: "Setup scripts" }), h("p", { text: "Three scripts StackOps ships for a new terminal or a new machine. Read what each would do. Nothing runs until you say so." })),
+      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Setup scripts" }), h("p", { text: "Three scripts StackOps ships for a new terminal or a new machine. Read what each would do. Nothing runs until you say so." })),
       h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The command's own form", onclick: () => tools.open(TOOL_PATH, { plain: true, preset: { which: chosen } }) })),
     ),
     h("div", { class: "table-bar" }, picker.element),

@@ -5,15 +5,17 @@ import { formatBytes, relativeTime } from "../../../words.js";
 import { FILES, SCHEMA_WORDS, standingOf, tidyProblem } from "../words.js";
 
 const REASONS = {
-  unavailable: "The working folder is not part of a project, so there is no place for this file. Choose a project folder at the top of the page.",
-  blocked: "Something that is not a file sits at this path. Move it away and the file can be created.",
+  unavailable: (words) => `This file belongs to a project, and the working folder is not part of one. ${words.outside} To see a project's file, choose its folder at the top of the page.`,
+  blocked: () => "Something that is not a file sits at this path. Move it away and the file can be created.",
 };
+// `devops config edit` finds a file by its kind alone, which for prompts and MCP servers is the project's. Your own is named by its path.
+const editTarget = (file, words) => ({ title: words.title, kind: file.kind, ...(file.id === file.kind ? {} : { path: file.path }) });
 
 // One settings file. The card is drawn again only when what it shows changed, so a check that comes in for another file leaves it alone, and
 // the keyboard stays on the button it was on. `handlers` are the page's: `onCreate`, `onSchema`, `onCheck` and `onExample`, each given the file.
-export function fileCard(kind, { activity, handlers }) {
-  const words = FILES[kind];
-  const element = h("article", { class: "settings-file", "data-kind": kind, tabindex: "-1" });
+export function fileCard(id, { activity, handlers }) {
+  const words = FILES[id];
+  const element = h("article", { class: "settings-file", "data-file": id, tabindex: "-1" });
   let drawn = "";
 
   const act = (name, control) => {
@@ -27,14 +29,14 @@ export function fileCard(kind, { activity, handlers }) {
     drawn = stamp;
     const standing = standingOf(file, check);
     const held = element.contains(document.activeElement) ? document.activeElement.dataset.action : null;
-    const problem = standing.id === "problem" || standing.id === "unchecked" ? tidyProblem(check.problem, file.path) : REASONS[standing.id];
+    const problem = standing.id === "problem" || standing.id === "unchecked" ? tidyProblem(check.problem, file.path) : REASONS[standing.id]?.(words);
     const schemaFix =
       file.exists && file.schema !== "current" &&
       act("schema", h("button", { class: "link", type: "button", text: file.schema === "missing" ? "Put it there" : "Bring it up to date", onclick: () => handlers.onSchema(file) }));
     const example = act("example", button({ label: file.exists ? "Example" : "See the example", glyph: "eye", small: true, title: "What StackOps ships as a starting point for this file", onclick: () => handlers.onExample(file) }));
     const actions = file.exists
       ? [
-          act("edit", editButton(activity, { title: words.title, kind }, { small: true })),
+          act("edit", editButton(activity, editTarget(file, words), { small: true })),
           act("check", button({ label: "Check", glyph: "check", small: true, title: "Runs the check StackOps runs before it uses this file", onclick: () => handlers.onCheck(file) })),
           example,
           h("span", { class: "spacer" }),
@@ -50,7 +52,7 @@ export function fileCard(kind, { activity, handlers }) {
         h(
           "header",
           {},
-          emojiTile(words.emoji, kind, 44),
+          emojiTile(words.emoji, id, 44),
           h("div", { class: "settings-file-title" }, h("h3", { text: words.title }), h("span", { text: `${file.format.toUpperCase()}${file.private ? " · only you can read it" : ""}` })),
           standing.id === "checking" ? h("span", { class: "pill settings-file-checking" }, h("i", { class: "ring" }), standing.label) : pill(standing.label, standing.tone),
         ),

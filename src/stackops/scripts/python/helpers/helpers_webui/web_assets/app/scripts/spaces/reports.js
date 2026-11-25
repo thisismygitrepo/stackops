@@ -23,7 +23,7 @@ export function createReportsSpace({ activity }) {
   const barTitle = h("div", { class: "report-title" });
   const stamp = h("span", { class: "dim" });
   const refresh = button({ label: "Refresh", glyph: "refresh", small: true, onclick: () => generate(boards.get(currentId)) });
-  const viewer = h("div", { class: "report-viewer", hidden: true }, h("div", { class: "report-bar" }, h("a", { class: "btn small ghost", href: "#/reports" }, icon("back", 14), h("span", { text: "All reports" })), barTitle, h("span", { class: "spacer" }), stamp, refresh), h("div", { class: "report-body" }, frames, overlay));
+  const viewer = h("div", { class: "report-viewer", hidden: true }, h("div", { class: "report-bar" }, h("a", { class: "btn small", href: "#/reports" }, icon("back", 14), h("span", { text: "All reports" })), barTitle, h("span", { class: "spacer" }), stamp, refresh), h("div", { class: "report-body" }, frames, overlay));
   const list = h("div", {}, viewHead({ title: "Reports", lede: "Rich, browsable snapshots of this machine. Each one opens on its last build and brings itself up to date." }), gallery);
   const element = h("section", { class: "view reports", hidden: true }, list, viewer);
   let currentId = null;

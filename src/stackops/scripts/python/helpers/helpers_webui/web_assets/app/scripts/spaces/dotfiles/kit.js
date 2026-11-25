@@ -1,4 +1,5 @@
 import { h, icon } from "/assets/scripts/dom.js";
+import { backLink } from "../../space_kit.js";
 import { button } from "../../widgets.js";
 import { DOTFILES_HASH } from "./words.js";
 
@@ -11,7 +12,7 @@ export function partHead({ title, lede, actions }) {
   return h(
     "header",
     { class: "view-head" },
-    h("div", { class: "view-title" }, h("a", { class: "dotfiles-back", href: DOTFILES_HASH }, icon("back", 14), h("span", { text: "Dotfiles" })), h("h1", { text: title }), h("p", { text: lede })),
+    h("div", { class: "view-title" }, backLink(DOTFILES_HASH, "Dotfiles"), h("h1", { text: title }), h("p", { text: lede })),
     h("div", { class: "view-actions" }, actions),
   );
 }

@@ -1,8 +1,4 @@
 /* The Dotfiles page's own views: Move to a new machine, Bring settings from another machine (spaces/dotfiles/), and the Add one file sheet. */
-.dotfiles-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.dotfiles-back svg { transition: transform 0.3s var(--spring); }
-.dotfiles-back:hover { color: var(--violet); }
-.dotfiles-back:hover svg { transform: translateX(-3px); }
 .dotfiles-stamp { align-self: center; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
 .dotfiles-part > div > .notice { background: var(--panel); }
 

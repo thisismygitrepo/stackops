@@ -1,6 +1,7 @@
 import { formatClock, h, icon, toast } from "/assets/scripts/dom.js";
 import { recall } from "../../../memory.js";
 import { replay } from "../../../motion.js";
+import { backLink } from "../../../space_kit.js";
 import { button } from "../../../widgets.js";
 import { createActions } from "./actions.js";
 import { windowsApi } from "./api.js";
@@ -77,7 +78,7 @@ export function createWindowsPage({ tools }, takePreset) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "windows-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Manage windows" }), h("p", { text: "Every window on this computer, by app and by screen. Bring one forward, put it away, or close what you are done with." })),
+      h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Manage windows" }), h("p", { text: "Every window on this computer, by app and by screen. Bring one forward, put it away, or close what you are done with." })),
       h("div", { class: "view-actions" }, stamp, button({ label: "All options", glyph: "sliders", title: "Open this tool's plain form, which has every option of the command", onclick: openPlain }), refreshButton),
     ),
     stateHolder, troubleHolder, hero.element, toolbar.element, list.element, tray.element,

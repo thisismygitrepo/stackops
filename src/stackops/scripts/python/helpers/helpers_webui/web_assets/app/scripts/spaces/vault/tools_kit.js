@@ -1,6 +1,7 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { openPopover } from "../../overlays.js";
+import { backLink } from "../../space_kit.js";
 import { button, notice } from "../../widgets.js";
 import { blurbOf, titleOf } from "../../words.js";
 
@@ -19,7 +20,7 @@ export function partHead({ title, lede, actions }) {
   return h(
     "header",
     { class: "view-head" },
-    h("div", { class: "view-title" }, h("a", { class: "vault-tools-back", href: VAULT_HASH }, icon("back", 14), h("span", { text: "Vault" })), h("h1", { text: title }), h("p", { text: lede })),
+    h("div", { class: "view-title" }, backLink(VAULT_HASH, "Vault"), h("h1", { text: title }), h("p", { text: lede })),
     h("div", { class: "view-actions" }, actions),
   );
 }

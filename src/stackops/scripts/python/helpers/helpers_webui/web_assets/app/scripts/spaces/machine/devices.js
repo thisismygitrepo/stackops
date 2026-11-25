@@ -1,8 +1,8 @@
-import { formatClock, h, icon } from "/assets/scripts/dom.js";
+import { formatClock, h } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
 import { staleKeeper } from "../../data.js";
 import { recall, remember } from "../../memory.js";
-import { toolButton } from "../../space_kit.js";
+import { backLink, toolButton } from "../../space_kit.js";
 import { button, notice, searchInput, segmented, skeleton } from "../../widgets.js";
 import { createDeviceActions } from "./devices/actions.js";
 import { createDeviceList } from "./devices/list.js";
@@ -171,7 +171,7 @@ export function createPart({ tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "devices-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Storage devices" }), h("p", { text: "Every disk in this computer or plugged into it, what is on each one, and how much room is left." })),
+      h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Storage devices" }), h("p", { text: "Every disk in this computer or plugged into it, what is on each one, and how much room is left." })),
       h("div", { class: "view-actions" }, stamp, button({ label: "Plain list", glyph: "terminal", title: "The same devices the way the command line lists them", onclick: () => tools.open(LIST_COMMAND, { plain: true }) }), toolButton(tools, MOUNT_COMMAND, { label: "Mount a device", glyph: "plug" }), refresh),
     ),
     summary.element,

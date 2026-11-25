@@ -1,8 +1,9 @@
-import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
+import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { markStale } from "../../data.js";
 import { replay, rise } from "../../motion.js";
 import { confirmAction, openPopover } from "../../overlays.js";
+import { backLink } from "../../space_kit.js";
 import { button, notice, pathChip, searchInput, sectionHead, segmented, skeleton, stat } from "../../widgets.js";
 import { openExample } from "./example_sheet.js";
 import { fileCard } from "./files/card.js";
@@ -29,7 +30,7 @@ export function open(_context, { preset, action }) {
 }
 
 // Settings › Settings files, at #/settings/files: every file the CLI manages, as a card that says where it is, whether it is there and whether
-// it passes its check, with the one-click ways to create, edit, check and export. A page and not a sheet: nine cards to compare and filter.
+// it passes its check, with the one-click ways to create, edit, check and export. A page and not a sheet: eleven cards to compare and filter.
 export function createPart({ activity, tools }) {
   let filter = "all";
   let typed = "";
@@ -63,21 +64,21 @@ export function createPart({ activity, tools }) {
   picker.set(filter);
 
   async function create(file, told) {
-    busy.add(file.kind);
+    busy.add(file.id);
     paint(files.reading);
     try {
-      await createFile(file.kind);
+      await createFile(file);
       toast(told, "info");
     } catch (error) {
       toast(error.message);
     }
-    busy.delete(file.kind);
+    busy.delete(file.id);
     // Other pages read these files too, so they are all told. That also reads this page's list again.
     markStale();
   }
 
   const handlers = {
-    onCreate: (file) => create(file, `Created ${FILES[file.kind].title.toLowerCase()} from the example StackOps ships.`),
+    onCreate: (file) => create(file, `Created ${FILES[file.id].title.toLowerCase()} from the example StackOps ships.`),
     async onSchema(file) {
       const sure = await confirmAction({
         title: file.schema === "missing" ? "Put the schema beside the file?" : "Bring the schema up to date?",
@@ -87,8 +88,8 @@ export function createPart({ activity, tools }) {
       if (sure) create(file, "The schema beside the file is the current one now.");
     },
     async onCheck(file) {
-      const check = await recheck(file.kind);
-      if (check.ok) toast(`${FILES[file.kind].title} passes its check.`, "info");
+      const check = await recheck(file);
+      if (check.ok) toast(`${FILES[file.id].title} passes its check.`, "info");
     },
     onExample: (file) => openExample({ activity, tools, file, onCreate: handlers.onCreate }),
   };
@@ -100,7 +101,7 @@ export function createPart({ activity, tools }) {
       yoursBlock.hidden = projectBlock.hidden = Boolean(failure);
       return;
     }
-    const standings = new Map(value.files.map((file) => [file.kind, standingOf(file, value.checks.get(file.kind))]));
+    const standings = new Map(value.files.map((file) => [file.id, standingOf(file, value.checks.get(file.id))]));
     const count = (test) => [...standings.values()].filter(test).length;
     const waiting = count((standing) => standing.id === "checking");
     tiles.here.set(count(PASSES.here), `of ${value.files.length} settings files`);
@@ -110,14 +111,14 @@ export function createPart({ activity, tools }) {
     const term = typed.trim().toLowerCase();
     let shown = 0;
     for (const file of value.files) {
-      if (!cards.has(file.kind)) cards.set(file.kind, fileCard(file.kind, { activity, handlers }));
-      const card = cards.get(file.kind);
-      card.paint(file, value.checks.get(file.kind), busy.has(file.kind));
-      const words = FILES[file.kind];
-      card.element.hidden = !PASSES[filter](standings.get(file.kind)) || !`${words.title} ${words.about} ${file.kind} ${file.path} ${standings.get(file.kind).label}`.toLowerCase().includes(term);
+      if (!cards.has(file.id)) cards.set(file.id, fileCard(file.id, { activity, handlers }));
+      const card = cards.get(file.id);
+      card.paint(file, value.checks.get(file.id), busy.has(file.id));
+      const words = FILES[file.id];
+      card.element.hidden = !PASSES[filter](standings.get(file.id)) || !`${words.title} ${words.about} ${file.kind} ${file.path} ${standings.get(file.id).label}`.toLowerCase().includes(term);
       shown += card.element.hidden ? 0 : 1;
     }
-    const cardsOf = (scope) => value.files.filter((file) => file.scope === scope).map((file) => cards.get(file.kind).element);
+    const cardsOf = (scope) => value.files.filter((file) => file.scope === scope).map((file) => cards.get(file.id).element);
     if (yours.childElementCount !== cardsOf("home").length || yours.firstElementChild?.classList.contains("skeleton")) {
       yours.replaceChildren(...cardsOf("home"));
       projects.replaceChildren(...cardsOf("folder"));
@@ -132,7 +133,7 @@ export function createPart({ activity, tools }) {
       picker.set(filter);
       paint(files.reading);
     };
-    lead.replaceChildren(...(shown === 0 ? [notice({ glyph: "search", title: "No settings file matches", body: "Nothing fits this filter and search.", action: button({ label: "Show all nine", small: true, onclick: reset }) })] : []));
+    lead.replaceChildren(...(shown === 0 ? [notice({ glyph: "search", title: "No settings file matches", body: "Nothing fits this filter and search.", action: button({ label: `Show all ${value.files.length}`, small: true, onclick: reset }) })] : []));
     if (spot && cards.has(spot)) land();
   }
 
@@ -183,7 +184,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "part-back", href: HASH }, icon("back", 14), h("span", { text: "Settings" })), h("h1", { text: "Settings files" }), h("p", { text: "Every file StackOps reads its settings from: where it is, whether it is there, and whether it passes its check." })),
+      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Settings files" }), h("p", { text: "Every file StackOps reads its settings from: where it is, whether it is there, and whether it passes its check." })),
       h("div", { class: "view-actions" }, options, again),
     ),
     body,

@@ -11,7 +11,7 @@ const EXAMPLES_FOLDER = ".stackops/examples";
 // working folder, which is what `devops config export-example` does; replacing copies that are already there asks first.
 // `file` is the page's record of the real file, and `onCreate` makes that file from this example while there is none.
 export async function openExample({ activity, tools, file, onCreate }) {
-  const words = FILES[file.kind];
+  const words = FILES[file.id];
   const sheet = openSheet({ label: `Example of ${words.title}`, wide: true });
   const text = h("div", { class: "settings-example-text" }, skeleton(5, "row"));
   const facts = h("div");
@@ -19,7 +19,7 @@ export async function openExample({ activity, tools, file, onCreate }) {
     h(
       "header",
       { class: "tool-head" },
-      emojiTile(words.emoji, file.kind, 56),
+      emojiTile(words.emoji, file.id, 56),
       h("div", {}, h("span", { class: "overline", text: "Settings files" }), h("h1", { text: `${words.title}: the example` }), h("p", { text: "What StackOps ships as a starting point. A new file of this kind starts out like this." })),
     ),
     facts,

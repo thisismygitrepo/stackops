@@ -4,10 +4,6 @@
 @media (prefers-color-scheme: dark) {
   :root { --procs-warm: #f5b84a; }
 }
-.procs-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.procs-back svg { transition: transform 0.3s var(--spring); }
-.procs-back:hover { color: var(--violet); }
-.procs-back:hover svg { transform: translateX(-3px); }
 .procs-live { display: inline-flex; align-items: center; align-self: center; gap: 7px; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
 .procs-live strong { font-weight: 650; color: var(--ink-soft); }
 .procs-live i { width: 8px; height: 8px; background: var(--good); border-radius: 50%; animation: procs-beat 2.4s ease-out infinite; }

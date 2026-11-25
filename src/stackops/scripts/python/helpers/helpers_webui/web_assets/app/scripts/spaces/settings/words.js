@@ -7,7 +7,13 @@ export const ASSETS_HASH = "#/settings/assets";
 export const WIZARD_PATH = "devops config interactive";
 export const WIZARD_TITLE = "Set up this machine";
 
-// The settings files the CLI manages, in its order: what each is called here, what it is for, and the page that works with it.
+// Saved prompts and MCP servers each have two files. The project's is the one `devops config` works on, so here it goes by the kind's plain
+// name, as the commands that lead to this page name it. Your own, which agents read in every project, gets a name of its own.
+const KEPT_TWICE = ["prompts", "mcp"];
+export const idOf = (file) => (file.scope === "home" && KEPT_TWICE.includes(file.kind) ? `own-${file.kind}` : file.kind);
+
+// The settings files the CLI manages, by `idOf`: what each is called here, what it is for, and the page that works with it. `outside` is
+// what still holds for a project's file while the working folder is in no project.
 export const FILES = {
   config: { emoji: "⚙️", title: "StackOps defaults", about: "The cloud, coding agent, multiplexers and email that commands use when you name none.", used: { label: "Setup", href: SETUP_HASH } },
   layouts: { emoji: "🧩", title: "Terminal layouts", about: "Workspaces of tabs and panes that start in one click.", used: { label: "Sessions", href: "#/sessions" } },
@@ -16,8 +22,16 @@ export const FILES = {
   secrets: { emoji: "🔐", title: "Vault", about: "Your saved logins and keys.", used: { label: "Vault", href: "#/vault" } },
   repos: { emoji: "🌿", title: "Projects list", about: "The repositories StackOps clones and keeps up to date.", used: { label: "Projects", href: "#/projects" } },
   software: { emoji: "📦", title: "Your own apps", about: "Apps you added to the install catalog.", used: { label: "Apps", href: "#/apps" } },
-  prompts: { emoji: "💬", title: "Saved prompts", about: "Named prompts this project shares with everyone who works in it.", used: { label: "Agents", href: "#/agents" } },
-  mcp: { emoji: "🔌", title: "MCP servers", about: "Tool servers this project offers to coding agents.", used: { label: "Agents", href: "#/agents" } },
+  "own-prompts": { emoji: "💬", title: "Your prompts", about: "Named prompts of your own, on hand in every project.", used: { label: "Agents", href: "#/agents/prompts" } },
+  "own-mcp": { emoji: "🔌", title: "Your MCP servers", about: "Tool servers of your own, on offer to coding agents in every project.", used: { label: "Agents", href: "#/agents" } },
+  prompts: {
+    emoji: "💬", title: "Project prompts", about: "Named prompts this project shares with everyone who works in it.", used: { label: "Agents", href: "#/agents/prompts" },
+    outside: "The Agents page still lists your own prompts and the built-in ones.",
+  },
+  mcp: {
+    emoji: "🔌", title: "Project MCP servers", about: "Tool servers this project offers to coding agents.", used: { label: "Agents", href: "#/agents" },
+    outside: "Coding agents can still use your own MCP servers and the built-in ones.",
+  },
 };
 
 // The commands that share the Settings files view, by the word the feature list hands over, with the button each one puts the keyboard on.

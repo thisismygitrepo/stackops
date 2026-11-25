@@ -1,4 +1,5 @@
 import { h, icon } from "/assets/scripts/dom.js";
+import { backLink } from "../../space_kit.js";
 import { button, notice } from "../../widgets.js";
 
 // The parts every view of the Network page is built from. Their rules are in network.css under the same names.
@@ -6,7 +7,7 @@ export function partHead({ title, lede, actions }) {
   return h(
     "header",
     { class: "view-head" },
-    h("div", { class: "view-title" }, h("a", { class: "part-back", href: "#/network" }, icon("back", 14), h("span", { text: "Network" })), h("h1", { text: title }), h("p", { text: lede })),
+    h("div", { class: "view-title" }, backLink("#/network", "Network"), h("h1", { text: title }), h("p", { text: lede })),
     h("div", { class: "view-actions" }, actions),
   );
 }

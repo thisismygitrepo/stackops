@@ -1,7 +1,8 @@
-import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
+import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
 import { rise } from "../../motion.js";
 import { confirmAction } from "../../overlays.js";
+import { backLink } from "../../space_kit.js";
 import { button, emojiTile, notice, pathChip, searchInput, sectionHead, segmented, skeleton } from "../../widgets.js";
 import { plural } from "../../words.js";
 import { PARTS, countsLine, differsBy, folderRow, standingBar, totalOf } from "./assets/rows.js";
@@ -138,7 +139,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "part-back", href: HASH }, icon("back", 14), h("span", { text: "Settings" })), h("h1", { text: "Packaged files" }), h("p", { text: "The scripts and ready-made settings StackOps ships, held against the copies on this machine. See what a copy would change before you make one." })),
+      h("div", { class: "view-title" }, backLink(HASH, "Settings"), h("h1", { text: "Packaged files" }), h("p", { text: "The scripts and ready-made settings StackOps ships, held against the copies on this machine. See what a copy would change before you make one." })),
       h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The command's own form, which can also copy both at once", onclick: () => tools.open(TOOL_PATH, { plain: true }) }), again),
     ),
     lead,

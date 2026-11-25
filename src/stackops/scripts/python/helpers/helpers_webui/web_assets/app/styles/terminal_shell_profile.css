@@ -1,7 +1,3 @@
-.shellprof-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.shellprof-back svg { transition: transform 0.3s var(--spring); }
-.shellprof-back:hover { color: var(--violet); }
-.shellprof-back:hover svg { transform: translateX(-3px); }
 .shellprof-body { display: grid; grid-template-columns: minmax(0, 1fr); }
 .shellprof-body > .notice, .shellprof-body > .health-callout { margin-bottom: 14px; }
 .shellprof-body > .skeleton.card { height: 250px; margin-bottom: 14px; border-radius: 26px; }

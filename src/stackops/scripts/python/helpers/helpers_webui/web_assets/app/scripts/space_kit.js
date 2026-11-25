@@ -18,6 +18,21 @@ export function editButton(activity, target, { label = "Edit", small = false } =
   return button({ label, glyph: "terminal", small, title: "Opens the file in a text editor inside the activity panel. It is checked when you close the editor.", onclick: () => editFile(activity, target) });
 }
 
+// The way back from one of a page's views to the page itself, above that view's title. Every view draws it with this, so it is the same
+// button everywhere.
+export function backLink(href, label) {
+  return aimBackLink(h("a", { class: "part-back" }, icon("back", 18), h("span")), href, label);
+}
+
+// For a view that is reached from more than one place: where its link leads is set again on each arrival. "Back" is the label for a place
+// that has no name of its own.
+export function aimBackLink(link, href, label) {
+  link.href = href;
+  link.lastElementChild.textContent = label;
+  link.title = label === "Back" ? "Back to the page you came from" : `Back to ${label}`;
+  return link;
+}
+
 export function viewHead({ title, lede, actions }) {
   return h("header", { class: "view-head" }, h("div", { class: "view-title" }, h("h1", { text: title }), h("p", { text: lede })), actions && h("div", { class: "view-actions" }, actions));
 }

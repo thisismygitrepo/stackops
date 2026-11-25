@@ -1,5 +1,6 @@
-import { h, icon, toast } from "/assets/scripts/dom.js";
+import { h, toast } from "/assets/scripts/dom.js";
 import { staleKeeper } from "../../data.js";
+import { backLink } from "../../space_kit.js";
 import { button, notice, skeleton } from "../../widgets.js";
 import { createFacts } from "./update/facts.js";
 import { createHero } from "./update/hero.js";
@@ -54,7 +55,7 @@ function createUpdatePage({ activity, tools }, preset) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "machine-update-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: UPDATE_TITLE }), h("p", { text: "What is installed here, what is newer, and one button to bring this machine up to date." })),
+      h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: UPDATE_TITLE }), h("p", { text: "What is installed here, what is newer, and one button to bring this machine up to date." })),
       h("div", { class: "view-actions" }, again, button({ label: "All options", glyph: "sliders", title: "The update command's own form, with every option it has", onclick: () => tools.open(UPDATE_PATH, { plain: true }) })),
     ),
     problem,

@@ -1,5 +1,6 @@
-import { formatClock, h, icon } from "/assets/scripts/dom.js";
+import { formatClock, h } from "/assets/scripts/dom.js";
 import { staleKeeper } from "../../data.js";
+import { aimBackLink, backLink } from "../../space_kit.js";
 import { button, notice } from "../../widgets.js";
 import { readPicture } from "./mount/api.js";
 import { mountBanner } from "./mount/banner.js";
@@ -53,8 +54,7 @@ export function createPart({ activity, tools }) {
     },
   });
   const plan = createPlanCard({ tools, onMount: mount });
-  const backLabel = h("span");
-  const back = h("a", { class: "mount-back" }, icon("back", 14), backLabel);
+  const back = backLink(MACHINE_HASH, "Machine");
   const stamp = h("span", { class: "mount-stamp" });
   const refresh = button({ label: "Refresh", glyph: "refresh", onclick: reload });
   const bannerHolder = h("div");
@@ -183,8 +183,7 @@ export function createPart({ activity, tools }) {
   // was opened with is applied to the fresh one.
   arrive = () => {
     fresh = true;
-    back.href = origin;
-    backLabel.textContent = origin === MACHINE_HASH ? "Machine" : "Back";
+    aimBackLink(back, origin, origin === MACHINE_HASH ? "Machine" : "Back");
     keeper.load();
   };
   paint();

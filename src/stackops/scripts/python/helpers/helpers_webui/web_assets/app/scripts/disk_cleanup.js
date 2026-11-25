@@ -9,6 +9,7 @@ import { cleanupBanner, createCleanupSummary, createCleanupTray } from "./disk_c
 import { RISKS, RISK_ORDER, categoryOf } from "./disk_cleanup_words.js";
 import { recall, remember } from "./memory.js";
 import { replay } from "./motion.js";
+import { backLink } from "./space_kit.js";
 import { button, notice, searchInput, segmented } from "./widgets.js";
 
 const MEMORY_ID = "machine cleanup";
@@ -211,7 +212,7 @@ export function createDiskCleanup({ activity }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "cleanup-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Free up disk space" }), h("p", { text: "See what is taking up room, tick what you can live without, and remove it in one go. Nothing is deleted until you confirm." })),
+      h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Free up disk space" }), h("p", { text: "See what is taking up room, tick what you can live without, and remove it in one go. Nothing is deleted until you confirm." })),
       h("div", { class: "view-actions" }, stamp, optionsButton, rescanButton),
     ),
     bannerHolder,

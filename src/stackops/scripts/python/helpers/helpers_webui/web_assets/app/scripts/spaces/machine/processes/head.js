@@ -1,4 +1,5 @@
 import { formatClock, h, icon } from "/assets/scripts/dom.js";
+import { backLink } from "../../../space_kit.js";
 import { button, iconButton } from "../../../widgets.js";
 import { TOOL_PATH } from "./words.js";
 
@@ -25,7 +26,7 @@ export function createHead({ tools, onToggle, onRefresh }) {
   const element = h(
     "header",
     { class: "view-head" },
-    h("div", { class: "view-title" }, h("a", { class: "procs-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Processes" }), h("p", { text: "Everything running on this machine, read again every few seconds. Find what is slowing it down and stop it." })),
+    h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Processes" }), h("p", { text: "Everything running on this machine, read again every few seconds. Find what is slowing it down and stop it." })),
     h("div", { class: "view-actions" }, status, toggle, refresh, button({ label: "All options", glyph: "sliders", title: "The plain form, with every option of the command behind this page", onclick: () => tools.open(TOOL_PATH, { plain: true }) })),
   );
   let pausedShown = null;

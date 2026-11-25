@@ -48,7 +48,7 @@ export function createScansSection({ tools, starter }) {
   });
 
   const opened = h("div", { class: "scan-opened", hidden: true });
-  const back = () => h("a", { class: "btn small ghost", href: SCANS_HASH }, icon("back", 14), h("span", { text: "All scans" }));
+  const back = () => h("a", { class: "btn small", href: SCANS_HASH }, icon("back", 14), h("span", { text: "All scans" }));
   let shownId = null;
 
   function runView({ run, targets, engines, accounts }) {

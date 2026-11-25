@@ -123,7 +123,7 @@ export function renderDetail({ agent, kind, view, tools, previous, next }) {
     h(
       "div",
       { class: "health-nav" },
-      h("a", { class: "btn small ghost", href: "#/agents/health" }, icon("back", 14), h("span", { text: "All agents" })),
+      h("a", { class: "btn small", href: "#/agents/health" }, icon("back", 14), h("span", { text: "All agents" })),
       h("span", { class: "spacer" }),
       previous && h("a", { class: "btn small ghost", href: agentHash(previous), title: `Previous: ${previous.name}` }, icon("up", 14), h("span", { text: previous.name })),
       next && h("a", { class: "btn small ghost", href: agentHash(next), title: `Next: ${next.name}` }, h("span", { text: next.name }), icon("down", 14)),

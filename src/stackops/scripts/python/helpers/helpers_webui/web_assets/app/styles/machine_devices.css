@@ -18,10 +18,6 @@
 .devices [data-slot="6"] { --hue: var(--devices-6); }
 .devices [data-slot="quiet"] { --hue: var(--devices-quiet); }
 
-.devices-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink-faint); transition: color 0.2s; }
-.devices-back svg { transition: transform 0.3s var(--spring); }
-.devices-back:hover { color: var(--violet); }
-.devices-back:hover svg { transform: translateX(-3px); }
 .devices-stamp { align-self: center; margin-right: 4px; font-size: 12.5px; color: var(--ink-faint); }
 .devices-stats { margin-bottom: 22px; }
 .devices-tools { display: grid; gap: 10px; margin-bottom: 14px; }

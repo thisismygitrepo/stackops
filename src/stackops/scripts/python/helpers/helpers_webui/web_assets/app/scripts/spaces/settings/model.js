@@ -1,7 +1,7 @@
 import { toast } from "/assets/scripts/dom.js";
 import { on, request, state } from "/assets/scripts/state.js";
 import { markStale } from "../../data.js";
-import { API } from "./words.js";
+import { API, idOf } from "./words.js";
 
 const onScreen = (element) => element.isConnected && !element.closest("[hidden]");
 
@@ -81,23 +81,24 @@ function createReading(read) {
 }
 
 const base = () => new URLSearchParams({ base: state.settings.workingDirectory });
-const askCheck = (kind) => request("GET", `${API}/files/check?${new URLSearchParams({ kind, base: state.settings.workingDirectory })}`).catch((error) => ({ kind, ok: null, problem: error.message }));
+const askCheck = ({ kind, scope }) => request("GET", `${API}/files/check?${new URLSearchParams({ kind, scope, base: state.settings.workingDirectory })}`).catch((error) => ({ kind, ok: null, problem: error.message }));
 
 // Every settings file, then whether each one that is there passes its check. The list is on the page at once; the checks take half a second
-// each, run side by side, and each is shown as it comes in. `checks` holds the answers by kind.
+// each, run side by side, and each is shown as it comes in. Each file gets the `id` the page knows it by, and `checks` holds the answers by it.
 // A design choice: when the page reads itself again after a run, a file that has not changed since it was checked (same place, size and time
 // of change) keeps its answer and is not checked again, so the cards do not all blink through "Checking". An answer can depend on more than
 // the file (the installer list names scripts beside it), which this misses; "Check again" and a card's Check button always check anew.
 export const files = createReading(async (progress, { fresh, previous }) => {
   const listing = await request("GET", `${API}/files?${base()}`);
-  const before = new Map((previous?.files ?? []).map((file) => [file.kind, file]));
-  const kept = (file) => !fresh && ["path", "size", "modified_at"].every((key) => before.get(file.kind)?.[key] === file[key]) && previous.checks.get(file.kind)?.ok != null;
-  const checks = new Map(listing.files.filter((file) => file.exists && kept(file)).map((file) => [file.kind, previous.checks.get(file.kind)]));
+  for (const file of listing.files) file.id = idOf(file);
+  const before = new Map((previous?.files ?? []).map((file) => [file.id, file]));
+  const kept = (file) => !fresh && ["path", "size", "modified_at"].every((key) => before.get(file.id)?.[key] === file[key]) && previous.checks.get(file.id)?.ok != null;
+  const checks = new Map(listing.files.filter((file) => file.exists && kept(file)).map((file) => [file.id, previous.checks.get(file.id)]));
   const shown = () => ({ ...listing, checks: new Map(checks) });
   progress(shown());
   await Promise.all(
-    listing.files.filter((file) => file.exists && !checks.has(file.kind)).map(async (file) => {
-      checks.set(file.kind, await askCheck(file.kind));
+    listing.files.filter((file) => file.exists && !checks.has(file.id)).map(async (file) => {
+      checks.set(file.id, await askCheck(file));
       progress(shown());
     }),
   );
@@ -105,18 +106,18 @@ export const files = createReading(async (progress, { fresh, previous }) => {
 });
 
 // One file checked again, with the answer put into the shared reading.
-export async function recheck(kind) {
+export async function recheck(file) {
   const { value } = files.reading;
-  value.checks.delete(kind);
+  value.checks.delete(file.id);
   files.tell();
-  const check = await askCheck(kind);
+  const check = await askCheck(file);
   if (files.reading.value !== value) return check;
-  value.checks.set(kind, check);
+  value.checks.set(file.id, check);
   files.tell();
   return check;
 }
 
-export const createFile = (kind) => request("POST", `${API}/files/create`, { kind, base: state.settings.workingDirectory });
+export const createFile = ({ kind, scope }) => request("POST", `${API}/files/create`, { kind, scope, base: state.settings.workingDirectory });
 export const readExample = (kind) => request("GET", `${API}/files/example?${new URLSearchParams({ kind })}`);
 export const setup = createReading(() => request("GET", `${API}/setup`));
 export const assets = createReading(() => request("GET", `${API}/assets`));

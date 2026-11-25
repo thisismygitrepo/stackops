@@ -1,7 +1,8 @@
-import { formatClock, h, icon } from "/assets/scripts/dom.js";
+import { formatClock, h } from "/assets/scripts/dom.js";
 import { staleKeeper } from "../../../data.js";
 import { recall, remember } from "../../../memory.js";
 import { rise } from "../../../motion.js";
+import { backLink } from "../../../space_kit.js";
 import { button, callout, notice, skeleton } from "../../../widgets.js";
 import { createActions, createOutcome } from "./actions.js";
 import { readStartup } from "./api.js";
@@ -174,7 +175,7 @@ export function createStartupPage({ tools }, takeArrival) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "part-back", href: "#/machine" }, icon("back", 14), h("span", { text: "Machine" })), h("h1", { text: "Startup programs" }), h("p", { text: "The services and programs that start on their own, when this computer starts or when you sign in." })),
+      h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Startup programs" }), h("p", { text: "The services and programs that start on their own, when this computer starts or when you sign in." })),
       h("div", { class: "view-actions" }, stamp, button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh),
     ),
     problemHolder,

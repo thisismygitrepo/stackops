@@ -2,7 +2,7 @@ import { h, icon, toast } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
 import { markStale, staleKeeper } from "../../data.js";
 import { rise } from "../../motion.js";
-import { editButton } from "../../space_kit.js";
+import { backLink, editButton } from "../../space_kit.js";
 import { button, notice, sectionHead, skeleton } from "../../widgets.js";
 import { plural, titleOf } from "../../words.js";
 import { multiplexerCard } from "./multiplexer/card.js";
@@ -150,7 +150,7 @@ export function createPart({ activity, tools }) {
     h(
       "header",
       { class: "view-head" },
-      h("div", { class: "view-title" }, h("a", { class: "mux-back", href: "#/sessions" }, icon("back", 14), h("span", { text: "Sessions" })), h("h1", { text: titleOf(state.nodes.get(PATH)) }), h("p", { text: LEDE })),
+      h("div", { class: "view-title" }, backLink("#/sessions", "Sessions"), h("h1", { text: titleOf(state.nodes.get(PATH)) }), h("p", { text: LEDE })),
       h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The same two choices as a plain form, run as a task you can watch", onclick: () => tools.open(PATH, { plain: true }) }), again),
     ),
     failure,

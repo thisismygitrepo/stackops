@@ -57,7 +57,7 @@ export function renderAgent({ agent, opened, onAsk }) {
     h(
       "div",
       { class: "health-nav" },
-      h("a", { class: "btn small ghost", href: ADDRESS }, icon("back", 14), h("span", { text: "All agents" })),
+      h("a", { class: "btn small", href: ADDRESS }, icon("back", 14), h("span", { text: "All agents" })),
       h("span", { class: "spacer" }),
       button({ label: "Ask for an update", glyph: "chat", small: true, title: "Ask this agent what it is doing, without interrupting its work", onclick: onAsk }),
     ),
