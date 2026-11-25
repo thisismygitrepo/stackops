@@ -13,7 +13,6 @@ export const SPACES = [
   { id: "machine", hash: "#/machine", label: "Machine", glyph: "cpu", title: "Machine" },
   { id: "security", hash: "#/security", label: "Security", glyph: "shield", title: "Security" },
   { id: "vault", hash: "#/vault", label: "Vault", glyph: "key", title: "Vault" },
-  { id: "reports", hash: "#/reports", label: "Reports", glyph: "chart", title: "Reports" },
   { id: "tools", hash: "#/tools", label: "Toolbox", glyph: "cube", title: "Toolbox" },
 ];
 
@@ -126,6 +125,7 @@ export const TOOL_BLURBS = {
   "utils machine mount": "Pick a disk, say where it should appear, and mount it.",
   "utils machine window": "See every open window by app and screen. Bring one to the front, minimize it or close it.",
   "devops self update": "See what is installed, what is newer, and update in one click.",
+  "utils machine environment": "The variables a task starts with, and the folders this machine searches for programs, in lookup order.",
 };
 
 // Options that only make sense on a command line: output formats, alternate renderers, and file overrides the app already picks for you.
@@ -230,14 +230,6 @@ export const BUNDLE_TITLES = {
   "db-desktop": "Database desktop apps", "db-web": "Database web apps", "db-tui": "Database terminal apps", media: "Media", gui: "Desktop apps",
   nw: "Networking", "file-sharing": "File sharing", productivity: "Productivity",
 };
-
-export const REPORTS = [
-  { id: "status", glyph: "cpu", title: "Machine status", file: "devops_status.html", blurb: "System, shell, repositories, SSH, managed settings, apps, and backups.", arguments: ["devops", "self", "status", "--as-html"] },
-  { id: "doctor", glyph: "bot", title: "Agents health", file: "agents_doctor.html", blurb: "Agent programs, configuration, hooks, plugins, skills, and where instructions come from.", arguments: ["agents", "doctor", "--as-html"] },
-  { id: "reset", glyph: "trash", title: "Agent cleanup preview", file: "agents_reset_preview.html", blurb: "What a reset of agent customizations would remove. Nothing is changed.", arguments: ["agents", "reset", "--as-html"] },
-  { id: "environment", glyph: "globe", title: "Environment", file: "environment_variables.html", blurb: "Environment variables, with secret-looking values left out.", arguments: ["utils", "machine", "environment", "ENV", "--as-html"] },
-  { id: "path", glyph: "arrow", title: "Program search path", file: "environment_path.html", blurb: "Where this machine looks for programs, in lookup order.", arguments: ["utils", "machine", "environment", "PATH", "--as-html"] },
-];
 
 export const QUICK_TASKS = [
   { title: "Install apps", blurb: "Search the catalog and install in one go.", glyph: "download", tint: 252, hash: "#/apps" },

@@ -17,13 +17,12 @@ function describeArguments(runArguments) {
   return { title: "Task", emoji: "" };
 }
 
-export function createActivity({ openReport }) {
+export function createActivity() {
   const tasks = new Map();
   let activeId = null;
   let closing = 0;
   const chips = h("div", { class: "task-chips", role: "tablist" });
   const hero = createHero({
-    openReport,
     runAgain: (task) => start({ title: task.title, emoji: task.emoji, arguments: task.summary.arguments, interactive: task.summary.interactive, reveal: true, workingDirectory: task.summary.working_directory }).catch((error) => toast(error.message)),
   });
   const editorBar = createEditorBar();

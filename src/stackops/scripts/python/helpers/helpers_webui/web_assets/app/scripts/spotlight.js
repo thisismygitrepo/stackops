@@ -1,22 +1,21 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
-import { QUICK_TASKS, REPORTS, SPACES } from "./catalog.js";
+import { QUICK_TASKS, SPACES } from "./catalog.js";
 import { software } from "./data.js";
 import { closeAll, openDialog } from "./overlays.js";
 import { avatar, emojiTile, glyphTile, highlight } from "./widgets.js";
 import { blurbOf, fullTitleOf, plainText, trailOf } from "./words.js";
 
 const GROUP_LIMIT = 7;
-const GROUP_ORDER = ["Recent", "Suggested", "Pages", "Apps", "Tools", "Collections", "Reports"];
+const GROUP_ORDER = ["Recent", "Suggested", "Pages", "Apps", "Tools", "Collections"];
 // Written by the tool sheet: the last few command paths opened, newest first.
 const RECENT_KEY = "stackops-webui-recent";
 // Tools that have a guided page of their own: search lands there instead of on the bare tool.
-const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup", "devops security status": "#/security", "devops security history": "#/security/scans" };
+const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup", "devops security status": "#/security", "devops security history": "#/security/scans", "devops self status": "#/machine" };
 
 export function createSpotlight({ tools }) {
   const fixed = [
     ...SPACES.map((space) => ({ group: "Pages", title: space.title, hint: "Go to this page", lead: () => glyphTile(space.glyph, 245, 34), go: () => (location.hash = space.hash) })),
-    ...REPORTS.map((report) => ({ group: "Reports", title: report.title, hint: report.blurb, lead: () => glyphTile(report.glyph, 190, 34), go: () => (location.hash = `#/reports/${report.id}`) })),
     ...[...state.nodes.values()]
       .filter((node) => node.kind !== "root")
       .map((node) => ({
@@ -55,7 +54,7 @@ export function createSpotlight({ tools }) {
   function open(initial = "") {
     if (dialog) return;
     recent = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]").flatMap((path) => fixed.filter((entry) => entry.group === "Tools" && entry.words === path).map((entry) => ({ ...entry, group: "Recent" })));
-    const input = h("input", { type: "text", placeholder: "Search apps, tools, pages, and reports", spellcheck: "false", autocomplete: "off", "aria-label": "Search", value: initial });
+    const input = h("input", { type: "text", placeholder: "Search apps, tools, and pages", spellcheck: "false", autocomplete: "off", "aria-label": "Search", value: initial });
     const list = h("div", { class: "spot-list", role: "listbox" });
     let rows = [];
     let selected = 0;

@@ -11,7 +11,7 @@ import { createOverview } from "./settings/overview.js";
 
 // The parts of the CLI's health check the four counts do not already cover, and the page that deals with each.
 // A design choice: managed settings are left out, since that part alone takes several seconds and Dotfiles shows it.
-const HEALTH = [["shell", "Shell profile", "#/reports/status"], ["ssh", "SSH", "#/network"], ["backup", "Backups", "#/data"]];
+const HEALTH = [["shell", "Shell profile", "#/sessions/shell-profile"], ["ssh", "SSH", "#/network"], ["backup", "Backups", "#/data"]];
 const HEALTH_TONES = { ready: "good", attention: "warn", error: "bad" };
 
 // Home, at #/: how this machine stands, then its StackOps settings (settings/overview.js). The settings tools have no page of their own, so

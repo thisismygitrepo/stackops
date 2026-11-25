@@ -1,0 +1,55 @@
+/* Machine › Environment: the bar with the two tabs and the search, the tiles, the filters, then the variables or the folders as rows. */
+.machine-environment.loading .view-actions .btn svg { animation: spin 0.9s linear infinite; }
+.env-bar .search-input { width: min(340px, 100%); }
+.env-tiles { margin-top: 16px; }
+.env-chips { margin-top: 16px; }
+.env-note { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 14px; font-size: 13px; color: var(--ink-soft); }
+.env-note .copy-chip { margin-left: 0; color: var(--violet); }
+.env-body { margin-top: 16px; }
+.env-list { display: grid; grid-template-columns: minmax(0, 1fr); overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+.env-list > li + li { border-top: 1px solid var(--line); }
+
+/* A variable: its name, its value, and the button that copies the value. */
+.env-row { display: grid; grid-template-columns: minmax(140px, 26%) minmax(0, 1fr) 32px; align-items: start; gap: 14px; padding: 9px 12px 9px 18px; cursor: pointer; transition: background 0.2s; }
+.env-row:hover { background: var(--well); }
+.env-name { padding-top: 5px; font: 650 12.5px var(--mono); overflow-wrap: anywhere; }
+.env-cell { min-width: 0; padding-top: 4px; }
+.env-cell code { font: 12.5px var(--mono); color: var(--ink-soft); }
+.env-value { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.env-row.open .env-value { display: block; }
+.env-parts { display: grid; gap: 2px; counter-reset: part; }
+.env-parts li { display: flex; gap: 8px; min-width: 0; counter-increment: part; }
+.env-parts li::before { content: counter(part); flex: none; width: 20px; font: 11px var(--mono); line-height: 20px; text-align: right; color: var(--ink-faint); }
+.env-parts code { overflow-wrap: anywhere; }
+.env-parts .env-more { font-size: 12px; color: var(--ink-faint); counter-increment: none; }
+.env-parts .env-more::before { content: ""; }
+.env-row .icon-btn { opacity: 0; }
+.env-row:is(:hover, :focus-within) .icon-btn { opacity: 1; }
+.env-gap { width: 32px; }
+
+/* A folder of the search path: its place in the order, its path, how it stands, and its programs once it is opened or searched. */
+.env-entry-head { display: flex; align-items: center; gap: 4px; padding-right: 12px; }
+.env-entry-toggle { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; padding: 11px 6px 11px 18px; text-align: left; transition: background 0.2s; }
+.env-entry-toggle:not(:disabled):hover { background: var(--well); }
+.env-entry-toggle:disabled { cursor: default; }
+.env-entry-toggle:disabled > svg { visibility: hidden; }
+.env-entry-toggle code { min-width: 0; overflow: hidden; font: 13px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.env-entry-toggle > svg { flex: none; color: var(--ink-faint); transition: transform 0.3s var(--spring); }
+.env-entry.open .env-entry-toggle > svg { transform: rotate(90deg); }
+.env-order { flex: none; width: 26px; height: 26px; font: 650 11.5px var(--mono); line-height: 26px; text-align: center; color: var(--ink-soft); background: var(--well); border-radius: 9px; }
+.env-entry.unusable code { color: var(--ink-faint); }
+.env-entry-count { flex: none; font-size: 12.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.env-entry-head .icon-btn { opacity: 0; }
+.env-entry:is(:hover, :focus-within) .env-entry-head .icon-btn { opacity: 1; }
+.env-programs { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 2px 18px 14px 56px; animation: fade-in 0.3s; }
+.env-program { display: inline-flex; align-items: center; gap: 6px; height: 23px; padding: 0 9px; font: 11.5px var(--mono); color: var(--ink); background: var(--well); border-radius: 8px; }
+.env-program.shadowed { color: var(--ink-faint); background: none; box-shadow: inset 0 0 0 1px var(--line); }
+.env-program.shadowed span { text-decoration: line-through; }
+.env-program b { font-weight: 600; }
+
+@media (max-width: 760px) {
+  .env-row { grid-template-columns: minmax(0, 1fr) 32px; }
+  .env-name { grid-column: 1 / -1; }
+  .env-entry-count { display: none; }
+  .env-programs { padding-left: 18px; }
+}

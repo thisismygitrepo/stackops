@@ -36,7 +36,7 @@ async function inspect(kind, place, fresh) {
   }
 }
 
-export function createSetupArea({ activity, tools, openReport }, { setStatus, failStatus }) {
+export function createSetupArea({ activity, tools }, { setStatus, failStatus }) {
   function cell(check, kind, place) {
     const preset = { kind: check.kind, source: check.place };
     const broken = check.verdict === "broken";
@@ -60,7 +60,7 @@ export function createSetupArea({ activity, tools, openReport }, { setStatus, fa
 
   // The reset preview is asked for before the lists, here and on every refresh signal (panels answer that in the order they were made). The lists
   // start nine commands at once and a browser sends six requests at a time, so the one preview would otherwise wait behind them.
-  const reset = createResetPanel({ tools, openReport });
+  const reset = createResetPanel({ tools });
   const lists = createPanel({
     title: "Lists your agents draw from", onFail: failStatus,
     load: (fresh) => Promise.all(KINDS.flatMap((kind) => PLACES.map((place) => inspect(kind.id, place.id, fresh)))),

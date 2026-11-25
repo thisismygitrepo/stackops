@@ -3,6 +3,7 @@ from starlette.routing import Route
 from stackops.scripts.python.helpers.helpers_webui.dotfiles_routes import dotfiles_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_routes import machine_autostart_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_devices_routes import machine_devices_routes
+from stackops.scripts.python.helpers.helpers_webui.machine_environment_routes import machine_environment_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_mount_routes import machine_mount_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_processes_routes import machine_processes_routes
 from stackops.scripts.python.helpers.helpers_webui.machine_update_routes import machine_update_routes
@@ -32,6 +33,7 @@ def feature_routes() -> list[Route]:
         *machine_mount_routes(),
         *machine_windows_routes(),
         *machine_update_routes(),
+        *machine_environment_routes(),
         *settings_routes(),
         *dotfiles_routes(),
         *network_routes(),

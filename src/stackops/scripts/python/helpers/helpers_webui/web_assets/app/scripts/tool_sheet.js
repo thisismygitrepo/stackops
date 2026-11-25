@@ -11,7 +11,6 @@ import { friendlyText, fullTitleOf, titleOf, trailOf } from "./words.js";
 
 const RELOAD_DELAY_MILLISECONDS = 400;
 const JSON_FLAG = "--json";
-const REPORT_FLAG = "--as-html";
 // The command tree only describes declared parameters, so a tool that passes the rest on gets this field added here.
 // Design choice: it follows the form's rule for arguments, so the ones before it must be filled in first; that is what keeps a pass-through value out of an earlier argument's place.
 const EXTRA_ARGUMENTS = {
@@ -21,7 +20,7 @@ const EXTRA_ARGUMENTS = {
 
 // The one place any tool opens: read-only tools show their result straight away, the rest wait for the button.
 // `guides` maps a command path to a function that opens a purpose-built view in place of the generic sheet; it is handed `{ preset }`.
-export function createToolSheet({ activity, openReport, guides = {} }) {
+export function createToolSheet({ activity, guides = {} }) {
   // `title` renames the sheet for a caller that uses a tool for something narrower than its name says, such as editing through "Add a backup".
   // `plain` asks for the generic sheet even where a purpose-built view stands in for it: that view's way to offer every option the command has.
   async function open(path, { preset = {}, title: givenTitle, plain = false } = {}) {
@@ -131,16 +130,6 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
     }
 
     const primary = live ? button({ label: "Refresh", glyph: "refresh", tone: "primary", onclick: () => load(true) }) : button({ label: title.length <= 24 ? title : "Start", glyph: "play", tone: "primary", onclick: run });
-    const reportButton =
-      flagged(REPORT_FLAG) &&
-      button({
-        label: "Open as a report", glyph: "report",
-        onclick: () => {
-          const { tokens } = form.collect();
-          sheet.close();
-          openReport({ title, blurb: friendlyText(node.summary), arguments: [...pathTokens, REPORT_FLAG, ...tokens.filter((token) => token !== REPORT_FLAG)] });
-        },
-      });
     const note = parameters === null ? "This tool's options can't be listed here, so it starts with its usual settings. To set them yourself, open it in the developer view." : "Nothing to fill in — it is ready to go.";
     formHolder.replaceChildren(...(form.count > 0 ? [form.element] : live ? [] : [h("p", { class: "tool-note", text: note })]));
     formHolder.hidden = !formHolder.hasChildNodes();
@@ -151,7 +140,6 @@ export function createToolSheet({ activity, openReport, guides = {} }) {
         problem,
         ...outputButtons,
         form.count > 0 && button({ label: "Reset", tone: "ghost", onclick: () => form.reset(starting) }),
-        reportButton,
         primary,
       ].filter(Boolean),
     );

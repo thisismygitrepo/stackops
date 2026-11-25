@@ -18,7 +18,7 @@ function lineOf(summary) {
 }
 
 // The header of the Activity panel: what the selected task is, how it is going, and what can be done with it.
-export function createHero({ openReport, runAgain }) {
+export function createHero({ runAgain }) {
   const element = h("div", { class: "task-hero" });
   let shown = null;
   let line = null;
@@ -41,8 +41,6 @@ export function createHero({ openReport, runAgain }) {
         "div",
         { class: "task-actions" },
         outputActions(() => consoleText(task.terminal), task.title),
-        // Several reports are told apart by their file names: a long task is credited with every report written while it ran (see `_finish_run`).
-        summary.reports.map((name) => button({ label: summary.reports.length === 1 ? "View report" : name.replace(/\.html$/, "").replaceAll("_", " "), glyph: "report", small: true, onclick: () => openReport({ title: task.title, blurb: "", file: name }) })),
         // Stop ends a run where it stands. An editor would lose what is unsaved that way, so it gets a button that closes it the editor's own way.
         status === "running" && !task.editor && button({ label: "Stop", glyph: "stop", small: true, tone: "danger", onclick: () => api.stopRun(task.id).catch((error) => toast(error.message)) }),
         status === "running" && task.editor && button({ label: "Close editor", glyph: "close", small: true, title: "Closes the editor. If something is not saved, you are asked what to do with it.", onclick: () => closeEditor(task) }),

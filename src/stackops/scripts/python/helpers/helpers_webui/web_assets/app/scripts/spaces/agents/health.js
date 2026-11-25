@@ -1,5 +1,4 @@
 import { h } from "/assets/scripts/dom.js";
-import { state } from "/assets/scripts/state.js";
 import { createLivePanel } from "../../live_panel.js";
 import { replay } from "../../motion.js";
 import { button, notice } from "../../widgets.js";
@@ -9,20 +8,12 @@ import { prepare } from "./health_model.js";
 import { renderOverview } from "./health_overview.js";
 
 // The address is #/agents/health for everyone, #/agents/health/<agent> for one, and #/agents/health/<agent>/<kind> for one kind of thing it uses.
-export function createHealthSection({ openReport, tools }) {
+export function createHealthSection({ tools }) {
   const view = { filter: null, term: "", origins: new Set(), showEmpty: false };
   const holder = h("div", { class: "health" });
   let agents = null;
   let route = [];
   let shownKey = null;
-
-  // The whole-machine report already has a home on the Reports page. A narrower one is built to order, and built again each time it is asked for,
-  // so it shows the setup as it is now. The Reports page keeps one board per report and shows its last build while the new one is made.
-  function openFullReport(agent) {
-    const directory = agents[0].directory;
-    if (!agent && directory === state.settings.workingDirectory) return void (location.hash = "#/reports/doctor");
-    openReport({ title: agent ? `${agent.name} health` : "Agents health", blurb: `Checked from ${directory}.`, arguments: ["agents", "doctor", ...(agent ? [agent.id] : []), "--directory", directory, "--as-html"] });
-  }
 
   function paint() {
     const index = agents.findIndex((candidate) => candidate.id === route[0]);
@@ -42,7 +33,6 @@ export function createHealthSection({ openReport, tools }) {
 
   const panel = createLivePanel({
     title: "Health check", path: "agents doctor", extra: ["--json"], locked: ["agent", "resource"],
-    actions: [button({ label: "Full report", glyph: "report", small: true, tone: "ghost", title: "Open the complete report for what is on screen", onclick: () => agents && openFullReport(agents.find((candidate) => candidate.id === route[0])) })],
     render: (data, { setCount, reload }) => {
       if (!Array.isArray(data) || data.length === 0) {
         agents = null;

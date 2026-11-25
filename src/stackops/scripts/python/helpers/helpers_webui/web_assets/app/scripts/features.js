@@ -9,7 +9,7 @@ import { openFind } from "./find_sheet.js";
 // Tools that have a view built for them in place of the form made from their options, by command path. Wherever such a tool is opened (a card,
 // search, the toolbox, another view), its feature opens. A feature's module is fetched the first time it is needed, so the app's start does not
 // grow with them, and one that fails to load takes only itself down.
-// A feature's module exports `open(context, { preset })`: `context` is what a page gets ({ activity, tools, openReport, openSearch }) and `preset`
+// A feature's module exports `open(context, { preset })`: `context` is what a page gets ({ activity, tools, openSearch }) and `preset`
 // holds values by the command's parameter names, from whoever opened it. A feature that is a page of its own also exports `createPart(context)`,
 // which returns `{ element, show(rest) }`; the page it belongs to shows it at `#/<space>/<part>`, and its `open` goes to that address.
 // `tools.open(path, { plain: true })` still opens the tool's own form, for a feature that offers every option of the command.
@@ -25,6 +25,7 @@ const FEATURES = [
   { path: "utils machine mount", space: "machine", part: "mount", load: () => import("./spaces/machine/mount.js") },
   { path: "utils machine window", space: "machine", part: "windows", load: () => import("./spaces/machine/windows.js") },
   { path: "devops self update", space: "machine", part: "update", load: () => import("./spaces/machine/update.js") },
+  { path: "utils machine environment", space: "machine", part: "environment", load: () => import("./spaces/machine/environment.js") },
   // One list per page, each kept by itself in feature_lists/.
   ...SETTINGS_FEATURES,
   ...DOTFILES_FEATURES,

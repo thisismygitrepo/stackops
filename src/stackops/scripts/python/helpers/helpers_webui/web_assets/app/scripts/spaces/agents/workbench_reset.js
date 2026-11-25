@@ -19,7 +19,7 @@ function fold(title, size, build) {
 }
 
 // The plan is read with the preview-only form of the command. Applying a reset is only ever reachable through the tool sheet.
-export function createResetPanel({ tools, openReport }) {
+export function createResetPanel({ tools }) {
   let scope = "all";
   // A design choice: a scope looked at before is shown from memory, so it can be older than the files. The refresh button asks again.
   const picker = segmented(SCOPES, (value) => {
@@ -46,14 +46,8 @@ export function createResetPanel({ tools, openReport }) {
         { glyph: blocked ? "alert" : "shield", hue: blocked ? 32 : 160, label: "In the way", value: blockers.length, note: blocked ? "a reset stops while these are in scope" : "nothing stops a reset" },
       ];
       const rows = () => entries.map((entry) => ({ agent: entry.agent, kind: KINDS[entry.event] ?? `Hook · ${entry.event}`, name: entry.name, where: HOMES[entry.origin] ?? entry.origin, state: entry.state, file: entry.path }));
-      // The two buttons act on the scope this plan was read for, not on one picked since whose plan is still loading.
+      // The button acts on the scope this plan was read for, not on one picked since whose plan is still loading.
       const shown = scope;
-      const place = SCOPES.find(([value]) => value === shown)[1].toLowerCase();
-      // "Everywhere" is the command's default and is asked for without --scope, so it opens the Reports page's own cleanup preview and adds no twin of it.
-      const report = button({
-        label: "Open as a report", glyph: "report", small: true,
-        onclick: () => openReport({ title: `Agent cleanup preview: ${place}`, blurb: "What a reset would remove. Nothing is changed.", arguments: ["agents", "reset", ...(shown === "all" ? [] : ["--scope", shown]), "--as-html"] }),
-      });
       return h(
         "div",
         { class: "stack" },
@@ -76,7 +70,7 @@ export function createResetPanel({ tools, openReport }) {
           "div",
           { class: "wb-line" },
           h("span", { class: "dim", text: blocked ? "As it stands, a reset would stop without changing anything." : "A reset is permanent and keeps no backup." }),
-          h("span", { class: "wb-line-actions" }, report, button({ label: "Reset…", glyph: "trash", small: true, onclick: () => tools.open("agents reset", { preset: { scope: shown } }) })),
+          h("span", { class: "wb-line-actions" }, button({ label: "Reset…", glyph: "trash", small: true, onclick: () => tools.open("agents reset", { preset: { scope: shown } }) })),
         ),
       );
     },

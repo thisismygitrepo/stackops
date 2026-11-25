@@ -14,7 +14,6 @@ import { createHomeSpace } from "./spaces/home.js";
 import { createMachineSpace } from "./spaces/machine.js";
 import { createNetworkSpace } from "./spaces/network.js";
 import { createProjectsSpace } from "./spaces/projects.js";
-import { createReportsSpace } from "./spaces/reports.js";
 import { createScriptsSpace } from "./spaces/scripts.js";
 import { createSecuritySpace } from "./spaces/security.js";
 import { createSessionsSpace } from "./spaces/sessions.js";
@@ -39,13 +38,12 @@ async function start() {
   initState(await api.bootstrap());
   installPointerEffects();
   const spaces = {};
-  const openReport = (report) => spaces.reports.openAdHoc(report);
-  const activity = createActivity({ openReport });
+  const activity = createActivity();
   // Filled in once `context` exists: a purpose-built view is handed the same things a page is, the tool sheet among them.
   const guides = {};
-  const tools = createToolSheet({ activity, openReport, guides });
+  const tools = createToolSheet({ activity, guides });
   const spotlight = createSpotlight({ tools });
-  const context = { activity, tools, openReport, openSearch: spotlight.open };
+  const context = { activity, tools, openSearch: spotlight.open };
   Object.assign(guides, createGuides(context));
   Object.assign(spaces, {
     home: createHomeSpace(context),
@@ -60,7 +58,6 @@ async function start() {
     machine: createMachineSpace(context),
     security: createSecuritySpace(context),
     vault: createVaultSpace(context),
-    reports: createReportsSpace(context),
     tools: createToolboxSpace(context),
   });
   const shell = createShell({ openSearch: spotlight.open, activity });
