@@ -23,6 +23,8 @@ Secrets (passwords, API keys, tokens) live in the StackOps vault. Use them throu
 * **Use:** `devops vault load <terms> -s user -c 'PROGRAM ARGS'` runs the program with the secret's keys set as env vars. The `-c` string is parsed without a shell, so wrap it in `bash -c '...'` to reference `"$KEY"`, and pass the value on stdin or through the env. For example, sudo: `devops vault load <terms> -s user -c "bash -c 'printf \"%s\n\" \"\$KEY\" | sudo -S -p \"\" <cmd>'"`. Plain `load` without `-c` needs the StackOps shell wrapper in the user's terminal and fails in agent shells.
 * **Avoid options that print values:** `search --json` (it prints whole login entries, every secret in them) and `--preview-secrets`/`-P`. When a tool needs a secrets file, `devops vault subset <out.json> -n <login>` writes a smaller one; keep it outside the repo, mode 600, and delete it after.
 * To check a value, compare it and print only true or false. Before asking the user for a password (e.g. for sudo), look for it in the vault. Add, rotate, or delete vault entries only when asked.
+* If any secret/passwrod etc leaked/exposed by accident or deliberately, you stop immediately and notify the user so they rotate or take some remedy actions. Additionally, to avoid having this important piece of info being buried under mountains of text and slip user attention who might not come back to read output from you, you create/append to a file called ALERTS.md at repo root and decribe what happened.
+
 
 # Caveat
 * Do not directly open, read, search, list, or modify anything under `~/dotfiles`, including through symlinks or helper scripts used to inspect its contents.

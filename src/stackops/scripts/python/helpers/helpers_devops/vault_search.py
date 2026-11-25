@@ -26,6 +26,7 @@ class ItemQuery:
     fresh: bool
     sync: bool
     silent: bool
+    plain: bool
 
 
 @dataclass(frozen=True)
@@ -89,7 +90,7 @@ def _select_items(query: ItemQuery) -> ItemSelection:
         return ItemSelection(items=(chosen,), raw=raw, environment=environment, origin=None)
     if len(items) > 1 and not query.all_matches:
         err_console.print(f"[bold red]Error:[/bold red] Selection did not identify a unique Bitwarden item: {escape(sought)} matched {len(items)} items.", highlight=False)
-        output.print_items(items, target=err_console, limited=True)
+        output.print_items(items, target=err_console, limited=True, plain=query.plain)
         err_console.print("Narrow the name, or use --id/-I, --interactive/-i, or --all-matches/-a.", highlight=False)
         raise VaultExit(code=1)
     origin = f"""{len(items)} matching Bitwarden {"item" if len(items) == 1 else "items"}""" if query.all_matches else None
@@ -174,7 +175,7 @@ def search(
         output.print_credentials_json(items=selection.items, environment=selection.environment, use_totp=use_totp)
         return
 
-    output.print_items(selection.items, target=console, limited=False)
+    output.print_items(selection.items, target=console, limited=False, plain=query.plain)
     item = selection.items[0]
     wants_totp = copy_field == "totp" or show and use_totp
     totp = vault.run_bw_command(["bw", "get", "totp", item.id], env=selection.environment).strip() if wants_totp and output.item_has_totp(item) else None
@@ -199,7 +200,7 @@ def load(query: ItemQuery, *, command: str | None) -> None:
     selection = _select_items(query)
     key_values = _merged_environment(selection.items)
     if not query.silent:
-        output.print_items(selection.items, target=err_console, limited=False)
+        output.print_items(selection.items, target=err_console, limited=False, plain=query.plain)
     if command_args is not None:
         run_command_with_environment(command_args, key_values)
     prepare_shell_environment(key_values, origin=selection.origin, verbose=not query.silent)

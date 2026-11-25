@@ -16,6 +16,7 @@ Search lists matching items without secret values and does nothing else.
 Add --copy/-C to put one field on the system clipboard, --load/-L to define the item's variables in the calling shell, or --show/-w to print credentials.
 The name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.
 Use --json to print the selected items as JSON, including values.
+Agents and scripts: add --plain/-p to list items as text lines instead of a table.
 """
 BITWARDEN_LOAD_EPILOG = """Examples:
   devops vault bitwarden load github-token
@@ -26,6 +27,7 @@ Each custom field of the item becomes one environment variable: the field name i
 A linked custom field takes the login's username or password as its value.
 Load prepares the variables for the calling shell, or with --command runs one program with them.
 The name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.
+Agents and scripts: add --plain/-p to list items as text lines instead of a table.
 """
 
 
@@ -61,13 +63,14 @@ def search(
     fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass the local search cache and query Bitwarden directly.")] = False,
     sync: Annotated[bool, typer.Option("--sync", "-y", help="Sync the vault with the server before searching and bypass the local search cache.")] = False,
     silent: Annotated[bool, typer.Option("--silent", "-q", help="Suppress progress and hints; only results are printed.")] = False,
+    plain: Annotated[bool, typer.Option("--plain", "-p", help="List items as plain text lines with full URLs instead of a table, for agents and scripts.")] = False,
 ) -> None:
     """Inspect Bitwarden (`bw`) items without exposing secrets; copying, loading and showing are explicit."""
     from stackops.scripts.python.helpers.helpers_devops import vault, vault_search
 
     try:
         vault_search.search(
-            vault_search.ItemQuery(name=name, item_id=item_id, interactive=interactive, all_matches=all_matches, fresh=fresh, sync=sync, silent=silent),
+            vault_search.ItemQuery(name=name, item_id=item_id, interactive=interactive, all_matches=all_matches, fresh=fresh, sync=sync, silent=silent, plain=plain),
             json_output=json_output,
             raw_output=raw_output,
             copy_field=copy,
@@ -90,13 +93,14 @@ def load(
     fresh: Annotated[bool, typer.Option("--fresh", "-f", help="Bypass the local search cache and query Bitwarden directly.")] = False,
     sync: Annotated[bool, typer.Option("--sync", "-y", help="Sync the vault with the server before searching and bypass the local search cache.")] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Print the selected items and env var keys without secret values.")] = False,
+    plain: Annotated[bool, typer.Option("--plain", "-p", help="List items as plain text lines with full URLs instead of a table, for agents and scripts.")] = False,
 ) -> None:
     """Load a Bitwarden item's custom fields into environment variables."""
     from stackops.scripts.python.helpers.helpers_devops import vault, vault_search
 
     try:
         vault_search.load(
-            vault_search.ItemQuery(name=name, item_id=item_id, interactive=interactive, all_matches=all_matches, fresh=fresh, sync=sync, silent=not verbose),
+            vault_search.ItemQuery(name=name, item_id=item_id, interactive=interactive, all_matches=all_matches, fresh=fresh, sync=sync, silent=not verbose, plain=plain),
             command=command,
         )
     except vault.VaultExit as exc:
