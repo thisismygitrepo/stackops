@@ -21,3 +21,4 @@ CLIPBOARD_CLEAR_SECONDS = 45
 BITWARDEN_VALUE_FIELD_TYPES: tuple[int, ...] = (0, 1, 2)
 BITWARDEN_LINKED_FIELD_TYPE = 3
 BITWARDEN_LINKED_LOGIN_FIELDS: dict[int, Literal["username", "password"]] = {100: "username", 101: "password"}
+BITWARDEN_ITEM_COLUMN_MAX_WIDTH = 40

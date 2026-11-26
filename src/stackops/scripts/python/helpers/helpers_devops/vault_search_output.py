@@ -4,13 +4,15 @@ from typing import TypedDict, cast
 from urllib.parse import urlsplit
 
 from rich import box
-from rich.console import Console
+from rich.console import Console, Group
 from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_constants import CANDIDATE_DISPLAY_LIMIT
 from stackops.scripts.python.helpers.helpers_devops.vault import VaultItem, get_item_notes, run_bw_command
+from stackops.scripts.python.helpers.helpers_devops.vault_constants import BITWARDEN_ITEM_COLUMN_MAX_WIDTH
 
 
 class CredentialRecord(TypedDict):
@@ -60,18 +62,19 @@ def print_items(items: Sequence[VaultItem], target: Console, limited: bool, plai
             target.print(f"... {hidden_count} more", markup=False, highlight=False)
         return
     show_environment_keys = any(item_field_names(item) for item in shown)
-    table = Table(box=box.SIMPLE_HEAD, header_style="bold cyan", caption=f"{hidden_count} more not shown" if hidden_count else None, show_lines=len(shown) > 1)
-    table.add_column("Name", style="bold", overflow="fold")
-    table.add_column("Username", overflow="fold")
-    table.add_column("Sites", style="blue", overflow="fold")
+    table = Table(box=box.SIMPLE_HEAD, header_style="bold cyan", caption=f"{hidden_count} more not shown" if hidden_count else None, show_lines=True)
+    table.add_column("Item", no_wrap=True, max_width=BITWARDEN_ITEM_COLUMN_MAX_WIDTH)
+    table.add_column("Sites", style="blue")
     table.add_column("Holds", style="green")
     if show_environment_keys:
         table.add_column("Env keys", style="magenta", overflow="fold")
-    table.add_column("ID", style="dim", no_wrap=True)
     for item in shown:
-        sites = "\n".join(dict.fromkeys(urlsplit(url).hostname or url for url in item_urls(item)))
-        cells = (item.name, item.username or "-", sites or "-", item_holdings(item) or "-", *((", ".join(item_field_names(item)) or "-",) if show_environment_keys else ()), item.id)
-        table.add_row(*(escape(cell) for cell in cells))
+        identity = Group(
+            Text(item.name, style="bold", no_wrap=False, overflow="fold"), *((Text(item.username, no_wrap=False, overflow="fold"),) if item.username else ()), Text(item.id, style="dim")
+        )
+        sites = "\n".join(dict.fromkeys(urlsplit(url).hostname or url for url in item_urls(item))) or "-"
+        holds = item_holdings(item).replace(", ", "\n") or "-"
+        table.add_row(identity, Text(sites, no_wrap=True, overflow="ellipsis"), Text(holds), *((Text("\n".join(item_field_names(item)) or "-"),) if show_environment_keys else ()))
     target.print(table)
 
 
