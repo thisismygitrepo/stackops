@@ -20,7 +20,15 @@ from stackops.utils.installer_utils.installer_bulk_display import (
     render_live_view,
     render_nothing_to_install,
 )
-from stackops.utils.installer_utils.installer_bulk_models import BulkInstallJob, BulkInstallOutcome, FinishedInstall, PlannedInstall, RunningInstall
+from stackops.utils.installer_utils.installer_bulk_models import (
+    BulkInstallJob,
+    BulkInstallOutcome,
+    FinishedInstall,
+    PlannedInstall,
+    RunningInstall,
+    StepProgress,
+)
+from stackops.utils.installer_utils.installer_bulk_steps import advance_steps, print_step_line
 from stackops.utils.installer_utils.installer_bulk_plan import cache_sudo_credentials, plan_bulk_installs
 from stackops.utils.schemas.installer.installer_types import (
     InstallRequest,
@@ -80,6 +88,7 @@ def _run_planned_installs(
     pending = sorted(planned_installs, key=lambda planned: not planned.holds_system_installer_lock)
     running: list[RunningInstall] = []
     finished: list[FinishedInstall] = []
+    step_progress: dict[str, StepProgress] = {}
     started_at = time.monotonic()
     sudo_refreshed_at = started_at
     with tempfile.TemporaryDirectory(prefix="stackops_bulk_install_") as work_dir_name:
@@ -93,6 +102,7 @@ def _run_planned_installs(
                         if planned.holds_system_installer_lock and system_lock_busy:
                             continue
                         pending.remove(planned)
+                        step_progress[planned.exe_name] = StepProgress(log_offset=0, title=None, started_at=started_at)
                         running.append(
                             _launch_install(
                                 planned=planned,
@@ -104,16 +114,39 @@ def _run_planned_installs(
                         )
                         system_lock_busy = system_lock_busy or planned.holds_system_installer_lock
                     now = time.monotonic()
-                    for item in [item for item in running if item.process.poll() is not None]:
+                    exited = [item for item in running if item.process.poll() is not None]
+                    for item in running:
+                        step_progress[item.planned.exe_name] = advance_steps(
+                            running=item, progress=step_progress[item.planned.exe_name], now=now, console=live.console, name_width=name_width
+                        )
+                    for item in exited:
                         running.remove(item)
                         finished_install = _collect_install(running=item, finished_at=now)
                         finished.append(finished_install)
+                        last_step = step_progress.pop(item.planned.exe_name)
+                        if last_step.title is not None:
+                            print_step_line(
+                                console=live.console,
+                                exe_name=item.planned.exe_name,
+                                title=last_step.title,
+                                seconds=now - last_step.started_at,
+                                failed=finished_install.result["kind"] == "failed",
+                                name_width=name_width,
+                            )
                         print_finished_line(console=live.console, finished=finished_install, name_width=name_width)
                     if sudo_credentials_cached and now - sudo_refreshed_at >= BULK_INSTALL_SUDO_KEEPALIVE_SECONDS:
                         subprocess.run(["sudo", "-n", "-v"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
                         sudo_refreshed_at = now
                     live.update(
-                        render_live_view(running=running, finished=finished, queued_count=len(pending), started_at=started_at, now=now, name_width=name_width),
+                        render_live_view(
+                            running=running,
+                            finished=finished,
+                            step_progress=step_progress,
+                            queued_count=len(pending),
+                            started_at=started_at,
+                            now=now,
+                            name_width=name_width,
+                        ),
                         refresh=True,
                     )
                     time.sleep(BULK_INSTALL_POLL_SECONDS)

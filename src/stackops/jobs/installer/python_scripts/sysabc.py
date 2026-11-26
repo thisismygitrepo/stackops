@@ -9,6 +9,8 @@ from rich.panel import Panel
 
 from stackops.jobs.installer import linux_scripts, powershell_scripts
 from stackops.utils.constants import IS_REPO_DEVELOPER
+from stackops.utils.installer_utils.apt_archive_download import build_apt_parallel_download_command
+from stackops.utils.installer_utils.constants import BULK_INSTALL_STEP_MARKER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
     LinuxDistribution,
@@ -111,17 +113,16 @@ def _build_linux_install_script(distribution: LinuxDistribution, privilege_prefi
 
     refresh_command = build_distribution_refresh_command(distribution=distribution, privilege_prefix=privilege_prefix)
     install_command = build_package_install_command(distribution.package_manager, packages)
-    return "\n".join(
-        (
-            "#!/usr/bin/env bash",
-            "set -euo pipefail",
-            shlex.join(refresh_command),
-            shlex.join((*privilege_prefix, *install_command)),
-            "curl -fsSL https://bun.com/install | bash",
-            'sudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node',
-            "",
-        )
-    )
+    steps: list[tuple[str, str]] = [("refresh package lists", shlex.join(refresh_command))]
+    if distribution.package_manager == "apt":
+        steps.append(("download base packages", build_apt_parallel_download_command(packages=packages, privilege_prefix=privilege_prefix)))
+    steps.append((f"""install {len(packages)} base packages""", shlex.join((*privilege_prefix, *install_command))))
+    steps.append(("install bun", '''curl -fsSL https://bun.com/install | bash\nsudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node'''))
+    lines = ["#!/usr/bin/env bash", "set -euo pipefail"]
+    for step_number, (title, command) in enumerate(steps, start=1):
+        lines.append(shlex.join(("echo", f"""{BULK_INSTALL_STEP_MARKER}{step_number}/{len(steps)} {title}""")))
+        lines.append(command)
+    return "\n".join((*lines, ""))
 
 
 def main(installer_data: InstallerData, version: str | None, update: bool) -> None:

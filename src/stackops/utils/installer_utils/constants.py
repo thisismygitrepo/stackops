@@ -12,6 +12,10 @@ BULK_INSTALL_FAILURE_EXCERPT_COUNT: Final[int] = 5
 BULK_INSTALL_SLOWEST_COUNT: Final[int] = 3
 BULK_INSTALL_SUDO_EXAMPLE_COUNT: Final[int] = 4
 BULK_INSTALL_VERSION_WIDTH: Final[int] = 48
+# An installer that prints a line starting with this marker opens a step; a group install lists each step with its duration as it ends.
+BULK_INSTALL_STEP_MARKER: Final[str] = "::step::"
+APT_DOWNLOAD_PARALLEL_JOBS: Final[int] = 16
+APT_DOWNLOAD_PACKAGES_PER_JOB: Final[int] = 4
 UNINSTALL_FAILURE_TAIL_LINES: Final[int] = 5
 SYSTEM_INSTALLER_COMMANDS: Final[frozenset[str]] = frozenset(("winget", "brew", "choco", "msiexec", "msiexec.exe", "snap"))
 # Scripts that only download and copy files; they never call a system package manager, so they run alongside the rest of a batch.

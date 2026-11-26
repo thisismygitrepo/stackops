@@ -40,6 +40,13 @@ class RunningInstall:
 
 
 @dataclass(frozen=True, slots=True)
+class StepProgress:
+    log_offset: int
+    title: str | None
+    started_at: float
+
+
+@dataclass(frozen=True, slots=True)
 class FinishedInstall:
     planned: PlannedInstall
     result: InstallationResult

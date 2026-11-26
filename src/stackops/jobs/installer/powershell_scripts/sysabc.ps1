@@ -1,3 +1,5 @@
+# a line starting with ::step:: opens a step in the group install view
+Write-Host "::step::1/5 winget"
 $winget = Get-Command winget -ErrorAction SilentlyContinue
 if (-not $winget) {
     Write-Host "winget not found. Installing..."
@@ -25,9 +27,13 @@ else {
     Write-Host "winget already available. Skipping installation."
 }
 
+Write-Host "::step::2/5 PowerShell"
 winget install --no-upgrade --name "Powershell"                   --Id "Microsoft.PowerShell"       --source winget --scope user --accept-package-agreements --accept-source-agreements  # powershell require admin
+Write-Host "::step::3/5 Windows Terminal"
 winget install --no-upgrade --name "Windows Terminal"             --Id "Microsoft.WindowsTerminal"  --source winget --scope user --accept-package-agreements --accept-source-agreements  # Terminal is is installed by default on W 11
+Write-Host "::step::4/5 Git"
 winget install --no-upgrade --name "Git"                          --Id "Git.Git"                    --source winget --accept-package-agreements --accept-source-agreements  # no --scope: it would hide a machine-wide Git from the already-installed check
+Write-Host "::step::5/5 bun"
 powershell -c "irm bun.sh/install.ps1|iex"
 
 # Install-Module -Name Terminal-Icons -Repository PSGallery -Force -AcceptLicense -PassThru -Confirm  # -RequiredVersion 2.5.10

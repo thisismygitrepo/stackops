@@ -9,7 +9,7 @@ from stackops.utils.schemas.installer.installer_types import OPERATING_SYSTEMS
 @pytest.mark.parametrize(
     ("operating_system", "locking_apps", "parallel_apps"),
     (
-        ("linux", {"yazi"}, {"jq", "bat", "tokei", "agent-git", "tuios", "nerdfont"}),
+        ("linux", {"yazi", "tokei"}, {"jq", "bat", "agent-git", "tuios", "nerdfont"}),
         ("windows", {"tokei", "nano", "gh", "yazi"}, {"jq", "bat", "agent-git", "tuios", "nerdfont"}),
     ),
 )

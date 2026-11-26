@@ -2984,11 +2984,19 @@ installers:
       - monitoring-performance
     fileNamePattern:
       amd64:
-        linux: cargo install tokei
+        linux:
+          apk: sudo apk add --no-cache tokei
+          apt: sudo apt-get update && sudo apt-get install -y tokei
+          dnf: sudo dnf install -y tokei
+          pacman: sudo pacman -S --needed --noconfirm tokei
         darwin: brew install tokei
         windows: winget install XAMPPRocky.tokei --source winget --scope user --accept-package-agreements --accept-source-agreements
       arm64:
-        linux: cargo install tokei
+        linux:
+          apk: sudo apk add --no-cache tokei
+          apt: sudo apt-get update && sudo apt-get install -y tokei
+          dnf: sudo dnf install -y tokei
+          pacman: sudo pacman -S --needed --noconfirm tokei
         darwin: brew install tokei
         windows: winget install XAMPPRocky.tokei --source winget --scope user --accept-package-agreements --accept-source-agreements
   - appName: wt

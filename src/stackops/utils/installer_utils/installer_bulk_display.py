@@ -10,13 +10,14 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.utils.installer_utils.constants import (
+    BULK_INSTALL_STEP_MARKER,
     BULK_INSTALL_FAILURE_EXCERPT_COUNT,
     BULK_INSTALL_FAILURE_TAIL_LINES,
     BULK_INSTALL_LOG_TAIL_BYTES,
     BULK_INSTALL_SLOWEST_COUNT,
     BULK_INSTALL_VERSION_WIDTH,
 )
-from stackops.utils.installer_utils.installer_bulk_models import BulkInstallStatus, FinishedInstall, PlannedInstall, RunningInstall
+from stackops.utils.installer_utils.installer_bulk_models import BulkInstallStatus, FinishedInstall, PlannedInstall, RunningInstall, StepProgress
 
 
 TERMINAL_NOISE_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -99,7 +100,13 @@ def print_finished_line(console: Console, finished: FinishedInstall, name_width:
 
 
 def render_live_view(
-    running: list[RunningInstall], finished: list[FinishedInstall], queued_count: int, started_at: float, now: float, name_width: int
+    running: list[RunningInstall],
+    finished: list[FinishedInstall],
+    step_progress: dict[str, StepProgress],
+    queued_count: int,
+    started_at: float,
+    now: float,
+    name_width: int,
 ) -> Group:
     total_count = len(running) + len(finished) + queued_count
     status_counts = Counter(describe_finished_install(finished=item)[0] for item in finished)
@@ -121,7 +128,13 @@ def render_live_view(
         line.append(f""" {SPINNER_FRAMES[int(elapsed * 10) % len(SPINNER_FRAMES)]} """, style="cyan")
         line.append(f"""{item.planned.exe_name:<{name_width}}""", style="bold")
         line.append(f"""{format_duration(elapsed):>7}  """, style="dim")
-        line.append(log_tail[0] if len(log_tail) > 0 else "starting", style="dim")
+        activity = log_tail[0] if len(log_tail) > 0 and not log_tail[0].startswith(BULK_INSTALL_STEP_MARKER) else ""
+        step_title = step_progress[item.planned.exe_name].title
+        if step_title is None:
+            line.append(activity if activity != "" else "starting", style="dim")
+        else:
+            line.append(step_title)
+            line.append(f"""  {activity}""", style="dim")
         running_lines.append(line)
     return Group(Text(""), progress_row, *running_lines)
 

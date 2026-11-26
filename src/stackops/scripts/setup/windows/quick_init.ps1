@@ -10,6 +10,8 @@ irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackop
 uv tool install --upgrade --python 3.14 stackops
 
 devops software install --group sysabc
+# sysabc installed Git, PowerShell and bun, whose PATH entries only reach new shells
+$env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
 
 # configs
 devops config copy-assets all
