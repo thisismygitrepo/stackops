@@ -9,8 +9,8 @@ from stackops.utils.schemas.installer.installer_types import OPERATING_SYSTEMS
 @pytest.mark.parametrize(
     ("operating_system", "locking_apps", "parallel_apps"),
     (
-        ("linux", {"yazi", "nerdfont"}, {"jq", "bat", "tokei", "agent-git", "tuios"}),
-        ("windows", {"tokei", "nano", "gh", "yazi", "nerdfont"}, {"jq", "bat", "agent-git", "tuios"}),
+        ("linux", {"yazi"}, {"jq", "bat", "tokei", "agent-git", "tuios", "nerdfont"}),
+        ("windows", {"tokei", "nano", "gh", "yazi"}, {"jq", "bat", "agent-git", "tuios", "nerdfont"}),
     ),
 )
 def test_termabc_system_installers_and_scripts_are_serialized(
@@ -37,6 +37,7 @@ def test_termabc_system_installers_and_scripts_are_serialized(
         ("CMD", "sudo apt-get install -y tmux", True),
         ("CMD", "winget install --id GNU.Nano", True),
         ("CMD", "yazi.py", True),
+        ("CMD", "nerdfont.py", False),
         ("CMD", "network.sh", True),
         ("https://github.com/cli/cli", "gh_{version}_windows_amd64.msi", True),
         ("https://github.com/owner/tool", "tool_{version}_amd64.deb", True),

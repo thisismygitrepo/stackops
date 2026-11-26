@@ -105,20 +105,15 @@ def _filter_installers(
     arch: CPU_ARCHITECTURES,
     which_cats: list[PACKAGE_NAME] | None,
 ) -> list[InstallerData]:
-    acceptable_apps_names: set[str] | None = None
+    group_position: dict[str, int] = {}
     if which_cats is not None:
-        acceptable_apps_names = {
-            app_name.casefold()
-            for category in which_cats
-            for app_name in PACKAGE_GROUP2NAMES[category]
-        }
-    else:
-        acceptable_apps_names = None
+        for category in which_cats:
+            for app_name in PACKAGE_GROUP2NAMES[category]:
+                group_position.setdefault(app_name.casefold(), len(group_position))
     all_installers: list[InstallerData] = []
     for installer_data in installers:
-        if acceptable_apps_names is not None:
-            if installer_data["appName"].casefold() not in acceptable_apps_names:
-                continue
+        if which_cats is not None and installer_data["appName"].casefold() not in group_position:
+            continue
         try:
             if resolve_installer_pattern(installer_data=installer_data, operating_system=os, architecture=arch) is None:
                 continue
@@ -127,6 +122,9 @@ def _filter_installers(
             print(f"Installer data: {installer_data}")
             raise KeyError(f"Missing key in installer data: {ke}") from ke
         all_installers.append(installer_data)
+    if which_cats is not None:
+        # a group lists its apps in install order, not in catalog order
+        all_installers.sort(key=lambda installer_data: group_position[installer_data["appName"].casefold()])
     return all_installers
 
 

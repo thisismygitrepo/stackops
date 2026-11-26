@@ -220,10 +220,10 @@ PACKAGES_SYSTEM_MONITORS = [
 
 # Search & Archive Tools - File and content search utilities, archive management
 PACKAGES_FILE = [
+    "yazi",  # slowest of the group (pulls its previewers), so it leads
     "fd",
     "fzf",
     "tv",
-    "broot",
     "rg",
     "rga",
     "ugrep",
@@ -236,7 +236,6 @@ PACKAGES_FILE = [
     # "lf",
     # "nnn",
     "superfile",
-    "yazi",
     "tere",
     # "exa",
     "lsd",
@@ -284,6 +283,7 @@ PACKAGE_NAME: TypeAlias = Literal[
     "media", "gui", "nw", "file-sharing", "productivity",
 ]
 
+# A group is installed in the order it lists its apps: put the slow ones first, the rest of the batch runs alongside them.
 PACKAGE_GROUP2NAMES: dict[PACKAGE_NAME, list[str]] = {
     "sysabc": ["sysabc"],
 
@@ -291,7 +291,7 @@ PACKAGE_GROUP2NAMES: dict[PACKAGE_NAME, list[str]] = {
     "search": PACKAGES_FILE,
     "sys-monitor": PACKAGES_SYSTEM_MONITORS,
     "code-analysis": PACKAGES_CODE_ANALYSIS,
-    "termabc": [*PACKAGES_CODE_ANALYSIS, *PACKAGES_SYSTEM_MONITORS, *PACKAGES_TERMINAL_SHELL, *PACKAGES_FILE,],
+    "termabc": [*PACKAGES_FILE, *PACKAGES_TERMINAL_SHELL, *PACKAGES_CODE_ANALYSIS, *PACKAGES_SYSTEM_MONITORS,],
 
     "dev": [*PACKAGES_TERMINAL_EMULATORS,
             *PACKAGES_BROWSERS, *PACKAGES_CODE_EDITORS, *PACKAGES_DATABASE,

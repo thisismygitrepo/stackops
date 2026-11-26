@@ -68,7 +68,7 @@ Here are the available groups as currently defined by the installer:
     </tr>
     <tr>
       <td><code>search</code></td>
-      <td>fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | yazi | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz</td>
+      <td>yazi | fd | fzf | tv | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz</td>
     </tr>
     <tr>
       <td><code>sys-monitor</code></td>
@@ -81,10 +81,10 @@ Here are the available groups as currently defined by the installer:
     <tr>
       <td><code>termabc</code></td>
       <td>
-        nano | lazygit | onefetch | gitcs | lazydocker | hyperfine | kondo | tokei | navi | tealdeer | gitui | delta | gh | watchexec | jq<br>
-        btop | btm | ntop | procs | cpufetch | fastfetch | psnet | pstop<br>
+        yazi | fd | fzf | tv | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz<br>
         nerdfont | psmux | tuios | mcfly | starship | cb<br>
-        fd | fzf | tv | broot | rg | rga | ugrep | ouch | pistol | bat | viu | superfile | yazi | tere | lsd | zoxide | diskonaut | dua | dust | pdu | cpz | rmz
+        nano | lazygit | onefetch | gitcs | lazydocker | hyperfine | kondo | tokei | navi | tealdeer | gitui | delta | gh | watchexec | jq<br>
+        btop | btm | ntop | procs | cpufetch | fastfetch | psnet | pstop
       </td>
     </tr>
     <tr>

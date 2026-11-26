@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.text import Text
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
-from stackops.utils.installer_utils.constants import BULK_INSTALL_SUDO_EXAMPLE_COUNT, SYSTEM_INSTALLER_COMMANDS
+from stackops.utils.installer_utils.constants import BULK_INSTALL_SUDO_EXAMPLE_COUNT, SCRIPTS_WITHOUT_SYSTEM_INSTALLER, SYSTEM_INSTALLER_COMMANDS
 from stackops.utils.installer_utils.install_request_logic import (
     InstallTarget,
     build_install_target,
@@ -29,7 +29,7 @@ SYSTEM_PACKAGE_FILE_SUFFIXES: Final[tuple[str, ...]] = (*LINUX_PACKAGE_FILE_SUFF
 def holds_system_installer_lock(install_target: InstallTarget) -> bool:
     installer_value = install_target.installer_value
     return (
-        install_target.installer_kind == "script"
+        (install_target.installer_kind == "script" and installer_value not in SCRIPTS_WITHOUT_SYSTEM_INSTALLER)
         or is_native_linux_package_manager_command(installer_value)
         or any(token in SYSTEM_INSTALLER_COMMANDS for token in installer_value.split())
         or installer_value.lower().endswith(SYSTEM_PACKAGE_FILE_SUFFIXES)

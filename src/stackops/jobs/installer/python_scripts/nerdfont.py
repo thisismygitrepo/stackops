@@ -30,14 +30,14 @@ nerd_fonts: InstallerData = {
     "categoryLabels": ["terminals-shells"],
     "fileNamePattern": {
         "amd64": {
-            "windows": "CascadiaCode.zip",
-            "linux": "CascadiaCode.zip",
-            "darwin": "CascadiaCode.zip",
+            "windows": "CascadiaCode.tar.xz",
+            "linux": "CascadiaCode.tar.xz",
+            "darwin": "CascadiaCode.tar.xz",
         },
         "arm64": {
-            "windows": "CascadiaCode.zip",
-            "linux": "CascadiaCode.zip",
-            "darwin": "CascadiaCode.zip",
+            "windows": "CascadiaCode.tar.xz",
+            "linux": "CascadiaCode.tar.xz",
+            "darwin": "CascadiaCode.tar.xz",
         },
     },
 }

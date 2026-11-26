@@ -14,3 +14,5 @@ BULK_INSTALL_SUDO_EXAMPLE_COUNT: Final[int] = 4
 BULK_INSTALL_VERSION_WIDTH: Final[int] = 48
 UNINSTALL_FAILURE_TAIL_LINES: Final[int] = 5
 SYSTEM_INSTALLER_COMMANDS: Final[frozenset[str]] = frozenset(("winget", "brew", "choco", "msiexec", "msiexec.exe", "snap"))
+# Scripts that only download and copy files; they never call a system package manager, so they run alongside the rest of a batch.
+SCRIPTS_WITHOUT_SYSTEM_INSTALLER: Final[frozenset[str]] = frozenset(("nerdfont.py",))
