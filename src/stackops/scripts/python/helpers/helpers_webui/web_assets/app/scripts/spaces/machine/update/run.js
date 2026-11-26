@@ -10,7 +10,7 @@ export const snapshot = (state) => ({ version: state.installed?.version ?? state
 
 // The last stop before an update that deletes settings or publishes commits: what exactly goes, by name and by number, as it stands at this
 // moment. Resolves to true only on an explicit yes. Committing and pushing also takes a tick, since it cannot be taken back from here.
-export function confirmUpdate({ state, effects, options }) {
+export function confirmUpdate({ state, effects, options, ask }) {
   const dialog = openDialog({ label: "Confirm the update", size: "machine-update-confirm" });
   const publishes = options.developer;
   const go = button({ label: publishes ? "Commit, push and update" : "Replace and update", glyph: "download", tone: "danger", onclick: () => dialog.close(true) });
@@ -46,7 +46,7 @@ export function confirmUpdate({ state, effects, options }) {
     h("header", { class: "machine-update-confirm-head" }, glyphTile("alert", 350, 46), h("div", {}, h("h2", { text: publishes ? "Commit, push, then update?" : "Replace your app settings?" }), h("p", { text: "This is what the update does besides installing the new version. It starts as soon as you confirm." }))),
     h("div", { class: "machine-update-confirm-parts" }, parts),
     ...(publishes ? [h("label", { class: "machine-update-ack" }, agree, h("span", { text: "I want these changes committed and pushed." }))] : []),
-    h("div", { class: "dialog-actions" }, button({ label: "Go back", onclick: () => dialog.close(false) }), go),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Go back", onclick: () => dialog.close(false) }), go),
   );
   return dialog.closed.then((answer) => answer === true);
 }

@@ -17,8 +17,9 @@ const AREAS = [
   { id: "setup", label: "Setup and cleanup", caption: "Prepare, start fresh", glyph: "wrench", hue: 290, create: createSetupArea },
 ];
 
+// `askFor(id)` makes the "Ask an agent" button of one area, which the area puts in its heading.
 // The strip of areas stays on the Agents page whichever section is open. Each area is built and loaded the first time it is shown. The address is #/agents/<area>.
-export function createWorkbench(context) {
+export function createWorkbench(context, askFor) {
   const built = new Map();
   const tabs = new Map(
     AREAS.map((area) => {
@@ -38,7 +39,7 @@ export function createWorkbench(context) {
       status.dataset.tone = tone || "quiet";
     };
     // `failStatus` is for the panel an area takes its status from: when that panel does not load, the strip says so instead of keeping the last good status.
-    const made = area.create(context, { setStatus, failStatus: () => setStatus("Couldn't check", "warn") });
+    const made = area.create(context, { setStatus, failStatus: () => setStatus("Couldn't check", "warn"), ask: askFor(area.id) });
     built.set(area.id, made);
     element.append(made.element);
     return made;

@@ -70,7 +70,7 @@ function chain(shell) {
 }
 
 // One shell that can be set up on this machine: where it stands, the chain from its profile to what a terminal gets, and what can be done.
-// `actions` is `{ setUp(shell), copyFiles(shell), openFile(file), busy }`; `loginName` is what the login shell is called, for a shell the
+// `actions` is `{ setUp(shell), copyFiles(shell), openFile(file), askAbout(file), busy }`; `loginName` is what the login shell is called, for a shell the
 // command does not act on.
 export function shellCard(shell, { featured, loginName, actions }) {
   const standing = standingOf(shell);
@@ -84,9 +84,10 @@ export function shellCard(shell, { featured, loginName, actions }) {
     manual && (!shell.setup_in_place || !shell.setup_current || standing === "old") &&
     button({ label: "Copy StackOps' files", glyph: "download", title: "Puts a fresh copy of StackOps' settings and scripts in place, and adds no line to a profile", onclick: () => actions.copyFiles(shell) });
   if (copyFiles) copyFiles.disabled = actions.busy;
-  const openers = shell.files.map((file) =>
+  const openers = shell.files.flatMap((file) => [
+    actions.askAbout(file),
     button({ label: shell.files.length > 1 ? `Open ${fileName(file.path)}` : "Open in editor", glyph: "pencil", title: `Opens ${shortPath(file.path)} in a text editor inside the activity panel`, onclick: () => actions.openFile(file) }),
-  );
+  ]);
   return h(
     "article",
     { class: `shellprof-card ${tone}${featured ? " featured" : ""}`, "data-shell": shell.id },

@@ -77,12 +77,20 @@ export function openDialog({ label, size = "", canDismiss, holdsWork }) {
   return { body, panel, ...mount(backdrop, panel, true, canDismiss, holdsWork) };
 }
 
-export function confirmAction({ title, body, confirm, tone = "primary" }) {
+// What makes the "Ask an agent" button of a question from its title and body. It is set once when the app starts (main.js), since the
+// button's own module is built on this one and cannot be reached from here.
+let askMaker = () => null;
+export const setQuestionAsk = (maker) => (askMaker = maker);
+export const questionAsk = (question) => askMaker(question);
+
+// Every question has an "Ask an agent" button, apart from its answers, so what it would do can be explained before it is answered. One that
+// knows more than its own words (which processes, which file) passes its own button as `ask`.
+export function confirmAction({ title, body, confirm, tone = "primary", ask = askMaker({ title, body }) }) {
   const dialog = openDialog({ label: title, size: "small" });
   dialog.body.append(
     h("h2", { text: title }),
     h("p", { text: body }),
-    h("div", { class: "dialog-actions" }, button({ label: "Cancel", onclick: () => dialog.close(false) }), button({ label: confirm, tone, onclick: () => dialog.close(true) })),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Cancel", onclick: () => dialog.close(false) }), button({ label: confirm, tone, onclick: () => dialog.close(true) })),
   );
   return dialog.closed.then((answer) => answer === true);
 }

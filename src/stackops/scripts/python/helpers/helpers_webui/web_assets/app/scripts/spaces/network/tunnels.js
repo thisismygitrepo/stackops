@@ -178,7 +178,8 @@ function createTunnelsPage({ activity, tools }, preset) {
   }
 
   async function run(tunnel) {
-    const way = await askHowToRun({ tunnel, local });
+    const ask = agentButton(activity, { title: `Run ${titleOf(tunnel)}`, commands: [PATHS.runTunnel], notes: [`The tunnel about to be run is “${titleOf(tunnel)}”.`], ideas: ["What does running this tunnel put on the internet?"] }, { small: true });
+    const way = await askHowToRun({ tunnel, local, ask });
     if (way === null) return;
     try {
       // `--yes` because the question was just asked here. Interactive, so a background start can ask for the password in the console.

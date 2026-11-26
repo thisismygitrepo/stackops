@@ -60,7 +60,7 @@ export function createTransfers({ activity }) {
 
 // Upload: a file of this computer into the folder on show. `names` are the files already in that folder, so replacing one is a choice made
 // here and not a surprise from the drive. `preset` is a path to start with.
-export function openUpload({ account, folder, names, preset = "", transfers, onDone }) {
+export function openUpload({ account, folder, names, preset = "", transfers, ask, onDone }) {
   const dialog = openDialog({ label: "Upload a file to OneDrive", size: "small od-dialog" });
   const problem = problemLine();
   const name = textBox("", { "aria-label": "Name on OneDrive", placeholder: "The file's own name" });
@@ -105,7 +105,7 @@ export function openUpload({ account, folder, names, preset = "", transfers, onD
     field("Name on OneDrive", name),
     toggle,
     problem.element,
-    h("div", { class: "dialog-actions" }, button({ label: "Cancel", onclick: () => dialog.close() }), go),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Cancel", onclick: () => dialog.close() }), go),
   );
   if (preset) name.value = lastPart(preset);
   check();
@@ -113,7 +113,7 @@ export function openUpload({ account, folder, names, preset = "", transfers, onD
 }
 
 // Download: one file of the drive into a folder of this computer. The command never overwrites, so a name that is taken there is said here.
-export function openDownload({ account, path, item, transfers }) {
+export function openDownload({ account, path, item, transfers, ask }) {
   const dialog = openDialog({ label: "Download a file from OneDrive", size: "small od-dialog" });
   const problem = problemLine();
   const name = textBox(item.name, { "aria-label": "Name on this computer" });
@@ -164,7 +164,7 @@ export function openDownload({ account, path, item, transfers }) {
     field("Save in", box.element),
     field("Name on this computer", name),
     problem.element,
-    h("div", { class: "dialog-actions" }, button({ label: "Cancel", onclick: () => dialog.close() }), go),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Cancel", onclick: () => dialog.close() }), go),
   );
   check();
 }

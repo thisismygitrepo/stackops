@@ -40,7 +40,7 @@ export function createPart({ activity, tools }) {
     // The shell a setup run acts on: the login shell where the command reaches it, and Nushell otherwise.
     const target = usable.find((shell) => shell.login && shell.route !== "manual") ?? usable.find((shell) => shell.route !== "manual");
     const loginName = login ? SHELLS[login.id].name : next.login_shell;
-    const cardOf = (shell) => shellCard(shell, { featured: shell === login, loginName, actions: { setUp: actions.setUp, copyFiles: actions.copyFiles, openFile: actions.openFile, busy: actions.busy() } });
+    const cardOf = (shell) => shellCard(shell, { featured: shell === login, loginName, actions: { setUp: actions.setUp, copyFiles: actions.copyFiles, openFile: actions.openFile, askAbout: actions.askAbout, busy: actions.busy() } });
     body.replaceChildren(
       ...[
         !login && next.login_shell && callout({ tone: "warn", title: `You sign in with ${next.login_shell}`, text: `StackOps has no setup for ${next.login_shell}, so nothing here changes the terminals that start in it. The shells below can still load StackOps' setup.` }),

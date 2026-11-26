@@ -1,5 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { api } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { markStale } from "../../data.js";
 import { confirmAction, openDialog } from "../../overlays.js";
 import { button, copyText, glyphTile, iconButton, notice, pathChip, pill, segmented, skeleton } from "../../widgets.js";
@@ -17,7 +18,8 @@ function formatted(text) {
 }
 
 // One file an agent reads, in a window of its own: read it, change it and save, or take it away. `remove` is left out for a file that holds several things.
-export function openResourceFile({ kind, origin, path, status, remove }) {
+// `agent` is the name of the coding agent the file belongs to.
+export function openResourceFile({ activity, agent, kind, origin, path, status, remove }) {
   const label = KIND_BY_ID[kind];
   const fileName = path.split("/").at(-1);
   const markdown = MARKDOWN.test(fileName);
@@ -46,6 +48,17 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
     read();
   });
   const copy = iconButton("copy", "Copy the whole file", async () => (await copyText(file.text)) && toast(`Copied ${fileName}.`, "info"));
+  // Only while the file is being read: with unsaved changes the window stays open over a chat, which is then out of reach behind it.
+  const ask = agentButton(
+    activity,
+    {
+      title: fileName, commands: ["agents doctor"], files: [{ label: `the ${label.one}`, path }],
+      about: `One ${label.one} the coding agent ${agent} uses. ${label.blurb} It comes from “${ORIGINS[origin].label}”: ${ORIGINS[origin].hint}`,
+      notes: status ? [`The health check lists it as “${STATES[status].label}”.`] : [],
+      ideas: ["Explain what this file makes my agent do", "Change this file so that …"],
+    },
+    { small: true },
+  );
   const removeButton = remove && button({ label: "Remove", glyph: "trash", title: `Remove this ${label.one}. You are shown what changes first.`, onclick: async () => (await remove()) && dialog.close() });
   if (removeButton) removeButton.classList.add("caution");
 
@@ -67,7 +80,7 @@ export function openResourceFile({ kind, origin, path, status, remove }) {
     editor = null;
     const stats = readingStats(file.text);
     const size = markdown ? `${plural(stats.words, "word")} · about ${stats.minutes} min to read` : plural(file.text.split("\n").length, "line");
-    bar.replaceChildren(...[h("span", { class: "dim", text: size }), h("span", { class: "spacer" }), markdown && picker.element, copy, button({ label: "Edit", glyph: "pencil", onclick: edit }), removeButton].filter(Boolean));
+    bar.replaceChildren(...[h("span", { class: "dim", text: size }), h("span", { class: "spacer" }), markdown && picker.element, copy, ask, button({ label: "Edit", glyph: "pencil", onclick: edit }), removeButton].filter(Boolean));
     picker.set(view);
     scroll.classList.remove("editing");
     scroll.replaceChildren(...(file.text.trim() === "" ? [h("p", { class: "dim", text: "This file is empty." })] : view === "formatted" ? formatted(file.text) : [h("pre", { class: "prompt-plain", text: file.text })]));

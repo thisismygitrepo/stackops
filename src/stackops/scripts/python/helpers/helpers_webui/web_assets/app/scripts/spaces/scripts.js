@@ -133,7 +133,7 @@ export function createScriptsSpace({ activity }) {
   // The script a form just made is the one to look at once the list is back, and it is opened to be written.
   const add = () =>
     addScript({
-      place: canChange(place) ? place : "user",
+      activity, place: canChange(place) ? place : "user",
       onCreated: (made) => {
         term = "";
         search.input.value = "";

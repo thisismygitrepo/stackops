@@ -87,7 +87,7 @@ export function createWindowsPage({ activity, tools }, takePreset) {
   // What reading again cannot change: a system the command does not work on, and a server that has to be restarted.
   const settled = () => (state.kind === "unavailable" && state.reason !== "permission") || (state.kind === "failed" && state.missing);
   const watcher = createWatcher({ element, read: () => windowsApi.list(), onAnswer: answer, idle: settled });
-  const act = createActions({ view, watcher, windows: () => model?.windows ?? [], sync });
+  const act = createActions({ activity, view, watcher, windows: () => model?.windows ?? [], sync });
 
   function sync() {
     list.sync();

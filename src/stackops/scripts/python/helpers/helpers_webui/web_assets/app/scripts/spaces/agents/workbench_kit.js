@@ -23,8 +23,9 @@ export function reloadAfterStart(activity, path, panel) {
   });
 }
 
-export function areaHead({ title, lede, actions = [] }) {
-  return h("header", { class: "wb-head" }, h("div", { class: "wb-head-text" }, h("h2", { text: title }), h("p", { text: lede })), h("div", { class: "view-actions" }, actions));
+// `ask` is the area's "Ask an agent" button, which stands first.
+export function areaHead({ title, lede, actions = [], ask }) {
+  return h("header", { class: "wb-head" }, h("div", { class: "wb-head-text" }, h("h2", { text: title }), h("p", { text: lede })), h("div", { class: "view-actions" }, ask, actions));
 }
 
 // A tool card with its own plain wording and starting values. `caution` marks tools that delete things: they still only open the sheet.

@@ -26,6 +26,7 @@
 .callout-text p { font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }
 .callout-text .aside { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .callout-text .aside .link { font-weight: 650; }
+.callout-text > .view-actions { margin-top: 6px; }
 a.health-callout { align-items: center; transition: transform 0.25s var(--spring), border-color 0.2s; }
 a.health-callout:hover { border-color: var(--tone); transform: translateX(4px); }
 a.health-callout > svg { color: var(--ink-faint); }

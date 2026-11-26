@@ -22,7 +22,7 @@ function modelList(rows) {
 
 const running = (data) => h("div", { class: "wb-server-head" }, statusPill("Running", "good", "check"), copyChip(data.host), data.errors.length > 0 && h("span", { class: "dim", text: "Some details couldn't be read just now." }));
 
-export function createLocalArea({ activity, tools }, { setStatus, failStatus }) {
+export function createLocalArea({ activity, tools }, { setStatus, failStatus, ask }) {
   const seen = {};
   // A panel that did not load reports `up` as null, so what it said before is no longer counted. With no server known to be running, the strip then says it could not check.
   function report(name, up, installed) {
@@ -118,6 +118,7 @@ export function createLocalArea({ activity, tools }, { setStatus, failStatus }) 
     "div",
     { class: "wb-area" },
     areaHead({
+      ask,
       title: "Local models", lede: "Run AI models on this machine instead of a cloud service, so nothing you ask leaves your computer.",
       actions: [toolButton(tools, SERVE, { label: "Start a model server", glyph: "play", tone: "primary" })],
     }),

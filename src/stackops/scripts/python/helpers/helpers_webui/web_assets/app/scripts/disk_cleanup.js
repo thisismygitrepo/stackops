@@ -184,7 +184,12 @@ export function createDiskCleanup({ activity }) {
   async function clean() {
     const items = chosen().sort((left, right) => right.bytes - left.bytes);
     if (items.length === 0) return;
-    if (!(await confirmCleanup({ items, bytes: total(items) }))) return;
+    const ask = agentButton(
+      activity,
+      { title: "Confirm cleanup", commands: ["utils machine clean-drive"], notes: [`About to be emptied for good: ${items.map((target) => target.title).join(", ")}.`], ideas: ["Is it safe to remove these?"] },
+      { small: true },
+    );
+    if (!(await confirmCleanup({ items, bytes: total(items), ask }))) return;
     // The task takes a moment to start. The tray stays away until its banner is up, so the same places are not sent twice.
     starting = true;
     paintTotals();

@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { confirmAction } from "../../../overlays.js";
 import { editFile } from "../../../space_kit.js";
 import { button, copyChip, iconButton } from "../../../widgets.js";
@@ -112,5 +113,16 @@ export function createActions({ activity, read, reload, onChange }) {
     busy: () => starting || run?.phase === "running",
     install: (app, name) => activity.start({ title: `Install ${name}`, emoji: "📦", arguments: ["devops", "software", "install", app], interactive: true, reveal: true }).catch((error) => toast(error.message)),
     openFile: (file) => editFile(activity, { title: shortPath(file.path), kind: "file", path: file.path }),
+    // The button that stands beside a profile's "Open in editor".
+    askAbout: (file) =>
+      agentButton(
+        activity,
+        {
+          title: shortPath(file.path), commands: [TOOL_PATH], files: [{ label: "the shell profile", path: file.path }],
+          about: "A shell reads its profile each time a terminal opens. One line in it loads StackOps' short commands, prompt and history search.",
+          ideas: ["Explain what this profile loads, line by line", "Add this to my profile: …"],
+        },
+        { small: true },
+      ),
   };
 }

@@ -1,5 +1,6 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "./agent_ask.js";
 import { QUICK_TASKS, SPACES } from "./catalog.js";
 import { software } from "./data.js";
 import { closeAll, openDialog } from "./overlays.js";
@@ -13,7 +14,7 @@ const RECENT_KEY = "stackops-webui-recent";
 // Tools that have a guided page of their own: search lands there instead of on the bare tool.
 const GUIDED_TOOLS = { "utils machine clean-drive": "#/machine/cleanup", "devops security status": "#/security", "devops security history": "#/security/scans", "devops self status": "#/machine" };
 
-export function createSpotlight({ tools }) {
+export function createSpotlight({ activity, tools }) {
   const fixed = [
     ...SPACES.map((space) => ({ group: "Pages", title: space.title, hint: "Go to this page", lead: () => glyphTile(space.glyph, 245, 34), go: () => (location.hash = space.hash) })),
     ...[...state.nodes.values()]
@@ -118,7 +119,17 @@ export function createSpotlight({ tools }) {
     dialog.body.append(
       h("div", { class: "spot-field" }, icon("search", 20), input, h("kbd", { text: "Esc" })),
       list,
-      h("div", { class: "spot-foot" }, h("span", {}, h("kbd", { text: "↑" }), h("kbd", { text: "↓" }), " to move"), h("span", {}, h("kbd", { text: "↵" }), " to open")),
+      h(
+        "div",
+        { class: "spot-foot" },
+        h("span", {}, h("kbd", { text: "↑" }), h("kbd", { text: "↓" }), " to move"),
+        h("span", {}, h("kbd", { text: "↵" }), " to open"),
+        // The box opens with what was typed here, so a search that finds nothing is one press from being a question.
+        agentButton(activity, () => ({
+          title: "Search", commands: state.boot.tree.children.map((child) => child.path), request: input.value.trim(),
+          about: "The web UI's search box, where a person types what they want to do and is shown the pages, apps and tools that match.",
+        })),
+      ),
     );
     search();
     input.focus();

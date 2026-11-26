@@ -38,7 +38,7 @@ async function inspect(kind, place, fresh) {
   }
 }
 
-export function createSetupArea({ activity, tools }, { setStatus, failStatus }) {
+export function createSetupArea({ activity, tools }, { setStatus, failStatus, ask }) {
   function cell(check, kind, place) {
     const preset = { kind: check.kind, source: check.place };
     const broken = check.verdict === "broken";
@@ -94,6 +94,7 @@ export function createSetupArea({ activity, tools }, { setStatus, failStatus }) 
     "div",
     { class: "wb-area" },
     areaHead({
+      ask,
       title: "Setup and cleanup", lede: "Get a project ready for agents, keep the lists they draw from in order, and see what a clean slate would remove.",
       actions: [toolButton(tools, "agents init", { label: "Set up a project", glyph: "plus", tone: "primary" })],
     }),

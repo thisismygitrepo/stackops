@@ -15,7 +15,7 @@ const WAYS = {
 
 // The last stop before anything is ended: every process by name, what stopping it costs, and the way it will be stopped.
 // Resolves to null when the person backs out, or to `{ processes, force }` with the processes in the order they will be stopped.
-export function confirmStop({ processes, force }) {
+export function confirmStop({ processes, force, ask }) {
   const dialog = openDialog({ label: "Stop processes", size: "procs-confirm" });
   const chosen = new Set(processes);
   // What the chosen ones started and would leave running: stopping a process does not stop these with it.
@@ -80,7 +80,7 @@ export function confirmStop({ processes, force }) {
     list,
     familyRow,
     agreeRow,
-    h("div", { class: "dialog-actions" }, button({ label: processes.length === 1 ? "Keep it running" : "Keep them running", onclick: () => dialog.close(null) }), go),
+    h("div", { class: "dialog-actions" }, ask, button({ label: processes.length === 1 ? "Keep it running" : "Keep them running", onclick: () => dialog.close(null) }), go),
   );
   paint();
   return dialog.closed.then((answer) => answer ?? null);

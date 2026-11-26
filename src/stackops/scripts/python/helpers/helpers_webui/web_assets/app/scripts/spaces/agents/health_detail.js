@@ -36,7 +36,7 @@ function limitsFold(agent) {
 }
 
 // One agent, swapped in where the list was: what is wrong first, then everything it uses, one kind at a time.
-export function renderDetail({ agent, kind, view, tools, previous, next }) {
+export function renderDetail({ agent, kind, view, activity, tools, previous, next }) {
   const term = () => view.term.trim().toLowerCase();
   const passes = (item) => (view.showEmpty || item.present) && (view.origins.size === 0 || view.origins.has(item.origin)) && matchesTerm(item, term());
   const ofKind = (id) => agent.items.filter((item) => item.kind === id);
@@ -89,8 +89,8 @@ export function renderDetail({ agent, kind, view, tools, previous, next }) {
     emptyCount.textContent = String(emptyPlaces);
     const hosts = chosen === "server" ? agent.items.filter((item) => item.kind === "configuration" && item.holdsServers && (view.showEmpty || item.present)) : [];
     holder.replaceChildren(
-      renderResources({ agent, kind: chosen, items: all.filter(passes), term: term(), hiddenEmpty: view.showEmpty ? 0 : emptyPlaces, onShowEmpty: () => showEmpty(true) }),
-      ...(hosts.length > 0 ? [sectionHead("Files that can list tool servers"), renderResources({ agent, kind: "configuration", items: hosts, term: "", hiddenEmpty: 0 })] : []),
+      renderResources({ activity, agent, kind: chosen, items: all.filter(passes), term: term(), hiddenEmpty: view.showEmpty ? 0 : emptyPlaces, onShowEmpty: () => showEmpty(true) }),
+      ...(hosts.length > 0 ? [sectionHead("Files that can list tool servers"), renderResources({ activity, agent, kind: "configuration", items: hosts, term: "", hiddenEmpty: 0 })] : []),
     );
   }
 

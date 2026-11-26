@@ -47,7 +47,7 @@ function weekChart(notes, monday) {
   );
 }
 
-export function createBrainArea({ tools }, { setStatus, failStatus }) {
+export function createBrainArea({ tools }, { setStatus, failStatus, ask: askAgent }) {
   let fromBrain = true;
   const question = h("input", { class: "wb-ask-input", type: "text", placeholder: "Ask a quick question…", "aria-label": "Your question", autocomplete: "off" });
   const toggle = h("button", { class: "mini-toggle", type: "button", role: "switch", "aria-checked": "true" }, h("i", { class: "switch" }), h("span", { text: "Answer from my Second Brain" }));
@@ -140,7 +140,7 @@ export function createBrainArea({ tools }, { setStatus, failStatus }) {
   const element = h(
     "div",
     { class: "wb-area" },
-    areaHead({ title: "Second Brain", lede: "A shared notebook your agents keep: what they worked on and what they learned, ready for the next one — or for you to ask.", actions: [resume] }),
+    areaHead({ ask: askAgent, title: "Second Brain", lede: "A shared notebook your agents keep: what they worked on and what they learned, ready for the next one — or for you to ask.", actions: [resume] }),
     h("div", { class: "wb-ask" }, icon("chat", 20), question, toggle, button({ label: "Ask", glyph: "sparkle", tone: "primary", onclick: ask })),
     panel.element,
     actionBlock(tools, "Look after it", ACTIONS),

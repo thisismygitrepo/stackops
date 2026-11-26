@@ -1,5 +1,6 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
 import { capture, markStale } from "../data.js";
 import { confirmAction, openDialog } from "../overlays.js";
 import { button } from "../widgets.js";
@@ -21,6 +22,11 @@ export async function removeApp(app, activity) {
   }
   const sure = await confirmAction({
     title: `Delete ${app.name}?`, confirm: "Delete", tone: "danger",
+    ask: agentButton(
+      activity,
+      { title: `Delete ${app.name}`, commands: ["devops software uninstall"], notes: [app.removal_command ? `Deleting it runs “${app.removal_command}”.` : `Deleting it removes ${app.binary}.`], ideas: ["What do I lose if I delete this app?"] },
+      { small: true },
+    ),
     body: app.removal_command
       ? `This runs “${app.removal_command}” on this machine. It shows in Activity, where you can answer what it asks, such as your password. Settings and data the app keeps elsewhere stay. You can install it again from here.`
       : `${tildify(app.binary, home)} is deleted from this machine. Settings and data the app keeps elsewhere stay. You can install it again from here.`,

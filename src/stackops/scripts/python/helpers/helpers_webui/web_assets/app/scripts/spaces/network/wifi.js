@@ -101,7 +101,8 @@ function createWifiPage({ activity, tools }, preset) {
     if (overview === null || overview.connect_blocker !== "") return;
     let body = { kind, name };
     if (kind === "new") {
-      const given = await askForNetwork({ name });
+      const ask = agentButton(activity, { title: "Join a network", commands: [PATHS.wifi], notes: name ? [`The network being joined is “${name}”.`] : [], ideas: ["Why won't this network let me in?"] }, { small: true });
+      const given = await askForNetwork({ name, ask });
       if (given === null) return;
       body = { kind, ...given };
     }

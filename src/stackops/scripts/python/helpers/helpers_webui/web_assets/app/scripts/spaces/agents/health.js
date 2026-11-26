@@ -8,7 +8,7 @@ import { prepare } from "./health_model.js";
 import { renderOverview } from "./health_overview.js";
 
 // The address is #/agents/health for everyone, #/agents/health/<agent> for one, and #/agents/health/<agent>/<kind> for one kind of thing it uses.
-export function createHealthSection({ tools }) {
+export function createHealthSection({ activity, tools }) {
   const view = { filter: null, term: "", origins: new Set(), showEmpty: false };
   const holder = h("div", { class: "health" });
   let agents = null;
@@ -22,7 +22,7 @@ export function createHealthSection({ tools }) {
     // A kind tab goes through the address, and that rebuilds the agent's view, so a tab pressed with the keyboard is given its focus back.
     // A design choice: the rest of the view (the rows shown, an open fold) starts over on a tab press and on a refresh, which keeps one way of painting.
     const onTab = holder.contains(document.activeElement) && document.activeElement.closest(".health-kinds");
-    holder.replaceChildren(agent ? renderDetail({ agent, kind: route[1], view, tools, previous: agents[index - 1], next: agents[index + 1] }) : renderOverview({ agents, view }));
+    holder.replaceChildren(agent ? renderDetail({ agent, kind: route[1], view, activity, tools, previous: agents[index - 1], next: agents[index + 1] }) : renderOverview({ agents, view }));
     if (onTab) holder.querySelector(`.health-kinds [aria-pressed="true"]`)?.focus({ preventScroll: true });
     if (key === shownKey) return;
     if (agent) replay(holder, "health-swap");

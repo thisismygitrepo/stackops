@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { capture, markStale } from "../../data.js";
 import { openDialog } from "../../overlays.js";
 import { button, pathChip, skeleton } from "../../widgets.js";
@@ -37,13 +38,18 @@ function changeLine(change, entries) {
 }
 
 // Shows what would change before anything does. Resolves to true once the thing is gone.
-export function removeResource({ agent, row }) {
+export function removeResource({ activity, agent, row }) {
   const label = KIND_BY_ID[row.kind];
   let busy = false;
   const dialog = openDialog({ label: `Remove this ${label.one}`, size: "small removal", canDismiss: () => !busy });
   const area = h("div", { class: "removal-area" }, skeleton(2, "row"));
   const cancel = button({ label: "Cancel", onclick: () => dialog.close(false) });
   const confirm = button({ label: "Remove", glyph: "trash", tone: "danger", onclick: apply });
+  const ask = agentButton(
+    activity,
+    { title: `Remove this ${label.one}`, commands: ["agents reset"], files: row.path ? [{ label: `the ${label.one}`, path: row.path }] : [], notes: [`About to be removed from ${agent.name}: the ${label.one} “${row.name}”.`], ideas: ["What stops working if I remove this?"] },
+    { small: true },
+  );
   let chosen = null;
   confirm.disabled = true;
 
@@ -74,7 +80,7 @@ export function removeResource({ agent, row }) {
     }
   }
 
-  dialog.body.append(h("h2", { text: `Remove this ${label.one}?` }), h("code", { class: "removal-name", text: row.name }), area, h("div", { class: "dialog-actions" }, cancel, confirm));
+  dialog.body.append(h("h2", { text: `Remove this ${label.one}?` }), h("code", { class: "removal-name", text: row.name }), area, h("div", { class: "dialog-actions" }, ask, cancel, confirm));
   planRemoval(agent, row).then(
     (found) => {
       if (!found) return stop(`A reset has nothing of its own to take away here. This ${label.one} is built into ${agent.name}, or it comes from something else that has to be changed instead.`);

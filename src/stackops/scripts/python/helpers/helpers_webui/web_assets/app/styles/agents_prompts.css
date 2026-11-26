@@ -75,7 +75,7 @@
 .prompt-file-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
 .prompt-file > .dim { font-size: 12.5px; }
 .prompt-file .copy-chip { background: var(--panel-solid); }
-.prompt-file-actions { margin-top: 4px; }
+.prompt-file-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 
 @media (max-width: 860px) {
   .prompt-tools, .prompt-panes { display: block; height: auto; }

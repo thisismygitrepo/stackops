@@ -1,4 +1,5 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { markStale } from "../../data.js";
 import { createLivePanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
@@ -151,7 +152,8 @@ export function createPromptsSection({ activity, tools }) {
   list.addEventListener("keydown", step);
 
   const panel = createLivePanel({
-    title: "Saved prompts", path: "agents run-prompt", extra: ["--list", "--json"], tunable: false, actions: [places, newButton, filesButton],
+    title: "Saved prompts", path: "agents run-prompt", extra: ["--list", "--json"], tunable: false,
+    actions: [places, agentButton(activity, { title: "Saved prompts", commands: ["agents run-prompt"], settings: "prompts", ideas: ["Save a prompt that …"] }, { small: true }), newButton, filesButton],
     render: (data, { setCount }) => {
       // A refresh that brings back the same prompts keeps everyone's place instead of starting the page over.
       const fresh = JSON.stringify(data ?? null);

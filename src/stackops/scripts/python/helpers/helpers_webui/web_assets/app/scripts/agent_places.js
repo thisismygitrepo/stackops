@@ -60,6 +60,9 @@ export const PLACES = {
   },
 };
 
+// The place of the form a login is added or changed in. Like every place of the Vault it names no file and passes on nothing typed there.
+export const LOGIN_PLACE = { ...PLACES.vault, title: "A login in the vault", ideas: ["What do the parts of a login mean?", "How do I load this login into a terminal?"] };
+
 // What each kind of settings file holds and the commands that read it, by the name `devops config` gives the kind. The vault's kind is
 // not here: `filePlace` gives it the Vault page's place.
 const SETTINGS = {

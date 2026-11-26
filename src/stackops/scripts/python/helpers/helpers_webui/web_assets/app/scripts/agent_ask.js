@@ -1,4 +1,4 @@
-import { h } from "/assets/scripts/dom.js";
+import { h, toast } from "/assets/scripts/dom.js";
 import { briefingFor, describePlace } from "./agent_brief.js";
 import { createCombo } from "./combo.js";
 import { commandDetail } from "./data.js";
@@ -32,7 +32,7 @@ function openAsk(anchor, activity, place) {
   const { title, where } = describePlace(place);
   let agent = localStorage.getItem(AGENT_KEY) ?? "";
   let launching = false;
-  const box = h("textarea", { class: "text-input", rows: "3", placeholder: "What should it do, or explain?", "aria-label": "Your request", spellcheck: "true", value: drafts.get(where) ?? "" });
+  const box = h("textarea", { class: "text-input", rows: "3", placeholder: "What should it do, or explain?", "aria-label": "Your request", spellcheck: "true", value: place.request || drafts.get(where) || "" });
   const problem = h("span", { class: "tool-problem" });
   const send = button({ label: "Start chat", glyph: "chat", tone: "primary", small: true, title: "Enter starts it too. Shift and Enter make a new line.", onclick: start });
   // The agents are the ones the command takes. Nothing picked leaves the choice to the command, which uses the person's default agent.
@@ -65,7 +65,9 @@ function openAsk(anchor, activity, place) {
       });
       drafts.delete(where);
       // The chat is in the Activity panel, which a sheet or dialog would lie over: whatever the button stood in is put away with the box.
+      // A window that holds unsaved work stays, and the person is told where the chat is.
       closeAll();
+      if (document.querySelector(".backdrop:not(.closing)")) toast("The chat has started in the Activity panel, behind this window. Save or close the window to get to it.", "info");
     } catch (error) {
       launching = false;
       problem.textContent = error.message;

@@ -1,6 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
-import { confirmAction, openDialog } from "./overlays.js";
+import { confirmAction, openDialog, questionAsk } from "./overlays.js";
 import { button, pill } from "./widgets.js";
 
 // How long an editor gets to act on a key before it counts as still open.
@@ -65,13 +65,15 @@ async function saveAndClose(task) {
 }
 
 function askAboutUnsaved() {
-  const dialog = openDialog({ label: "Save before closing?", size: "small editor-ask" });
+  const question = { title: "Save before closing?", body: "The editor is still open. It stays open while a change is not saved." };
+  const dialog = openDialog({ label: question.title, size: "small editor-ask" });
   dialog.body.append(
-    h("h2", { text: "Save before closing?" }),
-    h("p", { text: "The editor is still open. It stays open while a change is not saved." }),
+    h("h2", { text: question.title }),
+    h("p", { text: question.body }),
     h(
       "div",
       { class: "dialog-actions" },
+      questionAsk(question),
       button({ label: "Keep editing", onclick: () => dialog.close("stay") }),
       button({ label: "Close without saving", tone: "danger", onclick: () => dialog.close("discard") }),
       button({ label: "Save and close", tone: "primary", onclick: () => dialog.close("save") }),

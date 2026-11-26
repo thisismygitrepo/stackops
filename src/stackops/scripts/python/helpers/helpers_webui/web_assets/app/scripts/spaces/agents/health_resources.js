@@ -37,14 +37,14 @@ function what(row, kind, term) {
 }
 
 // A row opens the file behind it in a window, and can be taken away. Under a shared file the window is offered once, on the file's own line.
-function line(agent, row, kind, term, grouped) {
+function line(activity, agent, row, kind, term, grouped) {
   const states = row.command ? [...row.states] : row.state ? [row.state] : [];
   const remove = async () => {
-    const removed = await removeResource({ agent, row });
+    const removed = await removeResource({ activity, agent, row });
     if (removed) item.classList.add("gone");
     return removed;
   };
-  const open = () => openResourceFile({ kind, origin: row.origin, path: row.path, status: row.state, remove: canRemove(row) && !grouped ? remove : null });
+  const open = () => openResourceFile({ activity, agent: agent.id, kind, origin: row.origin, path: row.path, status: row.state, remove: canRemove(row) && !grouped ? remove : null });
   const trash = canRemove(row) && iconButton("trash", `Remove this ${KIND_BY_ID[kind].one}`, remove);
   if (trash) trash.classList.add("danger");
   const item = h(
@@ -61,7 +61,7 @@ function line(agent, row, kind, term, grouped) {
 }
 
 // One kind of thing for one agent, laid out by where it comes from.
-export function renderResources({ agent, kind, items, term, hiddenEmpty, onShowEmpty }) {
+export function renderResources({ activity, agent, kind, items, term, hiddenEmpty, onShowEmpty }) {
   const label = KIND_BY_ID[kind];
   if (items.length === 0) {
     const all = agent.items.filter((item) => item.kind === kind);
@@ -86,10 +86,10 @@ export function renderResources({ agent, kind, items, term, hiddenEmpty, onShowE
       room -= rows.length;
       const shared = group.rows.length > 1;
       if (shared) {
-        const open = group.rows[0].reachable && button({ label: "Open", glyph: "eye", small: true, tone: "ghost", title: "Open this file", onclick: () => openResourceFile({ kind, origin: group.origin, path: group.path, status: null, remove: null }) });
+        const open = group.rows[0].reachable && button({ label: "Open", glyph: "eye", small: true, tone: "ghost", title: "Open this file", onclick: () => openResourceFile({ activity, agent: agent.id, kind, origin: group.origin, path: group.path, status: null, remove: null }) });
         nodes.push(h("li", { class: "health-source" }, icon("folder", 14), pathChip(group.path), originTag(group.origin), h("span", { class: "dim", text: `${plural(group.rows.length, kind === "hook" ? "command" : label.one)} from this file` }), open));
       }
-      nodes.push(...rows.map((row) => line(agent, row, kind, term, shared)));
+      nodes.push(...rows.map((row) => line(activity, agent, row, kind, term, shared)));
     }
     list.replaceChildren(...nodes);
     more.hidden = total <= limit;

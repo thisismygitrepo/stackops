@@ -68,7 +68,7 @@ function tabList(windows) {
   );
 }
 
-export function createBrowserArea({ tools }, { setStatus, failStatus }) {
+export function createBrowserArea({ tools }, { setStatus, failStatus, ask }) {
   const open = () => toolButton(tools, "agents browser launch", { label: "Open a browser", glyph: "plus", tone: "primary" });
 
   function card(item) {
@@ -106,6 +106,7 @@ export function createBrowserArea({ tools }, { setStatus, failStatus }) {
     "div",
     { class: "wb-area" },
     areaHead({
+      ask,
       title: "Browser automation", lede: "Give an agent a real browser to work in. It gets its own profile, so your everyday browsing stays separate.",
       actions: [toolButton(tools, "agents browser install", { label: "Set up browser tools", glyph: "download" }), open()],
     }),

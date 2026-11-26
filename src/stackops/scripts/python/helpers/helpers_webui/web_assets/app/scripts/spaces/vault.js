@@ -1,7 +1,7 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
 import { agentButton } from "../agent_ask.js";
-import { filePlace, PLACES } from "../agent_places.js";
+import { filePlace, LOGIN_PLACE, PLACES } from "../agent_places.js";
 import { markStale } from "../data.js";
 import { partLoaders } from "../features.js";
 import { createPanel } from "../live_panel.js";
@@ -58,10 +58,10 @@ export function createVaultSpace(context) {
   const shownLogins = () => vault.logins.filter((login) => (place === EVERYWHERE || login.source === place) && (!term || login.haystack.includes(term)));
   // The login a save just wrote is the one to look at once the list is back.
   const pick = (saved) => (selected = keyOf(saved));
-  const add = () => addLogin({ place: place === EVERYWHERE ? "user" : place, reveal, onSaved: pick }).catch((error) => toast(error.message));
+  const add = () => addLogin({ place: place === EVERYWHERE ? "user" : place, reveal, ask: agentButton(activity, LOGIN_PLACE, { small: true }), onSaved: pick }).catch((error) => toast(error.message));
 
   function edit(login) {
-    openLoginEditor({ login, sources: vault.sources, reveal, onSaved: pick });
+    openLoginEditor({ login, sources: vault.sources, reveal, ask: agentButton(activity, LOGIN_PLACE, { small: true }), onSaved: pick });
   }
 
   async function remove(login) {

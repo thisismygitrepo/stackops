@@ -1,10 +1,12 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { api, initState, state } from "/assets/scripts/state.js";
 import { createActivity } from "./activity.js";
+import { agentButton } from "./agent_ask.js";
+import { PLACES } from "./agent_places.js";
 import { SPACES } from "./catalog.js";
 import { createGuides } from "./features.js";
 import { installPointerEffects, replay } from "./motion.js";
-import { closeAll } from "./overlays.js";
+import { closeAll, setQuestionAsk } from "./overlays.js";
 import { createShell } from "./shell.js";
 import { createAgentsSpace } from "./spaces/agents.js";
 import { createAppsSpace } from "./spaces/apps.js";
@@ -39,10 +41,22 @@ async function start() {
   installPointerEffects();
   const spaces = {};
   const activity = createActivity();
+  // A yes/no question tells the agent its own words, which say what answering yes would do. One asked on the Vault page comes with that
+  // page's word on secrets, since such a question can name the vault file.
+  setQuestionAsk(({ title, body }) =>
+    agentButton(
+      activity,
+      () => ({
+        title: title.replace(/\?$/, ""), ideas: ["Explain what this would do before I decide"],
+        notes: [...(location.hash.startsWith("#/vault") ? PLACES.vault.notes : []), `The web UI is asking the person: ${title} ${body}`],
+      }),
+      { small: true },
+    ),
+  );
   // Filled in once `context` exists: a purpose-built view is handed the same things a page is, the tool sheet among them.
   const guides = {};
   const tools = createToolSheet({ activity, guides });
-  const spotlight = createSpotlight({ tools });
+  const spotlight = createSpotlight({ activity, tools });
   const context = { activity, tools, openSearch: spotlight.open };
   Object.assign(guides, createGuides(context));
   Object.assign(spaces, {

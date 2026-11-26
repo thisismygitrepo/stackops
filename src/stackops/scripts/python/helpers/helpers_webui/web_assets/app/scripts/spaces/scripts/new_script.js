@@ -1,12 +1,14 @@
 import { h, tildify } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { PLACES } from "../../agent_places.js";
 import { openDialog } from "../../overlays.js";
 import { button, field, glyphTile, iconButton, segmented, textBox } from "../../widgets.js";
 import { PLACE_BLURBS, canChange, kindOf, newKinds, placeLabel } from "./words.js";
 
 // The form a script is added from. `places` are the folders one can be added to, as the server lists them, and `place` is the one to start on.
 // The script is made with one line that says what it does and one that shows it ran; `onCreated` is handed where it is, to open it for editing.
-export function openNewScript({ places, place, onCreated }) {
+export function openNewScript({ activity, places, place, onCreated }) {
   const kinds = newKinds();
   let target = places.find((candidate) => candidate.name === place) ?? places.find((candidate) => candidate.name === "user");
   let suffix = kinds[0][0];
@@ -67,14 +69,14 @@ export function openNewScript({ places, place, onCreated }) {
       h("div", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: "Keep it in" })), places.length > 1 && placePicker.element, where),
     ),
     // The foot is laid out by the vault form's rule (vault.css).
-    h("footer", { class: "vault-form-foot" }, problem, button({ label: "Cancel", onclick: () => dialog.dismiss() }), create),
+    h("footer", { class: "vault-form-foot" }, agentButton(activity, { ...PLACES.scripts, title: "New script" }, { small: true }), problem, button({ label: "Cancel", onclick: () => dialog.dismiss() }), create),
   );
   paint();
   name.focus();
 }
 
 // A new script, in the place being looked at when one can be added there and in the user's own otherwise. The places are read first.
-export async function addScript({ place, onCreated }) {
+export async function addScript({ activity, place, onCreated }) {
   const { places } = await api.scripts(state.settings.workingDirectory);
-  openNewScript({ places: places.filter((candidate) => canChange(candidate.name)), place, onCreated });
+  openNewScript({ activity, places: places.filter((candidate) => canChange(candidate.name)), place, onCreated });
 }

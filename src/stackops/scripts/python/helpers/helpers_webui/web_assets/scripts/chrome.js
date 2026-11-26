@@ -1,4 +1,5 @@
 import { VIEW_KEY } from "/assets/app/scripts/catalog.js";
+import { createAgentAsk } from "./agent_ask.js";
 import { createThemeButton } from "./theme_button.js";
 import { debounce, h, icon, tildify, toast } from "./dom.js";
 import { api, lineage, nodeHash, on, setSetting, state } from "./state.js";
@@ -155,5 +156,5 @@ export function createTopbar({ dock }) {
     { class: "icon-button menu-button", title: "Show navigation", "aria-label": "Show navigation", onclick: () => document.querySelector(".shell").classList.toggle("rail-open") },
     icon("menu", 16),
   );
-  return { element: h("header", { class: "topbar" }, menuButton, crumbs, directoryButton, directoryInput, attachPathCompletion(directoryInput), runButton), setCrumbs };
+  return { element: h("header", { class: "topbar" }, menuButton, crumbs, createAgentAsk({ dock }).element, directoryButton, directoryInput, attachPathCompletion(directoryInput), runButton), setCrumbs };
 }

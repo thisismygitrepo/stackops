@@ -143,7 +143,12 @@ function createUpdatePage({ activity, tools }, preset) {
       state = await readState();
       paint();
       if (blockerOf(state, latest, options)) return;
-      if ((options.settings || options.developer) && !(await confirmUpdate({ state, effects, options }))) return;
+      const ask = agentButton(
+        activity,
+        { title: "Confirm the update", commands: [UPDATE_PATH], notes: [`The update about to run is \`stackops ${runArguments(options).join(" ")}\`.`], ideas: ["What will this update change on my machine?"] },
+        { small: true },
+      );
+      if ((options.settings || options.developer) && !(await confirmUpdate({ state, effects, options, ask }))) return;
       const before = snapshot(state);
       const task = await activity.start({ title: UPDATE_TITLE, emoji: "🔄", arguments: runArguments(options), interactive: true, reveal: true });
       run = { phase: "running", id: task.id, before };

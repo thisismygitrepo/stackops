@@ -1,4 +1,5 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { recall, remember } from "../../../memory.js";
 import { replay } from "../../../motion.js";
 import { button, notice, skeleton } from "../../../widgets.js";
@@ -13,7 +14,7 @@ import { carryOut } from "./stopping.js";
 import { createSummary } from "./summary.js";
 import { COLUMNS, createTable } from "./table.js";
 import { createToolbar } from "./toolbar.js";
-import { REFRESH_MILLISECONDS, givenFilters } from "./words.js";
+import { REFRESH_MILLISECONDS, TOOL_PATH, givenFilters } from "./words.js";
 
 const MEMORY_ID = "machine processes";
 const ROW_STEP = 100;
@@ -170,7 +171,12 @@ export function createProcessesPage({ activity, tools }) {
 
   async function stop(processes, force) {
     if (state.stopping || state.ended || processes.length === 0) return;
-    const answer = await confirmStop({ processes, force });
+    const ask = agentButton(
+      activity,
+      { title: "Stop processes", commands: [TOOL_PATH], notes: [`About to be stopped${force ? " by force" : ""}: ${processes.map((item) => `${item.name} (process ID ${item.pid})`).join(", ")}.`], ideas: ["Is it safe to stop these?"] },
+      { small: true },
+    );
+    const answer = await confirmStop({ processes, force, ask });
     if (!answer) return;
     state.stopping = true;
     paintTray();

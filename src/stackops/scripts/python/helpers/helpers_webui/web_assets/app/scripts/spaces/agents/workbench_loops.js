@@ -14,7 +14,7 @@ const TIDY = [
   { path: "agents iter status", title: "Inspect every loop", blurb: "Each loop with its tabs, and which of them are safe to close.", preset: { all_workspaces: "on" } },
 ];
 
-export function createLoopsArea({ tools }, { setStatus, failStatus }) {
+export function createLoopsArea({ tools }, { setStatus, failStatus, ask }) {
   const clearButton = (count) => button({ label: `Clear ${plural(count, "old record")}`, glyph: "trash", small: true, onclick: () => tools.open("agents iter clean", { preset: PREVIEW_ALL }) });
 
   function loopCard(loop) {
@@ -70,7 +70,7 @@ export function createLoopsArea({ tools }, { setStatus, failStatus }) {
     },
   });
 
-  const element = h("div", { class: "wb-area" }, areaHead({ title: "Loops", lede: "Let agents work in rounds until a goal is met." }), loops.element, actionBlock(tools, "Tidy up loops", TIDY));
+  const element = h("div", { class: "wb-area" }, areaHead({ ask, title: "Loops", lede: "Let agents work in rounds until a goal is met." }), loops.element, actionBlock(tools, "Tidy up loops", TIDY));
   return {
     element,
     show() {

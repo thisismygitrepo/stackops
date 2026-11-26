@@ -22,7 +22,7 @@ const ACTIONS = [
   { path: "agents add-mcp", title: "Connect an agent to it", blurb: "Add desktop control to an agent's tools so it can start using this computer.", preset: { requested_mcp_servers: HELPER } },
 ];
 
-export function createComputerArea({ activity, tools }, { setStatus, failStatus }) {
+export function createComputerArea({ activity, tools }, { setStatus, failStatus, ask }) {
   const turnOn = (tone) => toolButton(tools, CONTROL, { label: "Turn it on", glyph: "power", tone });
 
   function endpointCard(endpoint) {
@@ -93,7 +93,7 @@ export function createComputerArea({ activity, tools }, { setStatus, failStatus 
   const element = h(
     "div",
     { class: "wb-area" },
-    areaHead({ title: "Desktop control", lede: "Let an agent use this computer the way you do: look at the screen, click, type, and work in any app." }),
+    areaHead({ ask, title: "Desktop control", lede: "Let an agent use this computer the way you do: look at the screen, click, type, and work in any app." }),
     panel.element,
     actionBlock(tools, "Use it", ACTIONS),
   );

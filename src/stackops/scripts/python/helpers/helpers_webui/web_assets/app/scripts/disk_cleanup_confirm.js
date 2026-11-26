@@ -6,7 +6,8 @@ import { button, glyphTile } from "./widgets.js";
 import { plural } from "./words.js";
 
 // The last stop before anything is deleted: every place by name, what is lost with it, and the total. Resolves to true only on an explicit yes.
-export function confirmCleanup({ items, bytes }) {
+// `ask` is the page's "Ask an agent" button for this question.
+export function confirmCleanup({ items, bytes, ask }) {
   const dialog = openDialog({ label: "Confirm cleanup", size: "cleanup-confirm" });
   const count = plural(items.length, "place");
   const risky = items.filter((target) => target.risk === "danger");
@@ -44,7 +45,7 @@ export function confirmCleanup({ items, bytes }) {
       h("p", {}, icon("clock", 15), h("span", { text: "Each place is emptied as it is right now, including anything added since it was measured." })),
       risky.length > 0 && h("label", { class: "confirm-ack" }, agree, h("span", { text: `I understand that ${risky.length === 1 ? "the place" : "the places"} marked Risky cannot be recovered.` })),
     ),
-    h("div", { class: "dialog-actions" }, button({ label: "Keep everything", onclick: () => dialog.close(false) }), go),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Keep everything", onclick: () => dialog.close(false) }), go),
   );
   return dialog.closed.then((answer) => answer === true);
 }

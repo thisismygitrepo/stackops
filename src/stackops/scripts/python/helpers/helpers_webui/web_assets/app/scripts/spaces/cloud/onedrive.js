@@ -1,5 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { on, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { button, notice, pill, skeleton } from "../../widgets.js";
 import { formatBytes, humanize } from "../../words.js";
 import { createAccountsBar, createSignIn, openAddAccount } from "./onedrive_accounts.js";
@@ -70,6 +71,8 @@ function createStorage({ onSignIn }) {
 
 export function createPart(context) {
   const { activity, tools } = context;
+  // The "Ask an agent" button of one of this page's forms, by the OneDrive command the form stands for.
+  const askAbout = (command) => agentButton(activity, { commands: [`cloud onedrive ${command}`] }, { small: true });
   let accounts = null;
   let reading = null;
   let stale = false;
@@ -84,8 +87,8 @@ export function createPart(context) {
   const signIn = createSignIn({ activity, onDone: (account) => signedIn(account) });
   const storage = createStorage({ onSignIn: (account) => renew(account) });
   const files = createFiles({
-    onUpload: ({ account, folder: where, names }) => openUpload({ account, folder: where, names, transfers, onDone: () => (files.changed(account, where), storage.load(account)) }),
-    onDownload: (target) => openDownload({ ...target, transfers }),
+    onUpload: ({ account, folder: where, names }) => openUpload({ account, folder: where, names, transfers, ask: askAbout("upload"), onDone: () => (files.changed(account, where), storage.load(account)) }),
+    onDownload: (target) => openDownload({ ...target, transfers, ask: askAbout("download") }),
     onDelete: (target) => deleteItem({ ...target, onDone: () => (files.changed(target.account, parentOf(target.path)), storage.load(target.account)) }),
     onSignIn: (account) => renew(account),
     // The drive answers again, so a size that could not be read before is asked for once more.
@@ -106,7 +109,7 @@ export function createPart(context) {
   on("data-stale", () => (stale = true));
 
   function addAccountDialog() {
-    openAddAccount({ taken: (accounts ?? []).map((account) => account.name), onAdded: (name) => ((stale = true), (location.hash = addressOf(name)), paint()) });
+    openAddAccount({ taken: (accounts ?? []).map((account) => account.name), ask: askAbout("add-account"), onAdded: (name) => ((stale = true), (location.hash = addressOf(name)), paint()) });
   }
 
   function renew(account) {
@@ -208,8 +211,8 @@ export function createPart(context) {
     if (command === "list" && remote) location.hash = addressOf(account.name, remote);
     if (command === "search" && typeof preset.query === "string" && preset.query) files.search(preset.query);
     else if (command === "search") files.focusSearch();
-    if (command === "upload") openUpload({ account: account.name, folder, names: [], preset: typeof preset.local_path === "string" ? preset.local_path : "", transfers, onDone: () => (files.changed(account.name, folder), storage.load(account.name)) });
-    if (command === "download" && remote && remote !== "/") openDownload({ account: account.name, path: remote, item: { name: nameOf(remote), type: "file", size: null }, transfers });
+    if (command === "upload") openUpload({ account: account.name, folder, names: [], preset: typeof preset.local_path === "string" ? preset.local_path : "", transfers, ask: askAbout("upload"), onDone: () => (files.changed(account.name, folder), storage.load(account.name)) });
+    if (command === "download" && remote && remote !== "/") openDownload({ account: account.name, path: remote, item: { name: nameOf(remote), type: "file", size: null }, transfers, ask: askAbout("download") });
   }
 
   announce({ act });

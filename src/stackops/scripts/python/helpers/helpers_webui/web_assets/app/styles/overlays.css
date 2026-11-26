@@ -25,6 +25,8 @@
 .dialog.small h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
 .dialog.small p { overflow-wrap: anywhere; color: var(--ink-soft); }
 .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+/* "Ask an agent" at the head of a row of answers stands apart from them, at the row's other end. */
+:is(.dialog-actions, .vault-form-foot) > .btn.agent.small:first-child { margin-right: auto; }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(-14px) scale(0.95); } }
 @keyframes dialog-out { to { opacity: 0; transform: translateY(-8px) scale(0.97); } }
 
@@ -61,6 +63,8 @@
 .spot-empty { padding: 36px; text-align: center; color: var(--ink-faint); }
 .spot-foot { display: flex; gap: 16px; padding: 10px 20px; font-size: 12px; color: var(--ink-faint); border-top: 1px solid var(--line); }
 .spot-foot kbd { margin-right: 3px; }
+.spot-foot { align-items: center; }
+.spot-foot .btn.agent { height: 30px; margin-left: auto; padding: 0 11px; font-size: 12.5px; border-radius: 10px; }
 
 .tool-head { display: flex; align-items: flex-start; gap: 16px; padding-right: 36px; }
 .tool-head h1, .app-detail-head h1 { font-size: 26px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.15; }

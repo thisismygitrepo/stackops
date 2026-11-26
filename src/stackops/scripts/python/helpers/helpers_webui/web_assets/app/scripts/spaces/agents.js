@@ -44,7 +44,7 @@ export function createAgentsSpace(context) {
     prompts: createPromptsSection(context),
     health: createHealthSection(context),
   };
-  const workbench = createWorkbench(context);
+  const workbench = createWorkbench(context, (id) => agentButton(context.activity, PLACES[id], { small: true }));
   const left = {};
   let current = null;
   let here = "running";

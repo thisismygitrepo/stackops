@@ -10,7 +10,7 @@ const WAYS = [
 ];
 
 // Asks how to run a tunnel and says what running it puts on the internet, before anything starts. Resolves to the way picked, or null.
-export function askHowToRun({ tunnel, local }) {
+export function askHowToRun({ tunnel, local, ask }) {
   const dialog = openDialog({ label: `Run ${titleOf(tunnel)}` });
   let way = "task";
   const named = tunnel.routes.filter((route) => route.hostname);
@@ -29,7 +29,7 @@ export function askHowToRun({ tunnel, local }) {
     !tunnel.hasCredentials && reason("No credentials file for this tunnel was found in ~/.cloudflared. Unless the configuration points to one somewhere else, it will not start."),
     (tunnel.running.length > 0 || tunnel.asService) && reason("A copy of this tunnel already runs on this machine. A second one works, and adds four more connections from the same place."),
     ways.element,
-    h("div", { class: "dialog-actions" }, button({ label: "Cancel", onclick: () => dialog.close(null) }), button({ label: "Run the tunnel", glyph: "play", tone: "primary", onclick: () => dialog.close(way) })),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Cancel", onclick: () => dialog.close(null) }), button({ label: "Run the tunnel", glyph: "play", tone: "primary", onclick: () => dialog.close(way) })),
   );
   return dialog.closed.then((answer) => answer ?? null);
 }

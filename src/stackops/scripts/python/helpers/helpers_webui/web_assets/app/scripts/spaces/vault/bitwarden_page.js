@@ -1,6 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { agentButton } from "../../agent_ask.js";
-import { PLACES } from "../../agent_places.js";
+import { LOGIN_PLACE, PLACES } from "../../agent_places.js";
 import { markStale, staleKeeper } from "../../data.js";
 import { confirmAction } from "../../overlays.js";
 import { button, skeleton } from "../../widgets.js";
@@ -47,7 +47,7 @@ function createBitwardenPage({ activity, tools }) {
     showKey: () => showInList({ term: state.login_name }),
     addKey: () =>
       addLogin({
-        title: "Add your Bitwarden API key", place: "user",
+        title: "Add your Bitwarden API key", place: "user", ask: agentButton(activity, LOGIN_PLACE, { small: true }),
         preset: { name: state.login_name, description: "API key the Bitwarden command-line program signs in with.", secrets: [{ name: "api-login", tags: [], scopes: [], values: KEY_NAMES.map((key) => ({ key, json: false })) }] },
       }).catch((error) => toast(error.message)),
     unlock: (account) => act("unlock", ["login-and-unlock", ...(account ? ["--account-name", account] : [])], "Bitwarden is unlocked.", "Unlock did not work"),

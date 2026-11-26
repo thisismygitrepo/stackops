@@ -1,5 +1,7 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { LOGIN_PLACE } from "../../agent_places.js";
 import { createCombo } from "../../combo.js";
 import { query } from "../../data.js";
 import { confirmAction, openDialog } from "../../overlays.js";
@@ -22,13 +24,14 @@ export function createScanStarter({ activity }) {
       if (add) addKey();
       return;
     }
-    if (!(await confirmAction({ title: `${title}?`, body, confirm: "Start the scan" }))) return;
+    const ask = agentButton(activity, { title, commands: [SCAN_COMMAND.join(" ")], notes: [body], ideas: ["What gets sent to VirusTotal, and what does it use up?"] }, { small: true });
+    if (!(await confirmAction({ title: `${title}?`, body, confirm: "Start the scan", ask }))) return;
     await activity.start({ title, emoji: "🦠", arguments: [...SCAN_COMMAND, ...scanArguments], interactive: true, reveal: true });
   }
   const guarded = (...parameters) => start(...parameters).catch((error) => toast(error.message));
 
   // The Vault page's form, started as the login a scan looks for: what is left to fill in is the account and the key itself.
-  const addKey = () => addLogin({ preset: { name: "virusTotal", secrets: [{ name: "api-key", values: [{ key: "API_KEY", json: false }] }] }, title: "Add a VirusTotal key" }).catch((error) => toast(error.message));
+  const addKey = () => addLogin({ preset: { name: "virusTotal", secrets: [{ name: "api-key", values: [{ key: "API_KEY", json: false }] }] }, title: "Add a VirusTotal key", ask: agentButton(activity, LOGIN_PLACE, { small: true }) }).catch((error) => toast(error.message));
   const apps = (names) => guarded(names.length === 1 ? `Scan ${names[0]}` : `Scan ${plural(names.length, "app")}`, `${WHAT_HAPPENS}${names.length > 4 ? PACE : ""}`, [names.join(",")]);
   const everything = () => guarded("Scan every installed app", `${WHAT_HAPPENS}${PACE}`, ["--all"]);
   const path = (file) => guarded(`Scan ${file.split(/[\\/]/).at(-1)}`, WHAT_HAPPENS, ["--path", file]);
@@ -57,7 +60,7 @@ export function createScanStarter({ activity }) {
       h("h2", { text: "Scan a file" }),
       h("p", { text: "Check any file on this machine, such as a download you are not sure about." }),
       combo.element,
-      h("div", { class: "dialog-actions" }, button({ label: "Cancel", onclick: () => dialog.close() }), button({ label: "Scan this file", glyph: "shield", tone: "primary", onclick: go })),
+      h("div", { class: "dialog-actions" }, agentButton(activity, { title: "Scan a file", commands: [SCAN_COMMAND.join(" ")], notes: [WHAT_HAPPENS] }, { small: true }), button({ label: "Cancel", onclick: () => dialog.close() }), button({ label: "Scan this file", glyph: "shield", tone: "primary", onclick: go })),
     );
     combo.input.focus();
   }

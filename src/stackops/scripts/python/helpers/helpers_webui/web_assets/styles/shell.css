@@ -59,6 +59,16 @@
 .cwd-edit { width: min(460px, 38vw); height: 28px; }
 .run-indicator { display: flex; align-items: center; gap: 7px; height: 28px; padding: 0 9px; font-size: 12.5px; color: var(--text-secondary); border-radius: 6px; }
 .run-indicator:hover { color: var(--text); background: var(--raised); }
+/* "Ask an agent" in the top bar, and the box it opens under itself (agent_ask.js). */
+.ask { position: relative; flex: none; }
+.ask-button { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; font-size: 12.5px; font-weight: 500; background: var(--accent-wash); border: 1px solid var(--border); border-radius: 6px; }
+.ask-button:hover { border-color: var(--accent); }
+.ask-button svg, .ask-about svg { color: var(--accent); }
+.ask-panel { position: absolute; top: 36px; right: 0; z-index: 30; display: grid; gap: 10px; width: min(420px, 86vw); padding: 14px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-pop); }
+.ask-about { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.ask-box { height: auto; min-height: 76px; padding: 8px 10px; font: inherit; resize: vertical; }
+.ask-foot { display: flex; gap: 8px; }
+.ask-foot .select { flex: 1; min-width: 0; }
 
 .dock { display: flex; flex: none; flex-direction: column; height: var(--dock-height, 320px); min-height: 0; background: var(--surface); border-top: 1px solid var(--hairline); }
 /* A height saved in a taller window is held to this one, with the same room left above as a drag leaves. */

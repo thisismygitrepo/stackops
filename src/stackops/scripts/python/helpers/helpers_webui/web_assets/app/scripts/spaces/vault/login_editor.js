@@ -11,7 +11,8 @@ import { PLACE_BLURBS, kindOf, listOf, placeLabel } from "./words.js";
 // and goes to the file named by `place`. `sources` are the vault files as the server lists them, and `reveal` is how much the page shows:
 // unless that is everything, what is typed into a value is covered until its row is asked to show it.
 // A value the login already has is never in the form unless its row is asked to show it: left alone, it is saved as it was.
-export function openLoginEditor({ login = null, preset = null, sources, place = "user", reveal, title, onSaved = () => {} }) {
+// `ask` is the "Ask an agent" button of whoever opened the form.
+export function openLoginEditor({ login = null, preset = null, sources, place = "user", reveal, title, ask, onSaved = () => {} }) {
   const places = sources.filter((source) => !source.problem);
   let target = login ? { name: login.source } : (places.find((source) => source.name === place) ?? places.find((source) => source.name === "user") ?? places[0]);
   if (!target) return toast("No vault file here can be read, so nothing can be added. Open the file from the Vault page and repair it first.");
@@ -141,13 +142,13 @@ export function openLoginEditor({ login = null, preset = null, sources, place = 
         },
       }),
     ),
-    h("footer", { class: "vault-form-foot" }, problem, button({ label: "Cancel", onclick: () => dialog.dismiss() }), save),
+    h("footer", { class: "vault-form-foot" }, ask, problem, button({ label: "Cancel", onclick: () => dialog.dismiss() }), save),
   );
   name.focus();
 }
 
 // A new login, from anywhere in the app. The files it can go to are read first, with nothing of what they hold shown.
-export async function addLogin({ preset = null, place = "user", reveal = "hidden", title, onSaved }) {
+export async function addLogin({ preset = null, place = "user", reveal = "hidden", title, ask, onSaved }) {
   const { sources } = await api.vault(state.settings.workingDirectory, "hidden");
-  openLoginEditor({ sources, preset, place, reveal, title, onSaved });
+  openLoginEditor({ sources, preset, place, reveal, title, ask, onSaved });
 }

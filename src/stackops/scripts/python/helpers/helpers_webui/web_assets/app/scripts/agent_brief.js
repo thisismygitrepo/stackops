@@ -10,10 +10,15 @@ import { blurbOf, friendlyText, titleOf } from "./words.js";
 //   files     other files behind it, each { label, path }
 //   notes     what else is worth knowing before the first question: what is selected, what the page says is wrong
 //   ideas     requests to start from, offered in the box; one that ends in "…" is to be finished by the person
-const RULES = [
+//   request   words to start the box with, where the person has already typed some (the search box)
+//   page      the page the place is on, for a button that is not on one of the app view's pages (the developer view's); left out, it is the
+//             page in the address
+// How the agent is asked to work. `inApp` adds what is only true of the app view: its pages read their data again when the Activity panel is
+// put away over a chat (activity.js).
+const rulesFor = (inApp) => [
   "For a question, answer in plain words with the short answer first, and name the page of the web UI that shows it when there is one.",
   "For a change, say in a sentence what you will change and where, then make it: with a StackOps command where one does the job, by editing the file where none does. Leave alone whatever the request is not about.",
-  "After a change, run the command that checks what you changed (most settings files have a `validate`) and say what it reported. The page they came from reads everything again when they put this panel away.",
+  `After a change, run the command that checks what you changed (most settings files have a \`validate\`) and say what it reported.${inApp ? " The page they came from reads everything again when they put this panel away." : ""}`,
   "Ask before anything that deletes or overwrites their data, sends something off this machine, or costs money.",
   "Never open, print or copy a password, token or key. Name a secret; do not show it.",
 ];
@@ -26,8 +31,8 @@ export function describePlace(place) {
   const title = place.title ?? (first ? titleOf(first) : "StackOps");
   const about = place.about ?? (first ? blurbOf(first) : "");
   const address = location.hash.replace(/^#\/?/, "");
-  const page = (SPACES.find((space) => space.id === address.split("/")[0]) ?? SPACES[0]).title;
-  return { title, about, where: page.toLowerCase() === title.toLowerCase() ? page : `${page} › ${title}`, address: `#/${address}` };
+  const page = place.page ?? (SPACES.find((space) => space.id === address.split("/")[0]) ?? SPACES[0]).title;
+  return { title, about, where: page.toLowerCase() === title.toLowerCase() ? page : `${page} › ${title}`, address: `${location.pathname === "/" ? "" : location.pathname}#/${address}` };
 }
 
 // What the agent is told before the person's own words: where the button was pressed and what lies behind that place, then how to find out
@@ -55,6 +60,6 @@ export function briefingFor(place) {
     `This machine is ${boot.host} (${boot.platform}), with StackOps ${boot.version}. You are in ${settings.workingDirectory}, the folder the web UI works in.`,
     "",
     "## How to work",
-    ...RULES.map((rule) => `- ${rule}`),
+    ...rulesFor(!place.page).map((rule) => `- ${rule}`),
   ].join("\n");
 }

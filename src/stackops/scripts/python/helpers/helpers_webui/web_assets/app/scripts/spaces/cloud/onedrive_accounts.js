@@ -36,7 +36,7 @@ export function createAccountsBar({ onPick, onAdd }) {
 }
 
 // A new account is a name of your choosing and the ID of an app registered with Microsoft. `taken` holds the names in use.
-export function openAddAccount({ taken, onAdded }) {
+export function openAddAccount({ taken, onAdded, ask }) {
   const dialog = openDialog({ label: "Add a OneDrive account", size: "small" });
   const name = textBox("", { placeholder: "personal", "aria-label": "Account name" });
   const clientId = textBox("", { placeholder: "00000000-0000-0000-0000-000000000000", "aria-label": "Application (client) ID" });
@@ -86,7 +86,7 @@ export function openAddAccount({ taken, onAdded }) {
     ),
     h("a", { class: "link od-out", href: APP_REGISTRATIONS, target: "_blank", rel: "noopener" }, "Open app registrations in the Azure portal", icon("external", 13)),
     problem,
-    h("div", { class: "dialog-actions" }, button({ label: "Cancel", onclick: () => dialog.close() }), add),
+    h("div", { class: "dialog-actions" }, ask, button({ label: "Cancel", onclick: () => dialog.close() }), add),
   );
   name.focus();
 }
