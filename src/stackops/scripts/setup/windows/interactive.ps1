@@ -7,14 +7,14 @@ irm "https://raw.githubusercontent.com/thisismygitrepo/stackops/main/src/stackop
 # live from github version
 # function stackops { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "git+https://github.com/thisismygitrepo/stackops" stackops $args }
 
-function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" devops $args }
-function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" cloud $args }
-function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" agents $args }
-function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" fire $args }
-function preview { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" preview $args }
-function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" utils $args }
-function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" terminal $args }
-function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.9" seek @args }
+function devops   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" devops $args }
+function cloud    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" cloud $args }
+function agents   { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" agents $args }
+function fire     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" fire $args }
+function preview { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" preview $args }
+function utils    { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" utils $args }
+function terminal { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" terminal $args }
+function seek     { & "$HOME\.local\bin\uvx.exe" --python 3.14 --from "stackops>=26.11.10" seek @args }
 
 function d { wrap_in_shell_script devops @args }
 function c { wrap_in_shell_script cloud @args }
