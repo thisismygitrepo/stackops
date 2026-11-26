@@ -1,4 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../agent_ask.js";
+import { filePlace, PLACES } from "../agent_places.js";
 import { query } from "../data.js";
 import { partLoaders } from "../features.js";
 import { openLayoutView, tabMap } from "../layout_view.js";
@@ -20,6 +22,8 @@ export function createSessionsSpace(context) {
   const launch = (layout) =>
     activity.start({ title: `Launch ${layout.name}`, emoji: "🏃", arguments: ["terminal", "run", "--choose-layouts", layout.selector], interactive: true, reveal: true }).catch((error) => toast(error.message));
 
+  const fileOf = (layout) => ({ title: layout.selector.startsWith("user:") ? MY_LAYOUTS.title : "this project's layouts", kind: "layouts", path: layout.source_file });
+
   function layoutCard(layout) {
     let cells = 0;
     const maps = layout.tabs.slice(0, PREVIEW_TABS).map((tab) => {
@@ -31,7 +35,8 @@ export function createSessionsSpace(context) {
     const view = () =>
       openLayoutView({
         layout, onLaunch: () => launch(layout), onTune: () => tools.open("terminal run", { preset: { choose_layouts: layout.selector } }),
-        onEdit: layout.source_file && (() => editFile(activity, { title: layout.selector.startsWith("user:") ? MY_LAYOUTS.title : "this project's layouts", kind: "layouts", path: layout.source_file })),
+        onEdit: layout.source_file && (() => editFile(activity, fileOf(layout))),
+        ask: layout.source_file && agentButton(activity, filePlace(fileOf(layout), { notes: [`The layout on screen is “${layout.name}”, which \`stackops terminal run --choose-layouts ${layout.selector}\` starts.`], ideas: ["Change this layout so that …"] })),
       });
     const card = h(
       "article",
@@ -52,12 +57,12 @@ export function createSessionsSpace(context) {
 
   const layouts = createLivePanel({
     title: "Saved layouts", path: "terminal list", extra: ["--json", "--tabs"], locked: ["show_tabs", "show_stats"], surface: { source: "Which layouts to list" }, skeletonShape: "card",
-    actions: [editButton(activity, MY_LAYOUTS, { label: "Edit my layouts", small: true })],
+    actions: [agentButton(activity, filePlace(MY_LAYOUTS, { ideas: PLACES.sessions.ideas }), { small: true }), editButton(activity, MY_LAYOUTS, { label: "Edit my layouts", small: true })],
     render: (data, { setCount }) => {
       const items = data?.layouts ?? [];
       setCount(items.length ? plural(items.length, "layout") : "");
       // The CLI's template command writes into the working folder, which this panel does not read; editing your layouts file is what puts one here.
-      if (items.length === 0) return notice({ glyph: "layers", title: "No saved layouts", body: "A layout is a set of tabs and panes you can start in one click. Your layouts file starts from an example the first time you edit it.", action: editButton(activity, MY_LAYOUTS, { label: "Edit my layouts" }) });
+      if (items.length === 0) return notice({ glyph: "layers", title: "No saved layouts", body: "A layout is a set of tabs and panes you can start in one click. Your layouts file starts from an example the first time you edit it.", action: h("div", { class: "dialog-actions" }, agentButton(activity, filePlace(MY_LAYOUTS, { ideas: PLACES.sessions.ideas })), editButton(activity, MY_LAYOUTS, { label: "Edit my layouts" })) });
       return rise(h("div", { class: "card-grid" }, items.map(layoutCard)));
     },
   });
@@ -72,7 +77,11 @@ export function createSessionsSpace(context) {
     {},
     viewHead({
       title: "Sessions", lede: "Start a saved workspace, or see what is already running.",
-      actions: [button({ label: "Save current as layout", glyph: "plus", title: "Save every running session as a layout of the same name", onclick: saveAll }), toolButton(tools, "terminal run", { label: "Launch with options", glyph: "sliders" })],
+      actions: [
+        agentButton(activity, PLACES.sessions),
+        button({ label: "Save current as layout", glyph: "plus", title: "Save every running session as a layout of the same name", onclick: saveAll }),
+        toolButton(tools, "terminal run", { label: "Launch with options", glyph: "sliders" }),
+      ],
     }),
     layouts.element,
     running.element,

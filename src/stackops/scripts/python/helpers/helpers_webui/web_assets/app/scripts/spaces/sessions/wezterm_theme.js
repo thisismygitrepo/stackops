@@ -1,5 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { request, state as app } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { confirmAction, openSheet } from "../../overlays.js";
 import { editFile } from "../../space_kit.js";
 import { button, callout, copyChip, emojiTile, highlight, keyValue, notice, pathChip, pill, searchInput, sectionHead, skeleton } from "../../widgets.js";
@@ -159,6 +160,7 @@ export function open({ activity, tools }, { preset }) {
   );
   sheet.foot.hidden = false;
   sheet.foot.append(
+    agentButton(activity, { commands: [TOOL_PATH] }),
     button({
       label: "All options", glyph: "sliders", tone: "ghost", title: "This tool's own form, with every option the command has",
       onclick: () => {

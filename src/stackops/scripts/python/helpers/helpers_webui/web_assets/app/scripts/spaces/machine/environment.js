@@ -1,5 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { backLink } from "../../space_kit.js";
 import { button, notice, searchInput, segmented, skeleton, stat } from "../../widgets.js";
@@ -7,7 +8,7 @@ import { plural } from "../../words.js";
 import { prepare } from "./environment/model.js";
 import { pathTab } from "./environment/path.js";
 import { variablesTab } from "./environment/variables.js";
-import { ADDRESS, ENVIRONMENT_HASH, PATH_HASH, TABS } from "./environment/words.js";
+import { ADDRESS, ENVIRONMENT_HASH, PATH_HASH, TABS, TOOL_PATH } from "./environment/words.js";
 
 // This page's stylesheet comes with the page, on its first visit, the way its script does: the app's start does not grow with it. The page
 // waits for it, so it is never drawn bare.
@@ -22,7 +23,7 @@ export function open(_context, { preset }) {
 // Machine › Environment, at #/machine/environment and #/machine/environment/path: the variables a task started from the web UI gets, and the
 // folders it searches for programs. A page and not a sheet: a hundred-odd variables and thousands of programs to search and filter.
 // The command behind it (`utils machine environment`) is a picker for a terminal, so the page reads the server instead (ADDRESS).
-export function createPart() {
+export function createPart({ activity }) {
   let tabs = null;
   let shown = "variables";
   let typed = "";
@@ -49,7 +50,7 @@ export function createPart() {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Environment" }), h("p", { text: "What a task started from here runs with: its variables, and the folders it searches for programs, in order." })),
-      h("div", { class: "view-actions" }, again),
+      h("div", { class: "view-actions" }, agentButton(activity, { commands: [TOOL_PATH], ideas: ["Where is this variable set, and how do I change it?"] }), again),
     ),
     h("div", { class: "table-bar env-bar" }, picker.element, search.element, h("span", { class: "spacer" }), count),
     tiles,

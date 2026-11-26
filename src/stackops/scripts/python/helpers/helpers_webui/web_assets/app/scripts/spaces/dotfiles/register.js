@@ -1,5 +1,6 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { createCombo } from "../../combo.js";
 import { markStale } from "../../data.js";
 import { openSheet } from "../../overlays.js";
@@ -182,6 +183,7 @@ export async function open({ activity, tools }, { preset }) {
   );
   sheet.foot.hidden = false;
   sheet.foot.append(
+    agentButton(activity, { commands: [REGISTER_PATH], settings: "dotfiles", ideas: ["Start managing my settings for …"] }),
     button({ label: "Every option", glyph: "sliders", tone: "ghost", title: "The command's own form, with everything it can do", onclick: () => (sheet.close(), tools.open(REGISTER_PATH, { plain: true, preset: { ...(choice.file.trim() && { file: choice.file.trim() }), method: choice.method, ...(choice.group.trim() && { group: choice.group.trim() }), ...(choice.name.trim() && { name: choice.name.trim() }) } })) }),
     h("span", { class: "spacer" }),
     problem,

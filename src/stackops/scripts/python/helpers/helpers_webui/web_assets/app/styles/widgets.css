@@ -16,6 +16,10 @@
 .btn.ghost:hover:not(:disabled) { color: var(--ink); background: var(--well); border-color: transparent; box-shadow: none; }
 .btn.danger { color: #fff; background: linear-gradient(135deg, #f0527a, #d9365a); border-color: transparent; }
 .btn.small { height: 30px; padding: 0 11px; font-size: 12.5px; border-radius: 10px; }
+/* "Ask an agent" (agent_ask.js): one tint wherever it stands, so it reads as the same button on every page. */
+.btn.agent { background: var(--brand-wash), var(--panel-solid); border-color: color-mix(in srgb, var(--violet) 34%, transparent); }
+.btn.agent svg { color: var(--violet); }
+.btn.agent.small { width: 30px; padding: 0; }
 .btn b, .more-toggle b, .chip-button b, .fold summary b {
   min-width: 18px; padding: 0 5px; font-size: 11px; font-weight: 650; line-height: 18px; text-align: center; color: var(--ink-soft); background: var(--well); border-radius: 999px;
 }

@@ -223,6 +223,10 @@ export const CONFIRMED_RUNS = [
   "devops config init-script --run", "devops config setup layouts --overwrite", "devops config export-example --overwrite",
 ];
 
+// Runs that are a chat with a coding agent, written the way the entries above are. One changes files while it runs and ends only when the person
+// leaves it, so the refresh that follows a finished run never comes: the pages read again when the Activity panel is put away over one.
+export const CHAT_RUNS = ["agents run-interactive", "agents run-prompt --interactive"];
+
 // Names for the installer's bundles (`devops software install <name> --group`), whose own names are abbreviations.
 export const BUNDLE_TITLES = {
   sysabc: "System basics", shell: "Shell upgrades", search: "Search & archive tools", "sys-monitor": "System monitors", "code-analysis": "Code analysis & Git",

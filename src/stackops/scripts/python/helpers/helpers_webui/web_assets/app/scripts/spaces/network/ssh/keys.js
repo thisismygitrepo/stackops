@@ -1,5 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../../agent_ask.js";
 import { editFile } from "../../../space_kit.js";
 import { button, copyChip, glyphTile, notice, pathChip, pill, searchInput, segmented } from "../../../widgets.js";
 import { plural } from "../../../words.js";
@@ -102,6 +103,7 @@ export function createKeysCard({ activity }) {
       h("span", { class: "dim", text: keys.length > 0 ? `Whoever holds one of these signs in as ${user}. They are kept in` : "Keys will be kept in" }),
       ...shown.map((file) => pathChip(file)),
       h("span", { class: "spacer" }),
+      keys.length > 0 && agentButton(activity, { title: "The allowed keys", commands: ["devops network ssh add-key"], files: [{ label: "the file of allowed keys", path: shown[0] }], about: "The public keys that may sign in to this machine over SSH, one to a line. Taking a line out takes that key's access away." }, { small: true }),
       keys.length > 0 && state.boot.platform !== "Windows" && button({ label: "Edit the file", glyph: "pencil", small: true, title: "Opens the file in a text editor inside the activity panel. Deleting a line takes that key's access away.", onclick: () => editFile(activity, { title: "the allowed keys", kind: "file", path: shown[0] }) }),
     );
   }

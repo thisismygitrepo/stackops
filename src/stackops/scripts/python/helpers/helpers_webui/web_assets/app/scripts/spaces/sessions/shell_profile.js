@@ -1,5 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { replay, rise } from "../../motion.js";
 import { backLink } from "../../space_kit.js";
@@ -95,6 +96,7 @@ export function createPart({ activity, tools }) {
       h(
         "div",
         { class: "view-actions" },
+        agentButton(activity, { commands: [TOOL_PATH] }),
         button({ label: "All options", glyph: "sliders", title: "Open the form with every option this tool has", onclick: () => tools.open(TOOL_PATH, { plain: true }) }),
         button({ label: "Check again", glyph: "refresh", title: "Read the profiles on this machine again", onclick: () => keeper.load() }),
       ),

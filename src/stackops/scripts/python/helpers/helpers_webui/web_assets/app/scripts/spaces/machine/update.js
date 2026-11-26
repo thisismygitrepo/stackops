@@ -1,4 +1,5 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { backLink } from "../../space_kit.js";
 import { button, notice, skeleton } from "../../widgets.js";
@@ -56,7 +57,7 @@ function createUpdatePage({ activity, tools }, preset) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: UPDATE_TITLE }), h("p", { text: "What is installed here, what is newer, and one button to bring this machine up to date." })),
-      h("div", { class: "view-actions" }, again, button({ label: "All options", glyph: "sliders", title: "The update command's own form, with every option it has", onclick: () => tools.open(UPDATE_PATH, { plain: true }) })),
+      h("div", { class: "view-actions" }, agentButton(activity, { commands: [UPDATE_PATH] }), again, button({ label: "All options", glyph: "sliders", title: "The update command's own form, with every option it has", onclick: () => tools.open(UPDATE_PATH, { plain: true }) })),
     ),
     problem,
     waiting,

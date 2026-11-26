@@ -1,4 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { query } from "../../data.js";
 import { createPanel } from "../../live_panel.js";
 import { rise } from "../../motion.js";
@@ -42,6 +44,7 @@ export function createSetupArea({ activity, tools }, { setStatus, failStatus }) 
     const broken = check.verdict === "broken";
     // Built-in lists stay read-only: a change made there is lost with the next update.
     const editable = check.verdict !== "missing" && check.place !== "library" && check.path;
+    const listFile = { title: `${kind.title.toLowerCase()} (${place.title.toLowerCase()})`, kind: check.kind, path: check.path };
     return h(
       "div",
       { class: `wb-list-cell ${check.verdict}` },
@@ -53,7 +56,8 @@ export function createSetupArea({ activity, tools }, { setStatus, failStatus }) 
           "span",
           { class: "wb-line-actions" },
           broken && button({ label: "See what's wrong", glyph: "search", small: true, onclick: () => tools.open("agents config validate", { preset }) }),
-          editable && editButton(activity, { title: `${kind.title.toLowerCase()} (${place.title.toLowerCase()})`, kind: check.kind, path: check.path }, { label: broken ? "Fix it" : "Edit", small: true }),
+          editable && agentButton(activity, filePlace(listFile, { notes: broken ? ["The web UI's check says this file has something wrong with it."] : [], ideas: [broken ? "Fix what is wrong with this file" : "Add an entry for …"] }), { small: true }),
+          editable && editButton(activity, listFile, { label: broken ? "Fix it" : "Edit", small: true }),
         ),
     );
   }

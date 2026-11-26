@@ -87,8 +87,12 @@ export function confirmAction({ title, body, confirm, tone = "primary" }) {
   return dialog.closed.then((answer) => answer === true);
 }
 
+// The popover each popover was opened from, for one whose button sits inside another: a press in the inner one is not a press outside the outer.
+const openers = new WeakMap();
+
 export function openPopover(anchor, content, { align = "end" } = {}) {
   const panel = h("div", { class: "popover", role: "dialog" }, content);
+  openers.set(panel, anchor.closest(".popover"));
   document.body.append(panel);
   // Under the button, or over it when there is more room there, and always inside the window: a panel that fits on neither side lies over its button, and one taller than the window scrolls.
   const place = () => {
@@ -107,7 +111,8 @@ export function openPopover(anchor, content, { align = "end" } = {}) {
   const resized = new ResizeObserver(place);
   resized.observe(panel);
   const outside = (event) => {
-    if (!(event.target instanceof Element) || panel.contains(event.target) || anchor.contains(event.target) || event.target.closest(".combo-list")) return;
+    if (!(event.target instanceof Element) || anchor.contains(event.target) || event.target.closest(".combo-list")) return;
+    for (let inside = event.target.closest(".popover"); inside; inside = openers.get(inside)) if (inside === panel) return;
     layer.close();
   };
   // The popover follows its button when the page scrolls, and goes when the button leaves the window.

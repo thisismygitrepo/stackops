@@ -18,7 +18,7 @@ const ACCOUNT_NUMBERS = ["requests", "success", "expected", "failed", "in_flight
 const HISTORY_LIMIT = 20;
 
 // Security › Scans: every saved scan, newest first at #/security/scans, and one of them opened in its place at #/security/scans/<run>.
-export function createScansSection({ tools, starter }) {
+export function createScansSection({ activity, tools, starter }) {
   const runRow = (run) => {
     const [label, tone] = RUN_STATES[run.status];
     return h(
@@ -65,7 +65,7 @@ export function createScansSection({ tools, starter }) {
     requestAnimationFrame(() => tiles.forEach(([tile, value, note]) => tile.set(value, note)));
     const again = { all: starter.everything, apps: () => starter.apps(run.requested), path: () => starter.path(run.requested[0]) }[run.scope];
     const open = (target) =>
-      openTargetSheet({ target, loadEngines: async () => engines.filter((engine) => engine.target_id === target.target_id), onScan: run.scope !== "path" && ((app) => starter.apps([app.name])) });
+      openTargetSheet({ activity, target, loadEngines: async () => engines.filter((engine) => engine.target_id === target.target_id), onScan: run.scope !== "path" && ((app) => starter.apps([app.name])) });
     return h(
       "div",
       { class: "stack" },

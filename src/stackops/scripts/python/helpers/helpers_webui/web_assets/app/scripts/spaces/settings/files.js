@@ -1,5 +1,6 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { markStale } from "../../data.js";
 import { replay, rise } from "../../motion.js";
 import { confirmAction, openPopover } from "../../overlays.js";
@@ -11,6 +12,11 @@ import { createFile, files, reasonOf, recheck } from "./model.js";
 import { BACK_LABEL, FILES, FILES_HASH, FILE_ACTIONS, FILE_TOOLS, HASH, needsAttention, standingOf } from "./words.js";
 
 const FILTERS = [["all", "All"], ["here", "On this machine"], ["missing", "Not created"], ["attention", "Need attention"]];
+const PLACE = {
+  title: "Settings files", commands: ["devops config path", "devops config init", "devops config edit", "devops config validate", "devops config export-example"],
+  about: "Every file StackOps reads its settings from, the person's own and this project's: where each is, whether it is there, and whether it passes its check.",
+  ideas: ["Which of my settings files need attention, and why?"],
+};
 const PASSES = {
   all: () => true,
   here: (standing) => !["missing", "unavailable"].includes(standing.id),
@@ -185,7 +191,7 @@ export function createPart({ activity, tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Settings files" }), h("p", { text: "Every file StackOps reads its settings from: where it is, whether it is there, and whether it passes its check." })),
-      h("div", { class: "view-actions" }, options, again),
+      h("div", { class: "view-actions" }, agentButton(activity, PLACE), options, again),
     ),
     body,
   );

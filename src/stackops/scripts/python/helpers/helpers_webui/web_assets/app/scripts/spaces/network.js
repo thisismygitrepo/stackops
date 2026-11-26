@@ -1,5 +1,7 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { PLACES } from "../agent_places.js";
 import { staleKeeper } from "../data.js";
 import { partLoaders } from "../features.js";
 import { createLivePanel } from "../live_panel.js";
@@ -15,7 +17,7 @@ const SHARE_TOOLS = ["devops network share-server", "devops network share-termin
 // Views that swap in place: the overview at #/network, and the ones features.js lists for this page (SSH access, port forwards, Wi-Fi,
 // WARP and Cloudflare tunnels), each at an address of its own under it.
 export function createNetworkSpace(context) {
-  const { tools } = context;
+  const { activity, tools } = context;
   const address = (label, hue, glyph, value, note) =>
     h("article", { class: "address-card lit" }, glyphTile(glyph, hue, 42), h("span", { class: "stat-label", text: label }), value ? copyChip(value) : h("strong", { class: "dim", text: "Unavailable" }), h("span", { class: "dim", text: note }));
 
@@ -86,7 +88,7 @@ export function createNetworkSpace(context) {
     {},
     viewHead({
       title: "Network", lede: "Where this machine lives on the network, and quick ways to share with others.",
-      actions: [toolButton(tools, "devops network share-server", { label: "Share a folder", glyph: "share", tone: "primary" })],
+      actions: [agentButton(activity, PLACES.network), toolButton(tools, "devops network share-server", { label: "Share a folder", glyph: "share", tone: "primary" })],
     }),
     panel.element,
     h("section", { class: "block" }, sectionHead("Share"), toolGrid(tools, SHARE_TOOLS)),

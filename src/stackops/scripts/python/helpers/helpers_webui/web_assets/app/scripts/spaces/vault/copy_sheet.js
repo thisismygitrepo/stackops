@@ -1,5 +1,7 @@
 import { h } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { PLACES } from "../../agent_places.js";
 import { markStale } from "../../data.js";
 import { confirmAction, openSheet } from "../../overlays.js";
 import { button, emojiTile, notice, pathChip, sectionHead, segmented, skeleton } from "../../widgets.js";
@@ -17,7 +19,7 @@ const SOURCES = { workspace: "workspace", w: "workspace", user: "user", u: "user
 
 // Copy part of the vault, as a side sheet: a job with a start and an end, done over the list it started from. Logins are chosen from their labels;
 // no value is read into the page. A copy from a file of the person's own choosing goes to the command's own form.
-export function open({ tools }, { preset = {} }) {
+export function open({ activity, tools }, { preset = {} }) {
   if (preset.custom_path) return tools.open(PATH, { plain: true, preset });
   const node = state.nodes.get(PATH);
   const sheet = openSheet({ label: titleOf(node), wide: true });
@@ -40,7 +42,7 @@ export function open({ tools }, { preset = {} }) {
     h("header", { class: "tool-head" }, emojiTile(node.icon || "📦", node.path, 56), h("div", {}, h("span", { class: "overline", text: "Vault" }), h("h1", { text: titleOf(node) }), h("p", { text: "Write the logins you choose, with their secrets and values, to another vault file. Nothing leaves this one." }))),
     body,
   );
-  sheet.foot.append(tally, problem, button({ label: "All options", glyph: "sliders", tone: "ghost", title: "The command's own form, with every option it has", onclick: () => tools.open(PATH, { plain: true }) }), button({ label: "Cancel", onclick: () => sheet.close() }), go);
+  sheet.foot.append(agentButton(activity, { ...PLACES.vault, title: titleOf(state.nodes.get(PATH)), commands: [PATH], about: "Copies the logins a person ticks from one vault file into another." }), tally, problem, button({ label: "All options", glyph: "sliders", tone: "ghost", title: "The command's own form, with every option it has", onclick: () => tools.open(PATH, { plain: true }) }), button({ label: "Cancel", onclick: () => sheet.close() }), go);
 
   const picked = () => source.logins.filter((login) => chosen.has(login.index));
 
@@ -90,7 +92,7 @@ export function open({ tools }, { preset = {} }) {
   }
 
   function showDone(done) {
-    sheet.foot.replaceChildren(h("span", { class: "spacer" }), button({ label: "Copy more", onclick: () => (sheet.close(), open({ tools }, { preset: {} })) }), button({ label: "Done", tone: "primary", onclick: () => sheet.close() }));
+    sheet.foot.replaceChildren(h("span", { class: "spacer" }), button({ label: "Copy more", onclick: () => (sheet.close(), open({ activity, tools }, { preset: {} })) }), button({ label: "Done", tone: "primary", onclick: () => sheet.close() }));
     body.replaceChildren(
       h(
         "div",

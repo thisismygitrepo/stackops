@@ -19,7 +19,8 @@ export function tabMap(tab, firstIndex = 0) {
   return h("span", { class: "tab-map", "aria-hidden": "true" }, paneRows(tab).map((row) => h("span", {}, row.map(() => h("i", { style: `--i:${index++}` })))));
 }
 
-export function openLayoutView({ layout, onLaunch, onTune, onEdit }) {
+// `ask` is the "Ask an agent" button for this layout, from the page that knows which file holds it.
+export function openLayoutView({ layout, onLaunch, onTune, onEdit, ask }) {
   const dialog = openDialog({ label: `Layout ${layout.name}`, size: "layout-view" });
   const tabButtons = layout.tabs.map((tab, index) =>
     h("button", { class: "term-tab", type: "button", role: "tab", onclick: () => select(index) }, tabMap(tab), h("span", { text: tab.tabName }), tab.panes.length > 1 && h("b", { text: String(tab.panes.length) })),
@@ -72,6 +73,7 @@ export function openLayoutView({ layout, onLaunch, onTune, onEdit }) {
       caption,
       layout.tabs.length > 1 && h("span", { class: "dim layout-keys" }, h("kbd", { text: "←" }), h("kbd", { text: "→" }), "switch tabs"),
       h("span", { class: "spacer" }),
+      ask,
       onEdit && button({ label: "Edit", glyph: "terminal", title: "Opens the file that holds this layout in a text editor inside the activity panel. It is checked when you close the editor.", onclick: act(onEdit) }),
       button({ label: "Launch with options", glyph: "sliders", onclick: act(onTune) }),
       button({ label: "Launch", glyph: "play", tone: "primary", onclick: act(onLaunch) }),

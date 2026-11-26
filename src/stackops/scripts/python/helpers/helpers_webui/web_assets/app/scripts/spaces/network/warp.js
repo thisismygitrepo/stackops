@@ -1,5 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { query, staleKeeper } from "../../data.js";
 import { confirmAction } from "../../overlays.js";
 import { button, copyChip, skeleton } from "../../widgets.js";
@@ -185,7 +186,7 @@ function createWarpPage({ activity, tools }) {
     { class: "network-part network-warp", hidden: true },
     partHead({
       title: "Cloudflare WARP", lede: "WARP sends this machine's traffic through Cloudflare, which changes the address the internet sees. Here is whether it is on, and one button to connect it.",
-      actions: [button({ label: "Check again", glyph: "refresh", onclick: () => load(true) }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(PATHS.warp, { plain: true }) })],
+      actions: [agentButton(activity, { title: "Cloudflare WARP", commands: [PATHS.warp, PATHS.switchAddress] }), button({ label: "Check again", glyph: "refresh", onclick: () => load(true) }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(PATHS.warp, { plain: true }) })],
     }),
     failure,
     body,

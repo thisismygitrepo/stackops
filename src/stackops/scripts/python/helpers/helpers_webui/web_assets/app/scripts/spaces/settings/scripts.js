@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { query } from "../../data.js";
 import { replay } from "../../motion.js";
 import { confirmAction } from "../../overlays.js";
@@ -109,7 +110,7 @@ export function createPart({ activity, tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Setup scripts" }), h("p", { text: "Three scripts StackOps ships for a new terminal or a new machine. Read what each would do. Nothing runs until you say so." })),
-      h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The command's own form", onclick: () => tools.open(TOOL_PATH, { plain: true, preset: { which: chosen } }) })),
+      h("div", { class: "view-actions" }, agentButton(activity, { commands: [TOOL_PATH] }), button({ label: "All options", glyph: "sliders", title: "The command's own form", onclick: () => tools.open(TOOL_PATH, { plain: true, preset: { which: chosen } }) })),
     ),
     h("div", { class: "table-bar" }, picker.element),
     panel,

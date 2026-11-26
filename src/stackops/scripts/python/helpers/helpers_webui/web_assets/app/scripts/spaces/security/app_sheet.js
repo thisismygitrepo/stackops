@@ -1,5 +1,6 @@
 import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { openSheet } from "../../overlays.js";
 import { avatar, button, copyChip, keyValue, notice, pill, skeleton } from "../../widgets.js";
 import { plural, relativeTime } from "../../words.js";
@@ -42,7 +43,7 @@ function engineBlocks(engines) {
 
 // One checked file, opened over the list: the verdict in words, where the answer came from, and what every engine said.
 // `loadEngines` is called only when there are engine results to show.
-export function openTargetSheet({ target, loadEngines, onScan }) {
+export function openTargetSheet({ activity, target, loadEngines, onScan }) {
   const sheet = openSheet({ label: target.name });
   const engines = h("div", { class: "stack" });
   sheet.body.append(
@@ -76,6 +77,12 @@ export function openTargetSheet({ target, loadEngines, onScan }) {
   sheet.foot.hidden = false;
   sheet.foot.append(
     ...[
+      agentButton(activity, {
+        title: target.name, commands: ["devops security report", "devops security scan"],
+        about: "One file checked against VirusTotal's antivirus engines: the verdict, where the answer came from, and what each engine said.",
+        notes: [`The file on screen is ${target.path}, with the verdict “${target.verdict}”.`, "A scan sends the file to VirusTotal and uses the account's quota, so do not start one unasked."],
+        ideas: ["What does this result mean, and should I worry?"],
+      }),
       target.sha256 && h("a", { class: "btn plain", href: `${VIRUSTOTAL_FILE_ADDRESS}${target.sha256}`, target: "_blank", rel: "noopener noreferrer", title: "Opens this file's page on virustotal.com" }, icon("external", 16), h("span", { text: "Open on VirusTotal" })),
       h("span", { class: "spacer" }),
       onScan &&

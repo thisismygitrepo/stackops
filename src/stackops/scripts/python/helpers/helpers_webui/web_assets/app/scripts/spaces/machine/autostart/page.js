@@ -1,4 +1,5 @@
 import { formatClock, h } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { staleKeeper } from "../../../data.js";
 import { recall, remember } from "../../../memory.js";
 import { rise } from "../../../motion.js";
@@ -19,7 +20,7 @@ const FRESH_MILLISECONDS = 30000;
 
 // Startup programs: everything that starts on its own, read on arrival, drawn by when it starts, whose it is and what kind of thing it is,
 // narrowed by clicking those, and turned off or removed where it belongs to the person. `takeArrival` hands over what the page was opened with.
-export function createStartupPage({ tools }, takeArrival) {
+export function createStartupPage({ activity, tools }, takeArrival) {
   const kept = recall(MEMORY_ID);
   const oneOf = (choices, value, fallback) => (choices.some(([id]) => id === value) ? value : fallback);
   const view = { system: kept.get("system") === "on", term: "", picks: emptyPicks(), group: oneOf(GROUPINGS, kept.get("group"), "when"), order: oneOf(ORDERS, kept.get("order"), "name"), shown: new Map(), busy: new Set() };
@@ -89,7 +90,7 @@ export function createStartupPage({ tools }, takeArrival) {
   const actions = createActions({ view, repaint: () => paint(), reload: () => keeper.load(true), outcome });
   const handlers = {
     ...actions,
-    open: (entry) => openDetail({ entry, platform: model.platform, tools, handlers }),
+    open: (entry) => openDetail({ activity, entry, platform: model.platform, tools, handlers }),
     more(group, limit) {
       view.shown.set(group, limit);
       paint();
@@ -176,7 +177,7 @@ export function createStartupPage({ tools }, takeArrival) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Startup programs" }), h("p", { text: "The services and programs that start on their own, when this computer starts or when you sign in." })),
-      h("div", { class: "view-actions" }, stamp, button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [COMMAND] }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh),
     ),
     problemHolder,
     waiting,

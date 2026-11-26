@@ -1,7 +1,8 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { api, emit, state } from "/assets/scripts/state.js";
 import { closeEditor, createEditorBar, editorOf } from "./activity_editor.js";
-import { createHero, statusOf } from "./activity_hero.js";
+import { createHero, isOneOf, statusOf } from "./activity_hero.js";
+import { CHAT_RUNS } from "./catalog.js";
 import { openConsole } from "./console_session.js";
 import { markStale } from "./data.js";
 import { burst, replay } from "./motion.js";
@@ -51,6 +52,8 @@ export function createActivity() {
   }
 
   function setMode(mode) {
+    // What an agent changed while the panel was up is on the pages as soon as the panel is put away (CHAT_RUNS in catalog.js).
+    if (mode === "closed" && element.dataset.mode !== "closed" && [...tasks.values()].some((task) => task.summary.exit_code === null && isOneOf(CHAT_RUNS, task.summary.arguments))) markStale();
     element.dataset.mode = mode;
     element.inert = mode === "closed";
     sizeButton.replaceChildren(icon(mode === "max" ? "shrink" : "expand", 16));

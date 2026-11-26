@@ -26,7 +26,7 @@ const REST_FACTOR = 25;
 const SLOWEST_MILLISECONDS = 12000;
 
 // Processes: every process on arrival, read again every few seconds, narrowed and sorted in the page, and stopped behind a confirmation.
-export function createProcessesPage({ tools }) {
+export function createProcessesPage({ activity, tools }) {
   const kept = recall(MEMORY_ID);
   const filters = { scope: kept.get("scope") === "mine" ? "mine" : "all", term: "", flags: new Set(), status: "", given: [] };
   const sort = { column: COLUMNS.some((column) => column.id === kept.get("column")) ? kept.get("column") : "memory", descending: kept.get("descending") !== "no" };
@@ -71,6 +71,7 @@ export function createProcessesPage({ tools }) {
     reveal,
   };
   const head = createHead({
+    activity,
     tools,
     onRefresh: () => load(true),
     onToggle() {
@@ -100,7 +101,7 @@ export function createProcessesPage({ tools }) {
     noteOf: outcome.noteOf,
     onPick: (process, on) => pick([process], on),
     onPickMany: pick,
-    onOpen: (process) => openDetail({ process, page }),
+    onOpen: (process) => openDetail({ activity, process, page }),
     onStop: (process) => stop([process], false),
     onSort(column, biggestFirst) {
       if (sort.column === column) sort.descending = !sort.descending;

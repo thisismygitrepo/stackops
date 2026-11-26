@@ -1,4 +1,5 @@
 import { formatClock, h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { recall } from "../../../memory.js";
 import { replay } from "../../../motion.js";
 import { backLink } from "../../../space_kit.js";
@@ -17,7 +18,7 @@ import { MEMORY_ID, WINDOWS_PATH } from "./words.js";
 
 // The Windows page: the summary and the map, the filters, the list, and the bar for what is ticked. `takePreset` hands over, once, what the page
 // was opened with.
-export function createWindowsPage({ tools }, takePreset) {
+export function createWindowsPage({ activity, tools }, takePreset) {
   let model = null;
   let signature = "";
   let state = { kind: "loading" };
@@ -79,7 +80,7 @@ export function createWindowsPage({ tools }, takePreset) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Manage windows" }), h("p", { text: "Every window on this computer, by app and by screen. Bring one forward, put it away, or close what you are done with." })),
-      h("div", { class: "view-actions" }, stamp, button({ label: "All options", glyph: "sliders", title: "Open this tool's plain form, which has every option of the command", onclick: openPlain }), refreshButton),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [WINDOWS_PATH] }), button({ label: "All options", glyph: "sliders", title: "Open this tool's plain form, which has every option of the command", onclick: openPlain }), refreshButton),
     ),
     stateHolder, troubleHolder, hero.element, toolbar.element, list.element, tray.element,
   );

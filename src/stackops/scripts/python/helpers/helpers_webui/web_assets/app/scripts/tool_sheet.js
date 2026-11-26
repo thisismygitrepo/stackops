@@ -1,5 +1,6 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
 import { nodeHash, state } from "/assets/scripts/state.js";
+import { agentButton } from "./agent_ask.js";
 import { ARRIVAL_VALUES, ESSENTIAL_FLAGS, HOME_PATH_FIELDS, LIVE_PATHS, OMITTED_FIELDS, PASSTHROUGH_TOOLS } from "./catalog.js";
 import { formDetail, query } from "./data.js";
 import { createFriendlyForm } from "./friendly_form.js";
@@ -136,6 +137,7 @@ export function createToolSheet({ activity, guides = {} }) {
     sheet.foot.hidden = false;
     sheet.foot.append(
       ...[
+        agentButton(activity, { title, commands: [path] }),
         h("a", { class: "dev-link", href: `/dev${nodeHash(node)}`, title: "Open this tool in the developer view" }, icon("code", 14), h("span", { text: "Developer view" })),
         problem,
         ...outputButtons,

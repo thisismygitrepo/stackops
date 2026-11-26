@@ -1,4 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
+import { agentButton } from "../agent_ask.js";
+import { PLACES } from "../agent_places.js";
 import { createView, linkCard } from "../space_kit.js";
 import { button, sectionHead, segmented } from "../widgets.js";
 import { createPostureSection } from "./security/posture.js";
@@ -22,7 +24,7 @@ export function createSecuritySpace(context) {
   const element = createView(
     {
       title: "Security", lede: "What VirusTotal's antivirus engines make of the apps installed here, and a record of every scan.",
-      actions: [button({ label: "Scan a file", glyph: "report", onclick: starter.file }), button({ label: "Scan every app", glyph: "shield", tone: "primary", onclick: starter.everything })],
+      actions: [agentButton(context.activity, PLACES.security), button({ label: "Scan a file", glyph: "report", onclick: starter.file }), button({ label: "Scan every app", glyph: "shield", tone: "primary", onclick: starter.everything })],
     },
     h("div", { class: "section-bar" }, picker.element),
     Object.values(sections).map((section) => section.element),

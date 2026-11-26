@@ -1,4 +1,5 @@
 import { debounce, h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { openSheet } from "../../overlays.js";
 import { button, copyChip, notice, pill, textBox } from "../../widgets.js";
 import { formatBytes } from "../../words.js";
@@ -149,7 +150,7 @@ export async function open(context, { preset = {} }) {
 
   sheet.body.append(toolHead(PATH, LEDE), h("div", { class: "sec-tool" }, part("Link", box, status.element, foundHolder), part("Where it goes", placeHolder), runHolder));
   sheet.foot.hidden = false;
-  sheet.foot.append(everyOption({ tools, sheet, path: PATH, preset }), problem, go);
+  sheet.foot.append(agentButton(context.activity, { commands: [PATH] }), everyOption({ tools, sheet, path: PATH, preset }), problem, go);
   paintFoot();
   box.focus();
   try {

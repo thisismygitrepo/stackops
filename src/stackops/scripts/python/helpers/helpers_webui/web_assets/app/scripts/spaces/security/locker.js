@@ -1,4 +1,5 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { confirmAction, openSheet } from "../../overlays.js";
 import { button, notice, segmented, skeleton } from "../../widgets.js";
 import { createKeyList, OWN_KEY } from "./locker_keys.js";
@@ -158,7 +159,7 @@ export async function openLocker(context, startMode, { preset = {} }) {
   sheet.foot.hidden = false;
   // The foot's link opens the form of the half on show when it is pressed, with the file and nothing else: a password is never handed on.
   const everything = button({ label: "Every option", glyph: "sliders", tone: "ghost", title: "The command's own form, with everything it can do", onclick: () => (sheet.close(), tools.open(PATHS[view.mode], { preset: view.typed.trim() ? { path: view.typed } : {}, plain: true })) });
-  sheet.foot.append(everything, hint, go);
+  sheet.foot.append(agentButton(context.activity, () => ({ commands: [PATHS[view.mode]] })), everything, hint, go);
   go.disabled = true;
   try {
     view.locker = await readLocker();

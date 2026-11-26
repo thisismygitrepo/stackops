@@ -1,5 +1,7 @@
 import { h, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { editButton } from "../../space_kit.js";
 import { button, glyphTile, pathChip, pill } from "../../widgets.js";
 import { formatBytes, plural, relativeTime } from "../../words.js";
@@ -22,7 +24,7 @@ function findingBlock(finding, activity, file) {
     finding.where && h("span", { class: "vault-file-where", text: finding.where }),
     h("p", { text: finding.what }),
     finding.said && finding.said !== finding.what && h("details", {}, h("summary", { text: "The check's own words" }), h("code", { text: finding.said })),
-    editButton(activity, editTarget(file), { label: "Open the file to repair it", small: true }),
+    h("div", { class: "view-actions" }, agentButton(activity, filePlace(editTarget(file)), { small: true }), editButton(activity, editTarget(file), { label: "Open the file to repair it", small: true })),
   );
 }
 
@@ -96,6 +98,7 @@ export function fileCard({ file, check, starter, activity, actions }) {
       h("span", { class: "dim", text: `${formatBytes(file.bytes)} · changed ${relativeTime(file.modified)}` }),
       pathChip(file.path),
       h("span", { class: "spacer" }),
+      !file.finding && agentButton(activity, filePlace(editTarget(file)), { small: true }),
       !file.finding && editButton(activity, editTarget(file), { label: "Open the file", small: true }),
     ),
   );

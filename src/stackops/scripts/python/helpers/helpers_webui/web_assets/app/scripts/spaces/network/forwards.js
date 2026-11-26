@@ -1,5 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { button, notice } from "../../widgets.js";
 import { createForwardForm } from "./forwards/form.js";
@@ -59,7 +60,7 @@ function createForwardsPage({ activity, tools }, preset) {
     { class: "network-part network-fwd", hidden: true },
     partHead({
       title: "Forward a port", lede: "Reach a port on another machine as if it were on this one. The traffic travels inside SSH, so nothing new is opened to the network.",
-      actions: [button({ label: "Refresh", glyph: "refresh", onclick: () => load() }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(PATHS.mapPort, { plain: true }) })],
+      actions: [agentButton(activity, { commands: [PATHS.mapPort] }), button({ label: "Refresh", glyph: "refresh", onclick: () => load() }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(PATHS.mapPort, { plain: true }) })],
     }),
     failure,
     body,

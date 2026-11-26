@@ -1,15 +1,16 @@
 import { h, icon, shellQuote } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { openSheet } from "../../../overlays.js";
 import { button, copyChip, glyphTile, keyValue, pathChip, pill } from "../../../widgets.js";
 import { plural } from "../../../words.js";
 import { readDetail } from "./api.js";
-import { KINDS, MANNERS, PROCESSES_COMMAND, SCOPES, lastEndText, lockText, stateWords, triggerLines, whenText, whoseWords } from "./words.js";
+import { COMMAND, KINDS, MANNERS, PROCESSES_COMMAND, SCOPES, lastEndText, lockText, stateWords, triggerLines, whenText, whoseWords } from "./words.js";
 
 const chips = (paths) => h("div", { class: "autostart-chips" }, paths.map(pathChip));
 
 // Everything about one entry, in a side sheet. What the list already knows shows at once; the rest of a launchd job (what it is given, where
 // its output goes, how often it has run) is read when the sheet opens and filled in when it arrives.
-export function openDetail({ entry, platform, tools, handlers }) {
+export function openDetail({ activity, entry, platform, tools, handlers }) {
   const sheet = openSheet({ label: entry.title, wide: true });
   const kind = KINDS[entry.category];
   const status = stateWords(entry);
@@ -19,6 +20,12 @@ export function openDetail({ entry, platform, tools, handlers }) {
     sheet.close();
     run(entry);
   };
+
+  const ask = agentButton(activity, {
+    title: entry.title, commands: [COMMAND], about: "One of the things that start on their own on this computer, at start-up or at sign-in.",
+    notes: [`The entry on screen is “${entry.title}”${entry.program ? `, which runs ${entry.program}` : ""}. It is ${entry.enabled ? "turned on" : "turned off"}.`],
+    ideas: ["What is this, and is it safe to turn off?"],
+  });
 
   function paintFacts(detail) {
     const since = entry.scope === "boot" ? "the computer started" : "you signed in";
@@ -63,14 +70,15 @@ export function openDetail({ entry, platform, tools, handlers }) {
   sheet.foot.hidden = false;
   if (changeable) {
     sheet.foot.append(
+      ask,
       button({ label: entry.enabled ? "Turn off" : "Turn back on", glyph: "power", tone: entry.enabled ? "plain" : "primary", onclick: act(handlers.toggle) }),
       h("span", { class: "spacer" }),
       button({ label: "Move to the Trash", glyph: "trash", tone: "ghost", title: "Stops it and puts its file in the Trash", onclick: act(handlers.remove) }),
     );
   } else if (entry.actions.includes("remove")) {
-    sheet.foot.append(button({ label: "Stop opening it at sign-in", glyph: "close", onclick: act(handlers.remove) }));
+    sheet.foot.append(ask, button({ label: "Stop opening it at sign-in", glyph: "close", onclick: act(handlers.remove) }));
   } else {
-    sheet.foot.append(h("p", { class: "autostart-locked" }, icon("lock", 15), h("span", { text: lockText(entry, platform) })));
+    sheet.foot.append(ask, h("p", { class: "autostart-locked" }, icon("lock", 15), h("span", { text: lockText(entry, platform) })));
   }
 
   if (entry.kind === "launchd") {

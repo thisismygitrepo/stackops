@@ -1,5 +1,6 @@
 import { formatClock, h } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { recall, remember } from "../../memory.js";
 import { backLink, toolButton } from "../../space_kit.js";
@@ -20,7 +21,7 @@ export function open() {
 }
 
 // Storage devices: every disk of this machine with what is on it, read on arrival and again whenever a disk comes, goes, or is mounted.
-export function createPart({ tools }) {
+export function createPart({ activity, tools }) {
   const remembered = recall(MEMORY_ID);
   const view = {
     place: "all", state: "all", term: "", order: ORDERS.some(([id]) => id === remembered.get("order")) ? remembered.get("order") : "disk", parts: remembered.get("parts") === "on",
@@ -172,7 +173,7 @@ export function createPart({ tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Storage devices" }), h("p", { text: "Every disk in this computer or plugged into it, what is on each one, and how much room is left." })),
-      h("div", { class: "view-actions" }, stamp, button({ label: "Plain list", glyph: "terminal", title: "The same devices the way the command line lists them", onclick: () => tools.open(LIST_COMMAND, { plain: true }) }), toolButton(tools, MOUNT_COMMAND, { label: "Mount a device", glyph: "plug" }), refresh),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [LIST_COMMAND, MOUNT_COMMAND] }), button({ label: "Plain list", glyph: "terminal", title: "The same devices the way the command line lists them", onclick: () => tools.open(LIST_COMMAND, { plain: true }) }), toolButton(tools, MOUNT_COMMAND, { label: "Mount a device", glyph: "plug" }), refresh),
     ),
     summary.element,
     toolbar,

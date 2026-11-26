@@ -1,4 +1,5 @@
 import { formatClock, h } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { query, staleKeeper } from "../../data.js";
 import { button, notice } from "../../widgets.js";
 import { readExportPlan } from "./api.js";
@@ -47,7 +48,7 @@ export function createPart({ activity, tools }) {
   const element = h(
     "div",
     { class: "dotfiles-part", hidden: true },
-    partHead({ title: "Move to a new machine", lede: "Pack your dotfiles folder into one protected archive and get it to the other machine.", actions: [stamp, everyOption(tools, EXPORT_PATH, preset), refresh] }),
+    partHead({ title: "Move to a new machine", lede: "Pack your dotfiles folder into one protected archive and get it to the other machine.", actions: [stamp, agentButton(activity, { commands: [EXPORT_PATH] }), everyOption(tools, EXPORT_PATH, preset), refresh] }),
     bannerHolder,
     problemHolder,
     columns,

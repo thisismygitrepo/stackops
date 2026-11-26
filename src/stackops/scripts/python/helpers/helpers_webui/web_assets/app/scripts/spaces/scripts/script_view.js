@@ -1,10 +1,19 @@
 import { h, icon, splitArguments, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { replay } from "../../motion.js";
 import { editButton } from "../../space_kit.js";
 import { button, copyChip, notice, pathChip, pill, skeleton, textBox } from "../../widgets.js";
 import { formatBytes, relativeTime } from "../../words.js";
 import { ONLINE, canChange, commandLine, fileOf, folderOf, kindLabel, placeLabel, runArguments, runsHere, scriptFace } from "./words.js";
+
+// What "Ask an agent" says of one script. A script that is not the person's to change is to be copied, not edited where it is.
+const placeOf = (script) => ({
+  title: fileOf(script), commands: ["devops scripts run", "devops scripts edit"], files: [{ label: `the script (${placeLabel(script.source).toLowerCase()})`, path: script.path }],
+  about: script.summary || "One of the scripts StackOps keeps to hand.",
+  notes: canChange(script.source) ? [] : ["This script is not one of the person's own, so it must not be changed where it is. To change it, offer a copy among their own scripts."],
+  ideas: ["Explain what this script does, step by step", canChange(script.source) ? "Change this script so that …" : "Make me my own copy of this script that …"],
+});
 
 // The script picked in the list: what it is, a bar to run it from, and its text to read before doing so.
 export function createScriptView({ activity, onBack }) {
@@ -86,7 +95,7 @@ export function createScriptView({ activity, onBack }) {
       h("button", { class: "icon-btn prompt-back", type: "button", title: "Back to all scripts", "aria-label": "Back to all scripts", onclick: onBack }, icon("back", 16)),
       scriptFace(script, 46),
       h("div", { class: "prompt-title" }, h("span", { class: "overline", text: [placeLabel(script.source), folderOf(script)].filter(Boolean).join(" · ") }), h("h2", { text: fileOf(script) })),
-      h("div", { class: "prompt-actions" }, canChange(script.source) && editButton(activity, { title: fileOf(script), kind: "script", path: script.path })),
+      h("div", { class: "prompt-actions" }, agentButton(activity, () => placeOf(script), { small: true }), canChange(script.source) && editButton(activity, { title: fileOf(script), kind: "script", path: script.path })),
     );
     blurb.textContent = script.summary;
     blurb.hidden = !script.summary;

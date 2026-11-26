@@ -1,5 +1,7 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { filePlace, PLACES } from "../agent_places.js";
 import { markStale } from "../data.js";
 import { partLoaders } from "../features.js";
 import { createPanel } from "../live_panel.js";
@@ -163,7 +165,7 @@ export function createVaultSpace(context) {
         unread.map((source) =>
           callout({
             tone: "bad", title: `The vault file under “${placeLabel(source.name)}” cannot be read`, text: source.problem,
-            extra: editButton(activity, { title: "the vault file", kind: "secrets", path: source.path }, { label: "Open the file", small: true }),
+            extra: h("div", { class: "view-actions" }, agentButton(activity, filePlace({ title: "the vault file", kind: "secrets", path: source.path }), { small: true }), editButton(activity, { title: "the vault file", kind: "secrets", path: source.path }, { label: "Open the file", small: true })),
           }),
         ),
         h("div", { class: "prompt-tools" }, search.element, places),
@@ -178,7 +180,7 @@ export function createVaultSpace(context) {
     {},
     viewHead({
       title: "Vault", lede: "The logins, keys and tokens StackOps keeps for you, ready to load into a terminal or a program.",
-      actions: [button({ label: "Add a login", glyph: "plus", tone: "primary", onclick: add })],
+      actions: [agentButton(activity, PLACES.vault), button({ label: "Add a login", glyph: "plus", tone: "primary", onclick: add })],
     }),
     panel.element,
     toolSections.elements,

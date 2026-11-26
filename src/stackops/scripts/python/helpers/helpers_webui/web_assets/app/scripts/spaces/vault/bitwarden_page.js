@@ -1,4 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
+import { PLACES } from "../../agent_places.js";
 import { markStale, staleKeeper } from "../../data.js";
 import { confirmAction } from "../../overlays.js";
 import { button, skeleton } from "../../widgets.js";
@@ -28,7 +30,7 @@ export function createPart(context) {
   return page;
 }
 
-function createBitwardenPage({ tools }) {
+function createBitwardenPage({ activity, tools }) {
   let place = null;
   let state = null;
   let busy = "";
@@ -73,7 +75,7 @@ function createBitwardenPage({ tools }) {
   const element = h(
     "div",
     { class: "vault-bw", hidden: true },
-    partHead({ title: "Bitwarden", lede: "Open your Bitwarden vault, keep this machine's copy of it in step, and look a login up. All of it goes through Bitwarden's command-line program.", actions: [again, optionsButton(tools, BITWARDEN_PATHS)] }),
+    partHead({ title: "Bitwarden", lede: "Open your Bitwarden vault, keep this machine's copy of it in step, and look a login up. All of it goes through Bitwarden's command-line program.", actions: [agentButton(activity, { ...PLACES.vault, title: "Bitwarden", commands: ["devops vault bitwarden"], about: "StackOps' bridge to a Bitwarden vault through Bitwarden's command-line program: unlocking it, syncing this machine's copy, and looking a login up.", ideas: ["Why can't I unlock Bitwarden here?"] }), again, optionsButton(tools, BITWARDEN_PATHS)] }),
     failureHolder,
     waiting,
     status.element,

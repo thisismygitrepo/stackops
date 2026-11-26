@@ -1,4 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
+import { agentButton } from "../agent_ask.js";
+import { PLACES } from "../agent_places.js";
 import { createDiskCleanup } from "../disk_cleanup.js";
 import { CLEANUP_HASH } from "../disk_cleanup_words.js";
 import { partLoaders } from "../features.js";
@@ -13,7 +15,7 @@ const CARE_TOOLS = ["utils machine kill-process", "utils machine autostart", "ut
 
 // Views that swap in place: the overview at #/machine, the disk cleanup at #/machine/cleanup, and the ones features.js lists for this page.
 export function createMachineSpace(context) {
-  const { tools } = context;
+  const { activity, tools } = context;
   const fact = (label, value, glyph, hue) => h("article", { class: "spec-card lit" }, glyphTile(glyph, hue, 38), h("span", { class: "stat-label", text: label }), h("strong", { text: value || "—" }));
 
   const specs = createLivePanel({
@@ -44,7 +46,7 @@ export function createMachineSpace(context) {
     {},
     viewHead({
       title: "Machine", lede: "What this computer is, what runs on it, and how to keep it tidy.",
-      actions: [toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })],
+      actions: [agentButton(activity, PLACES.machine), toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })],
     }),
     specs.element,
     status.element,

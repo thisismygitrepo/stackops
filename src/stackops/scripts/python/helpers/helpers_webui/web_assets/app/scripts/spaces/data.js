@@ -1,5 +1,7 @@
 import { h } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { filePlace, PLACES } from "../agent_places.js";
 import { query } from "../data.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
@@ -10,6 +12,7 @@ import { appliesHere, backupGroup } from "./data_backups.js";
 
 const PROTECT_TOOLS = ["devops data encrypt", "devops data decrypt", "devops data subset", "devops data validate"];
 const CLOUD_TOOLS = ["cloud sync", "cloud copy", "cloud mount", "cloud transfer"];
+const BACKUP_LIST = { title: "the backup list", kind: "data" };
 
 export function createDataSpace({ activity, tools }) {
   // Kept outside the panel's render so it survives a refresh: the panel reloads when a backup ends.
@@ -17,7 +20,7 @@ export function createDataSpace({ activity, tools }) {
 
   const panel = createLivePanel({
     title: "What is backed up", path: "devops data list", extra: ["--json"], surface: { source: "Which backup list to read" },
-    actions: [editButton(activity, { title: "the backup list", kind: "data" }, { label: "Edit the list", small: true })],
+    actions: [agentButton(activity, filePlace(BACKUP_LIST, { ideas: PLACES.data.ideas }), { small: true }), editButton(activity, BACKUP_LIST, { label: "Edit the list", small: true })],
     render: (data, { setCount }) => {
       const entries = data?.entries ?? [];
       if (entries.length === 0) {
@@ -101,6 +104,7 @@ export function createDataSpace({ activity, tools }) {
     {
       title: "Data", lede: "The files and folders StackOps keeps safe in your cloud storage, and ways to move them around.",
       actions: [
+        agentButton(activity, PLACES.data),
         toolButton(tools, "devops data register", { label: "Add a backup", glyph: "plus" }),
         toolButton(tools, "devops data sync", { label: "Retrieve everything", glyph: "download", preset: { direction: "down", which: "all" } }),
         toolButton(tools, "devops data sync", { label: "Back up everything", glyph: "up", tone: "primary", preset: { direction: "up", which: "all" } }),

@@ -8,6 +8,8 @@ import { button, notice, outputActions } from "./widgets.js";
 // "stopped" is a task the user ended (Stop, or removing it while it ran); the server remembers that it was asked to, so it is not shown as a failure.
 export const statusOf = (summary) => (summary.exit_code === null ? "running" : summary.exit_code === 0 ? "done" : summary.stopped ? "stopped" : "failed");
 const MARK_GLYPHS = { done: "check", stopped: "stop", failed: "alert" };
+// Whether a run is one of `entries` (catalog.js): the words each begins with, then any switch it must also carry, wherever that sits.
+export const isOneOf = (entries, runArguments) => entries.some((entry) => entry.split(" ").every((word, index) => (word.startsWith("--") ? runArguments.includes(word) : runArguments[index] === word)));
 
 function lineOf(summary) {
   const status = statusOf(summary);
@@ -31,8 +33,7 @@ export function createHero({ runAgain }) {
     }
     const { summary } = task;
     const status = statusOf(summary);
-    const confirmed = CONFIRMED_RUNS.some((entry) => entry.split(" ").every((word, index) => (word.startsWith("--") ? summary.arguments.includes(word) : summary.arguments[index] === word)));
-    const repeatable = status !== "running" && !confirmed;
+    const repeatable = status !== "running" && !isOneOf(CONFIRMED_RUNS, summary.arguments);
     line = h("p", { text: lineOf(summary) });
     element.replaceChildren(
       h("span", { class: `task-mark ${status}` }, status === "running" ? h("i", { class: "ring" }) : icon(MARK_GLYPHS[status], 22)),

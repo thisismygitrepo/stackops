@@ -1,5 +1,7 @@
 import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { replay } from "../../motion.js";
 import { editButton } from "../../space_kit.js";
 import { button, copyChip, copyText, pathChip, pill, segmented } from "../../widgets.js";
@@ -96,6 +98,7 @@ export function createPromptReader({ activity, tools, onBack }) {
         "div",
         { class: "prompt-actions" },
         copyButton(prompt.text),
+        canChange(prompt) && agentButton(activity, filePlace(editTarget(prompt), { notes: [`The prompt on screen is “${prompt.name}”.`], ideas: ["Rewrite this prompt so that …"] }), { small: true }),
         canChange(prompt) && editButton(activity, editTarget(prompt)),
         button({ label: "Run this prompt", glyph: "play", tone: "primary", title: "Hand this prompt to an agent", onclick: () => tools.open("agents run-prompt", { preset: runPreset(prompt) }) }),
       ),

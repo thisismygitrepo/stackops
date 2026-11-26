@@ -1,5 +1,6 @@
 import { h, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { rise } from "../../motion.js";
 import { confirmAction } from "../../overlays.js";
 import { backLink } from "../../space_kit.js";
@@ -140,7 +141,7 @@ export function createPart({ activity, tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Packaged files" }), h("p", { text: "The scripts and ready-made settings StackOps ships, held against the copies on this machine. See what a copy would change before you make one." })),
-      h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The command's own form, which can also copy both at once", onclick: () => tools.open(TOOL_PATH, { plain: true }) }), again),
+      h("div", { class: "view-actions" }, agentButton(activity, { commands: [TOOL_PATH] }), button({ label: "All options", glyph: "sliders", title: "The command's own form, which can also copy both at once", onclick: () => tools.open(TOOL_PATH, { plain: true }) }), again),
     ),
     lead,
     sets,

@@ -1,5 +1,7 @@
 import { h, icon } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { PLACES } from "../agent_places.js";
 import { query, software, staleKeeper } from "../data.js";
 import { partLoaders } from "../features.js";
 import { createHeroOrbit } from "../hero_orbit.js";
@@ -49,6 +51,7 @@ export function createHomeSpace(context) {
         h("span", { text: "What do you want to do?" }),
         h("kbd", { text: navigator.platform.startsWith("Mac") ? "⌘K" : "Ctrl K" }),
       ),
+      agentButton(context.activity, PLACES.home),
     ),
     rise(h("div", { class: "stats" }, Object.values(stats).map((item) => item.element))),
     h("div", { class: "home-health" }, health.map((item) => item.element)),

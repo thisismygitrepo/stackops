@@ -44,7 +44,7 @@ export function createPostureSection({ activity, starter }) {
 
   const open = (target) =>
     openTargetSheet({
-      target, onScan: (app) => starter.apps([app.name]),
+      activity, target, onScan: (app) => starter.apps([app.name]),
       loadEngines: async () => (await query(["devops", "security", "report", "--run", target.run_id, "--json", target.name])).json.engines.filter((engine) => engine.target_id === target.target_id),
     });
 

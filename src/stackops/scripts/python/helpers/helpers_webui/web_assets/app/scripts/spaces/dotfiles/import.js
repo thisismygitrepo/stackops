@@ -1,5 +1,6 @@
 import { formatClock, h, tildify } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { confirmAction } from "../../overlays.js";
 import { button, notice } from "../../widgets.js";
@@ -49,7 +50,7 @@ export function createPart({ activity, tools }) {
   const element = h(
     "div",
     { class: "dotfiles-part", hidden: true },
-    partHead({ title: "Bring settings from another machine", lede: "Open an archive made on the other machine, see what it would change here, then put it in place.", actions: [stamp, everyOption(tools, IMPORT_PATH, preset), refresh] }),
+    partHead({ title: "Bring settings from another machine", lede: "Open an archive made on the other machine, see what it would change here, then put it in place.", actions: [stamp, agentButton(activity, { commands: [IMPORT_PATH] }), everyOption(tools, IMPORT_PATH, preset), refresh] }),
     bannerHolder,
     problemHolder,
     columns,

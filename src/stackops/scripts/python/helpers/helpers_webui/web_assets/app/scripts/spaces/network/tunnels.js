@@ -1,5 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { query, staleKeeper } from "../../data.js";
 import { button, copyChip, notice, pill, searchInput, skeleton } from "../../widgets.js";
 import { plural } from "../../words.js";
@@ -195,6 +196,7 @@ function createTunnelsPage({ activity, tools }, preset) {
     partHead({
       title: "Cloudflare tunnels", lede: "A tunnel publishes something that runs on this machine under a public address, without opening a port. Here is which tunnels exist, where each is connected, what it publishes, and a way to run one.",
       actions: [
+        agentButton(activity, { title: "Cloudflare tunnels", commands: [PATHS.tunnelStatus, PATHS.runTunnel] }),
         button({ label: "Refresh", glyph: "refresh", onclick: () => load() }),
         button({ label: "Status options", glyph: "sliders", title: "The status command's own form, which can also check other machines over SSH", onclick: () => tools.open(PATHS.tunnelStatus, { plain: true }) }),
         button({ label: "Run options", glyph: "sliders", title: "The run command's own form", onclick: () => tools.open(PATHS.runTunnel, { plain: true }) }),

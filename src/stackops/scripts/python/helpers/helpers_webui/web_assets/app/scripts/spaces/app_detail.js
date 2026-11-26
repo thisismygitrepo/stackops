@@ -1,5 +1,6 @@
 import { h, icon, tildify } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
 import { openSheet } from "../overlays.js";
 import { avatar, button, copyChip, keyValue, pill } from "../widgets.js";
 import { plainText, relativeTime } from "../words.js";
@@ -74,6 +75,11 @@ export function openAppDetail({ app, categories, picked, activity, onToggle, onI
   sheet.foot.hidden = false;
   sheet.foot.append(
     ...[
+      agentButton(activity, {
+        title: app.name, commands: ["devops software"], about: plainText(app.summary),
+        notes: [`The app on screen is “${app.name}”, which is ${app.installed ? "installed on" : "not installed on"} this machine.`],
+        ideas: [app.installed ? "Why would I update or delete this?" : "Install this for me", "What is this app for?"],
+      }),
       app.installed && remove,
       h("span", { class: "spacer" }),
       button({

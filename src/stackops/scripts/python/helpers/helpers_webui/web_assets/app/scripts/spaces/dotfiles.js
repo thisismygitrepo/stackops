@@ -1,5 +1,7 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { filePlace, PLACES } from "../agent_places.js";
 import { partLoaders } from "../features.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
@@ -12,6 +14,7 @@ import { COLLECT_WORDS, foundGroups, managedGroups } from "./dotfiles_groups.js"
 const IN_SYNC = "Configured";
 // On neither side: not on this machine and not in the dotfiles folder. A file for something that is not used here, so it stays out of the way unless it is asked for.
 const UNUSED = "Missing both paths";
+const MY_LIST = { title: "your dotfiles list", kind: "dotfiles" };
 
 // The cards at the foot of the page. Each opens a view of its own (feature_lists/dotfiles.js): two pages under this one and a side sheet.
 const MORE_TOOLS = [
@@ -38,7 +41,7 @@ export function createDotfilesSpace(context) {
   const panel = createLivePanel({
     // No Options: the command's switches pick which sections the answer holds and the page needs all of them, and its group choice is what the search box here does.
     title: "What is managed", path: "devops config dotfiles status", extra: ["--json"], tunable: false,
-    actions: [editButton(activity, { title: "your dotfiles list", kind: "dotfiles" }, { label: "Edit my list", small: true })],
+    actions: [agentButton(activity, filePlace(MY_LIST, { ideas: PLACES.dotfiles.ideas }), { small: true }), editButton(activity, MY_LIST, { label: "Edit my list", small: true })],
     render: (data, { setCount }) => {
       const everything = [...data.sync.user, ...data.sync.library];
       const synced = everything.filter((entry) => entry.status === IN_SYNC).length;
@@ -137,6 +140,7 @@ export function createDotfilesSpace(context) {
     viewHead({
       title: "Dotfiles", lede: "Your settings files, kept in one safe place and applied wherever you work.",
       actions: [
+        agentButton(activity, PLACES.dotfiles),
         toolButton(tools, "devops config dotfiles collect", { label: "Collect", glyph: "plus" }),
         toolButton(tools, "devops config dotfiles sync", { label: "Save from this machine", glyph: "up", preset: { direction: "up" } }),
         toolButton(tools, "devops config dotfiles sync", { label: "Apply to this machine", glyph: "download", tone: "primary", preset: { direction: "down" } }),

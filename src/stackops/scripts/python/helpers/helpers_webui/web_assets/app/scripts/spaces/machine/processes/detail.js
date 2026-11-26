@@ -1,10 +1,11 @@
 import { h, icon, shellQuote } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { openSheet } from "../../../overlays.js";
 import { button, callout, copyText, glyphTile, keyValue, notice, pathChip, pill, skeleton } from "../../../widgets.js";
 import { hueOf, plural } from "../../../words.js";
 import { readDetail } from "./api.js";
 import { ancestors } from "./model.js";
-import { HEAVY_CPU, HEAVY_MEMORY, LOCKS, ROLES, ageText, cpuText, memoryText, processCount, startedText, statusOf } from "./words.js";
+import { HEAVY_CPU, HEAVY_MEMORY, LOCKS, ROLES, TOOL_PATH, ageText, cpuText, memoryText, processCount, startedText, statusOf } from "./words.js";
 
 const REACH = { local: "this machine only", network: "open to the network" };
 const UNREAD = {
@@ -68,7 +69,7 @@ function restOf(detail, process) {
 
 // Everything about one process, beside the list. Its figures and its relatives follow the page's readings; the command, the folder, the
 // ports and the files are read once when it is shown. `page` gives the current reading, a way to hear of new ones, and the page's actions.
-export function openDetail({ process, page }) {
+export function openDetail({ activity, process, page }) {
   const sheet = openSheet({ label: process.name, wide: true });
   const title = h("h1");
   const line = h("p");
@@ -173,7 +174,13 @@ export function openDetail({ process, page }) {
     childrenBlock,
   );
   sheet.foot.hidden = false;
-  sheet.foot.append(find, h("span", { class: "spacer" }), force, quit);
+  // The process on show when the button is pressed: the sheet moves on to a parent or a child without closing.
+  const ask = agentButton(activity, () => ({
+    title: current()?.name ?? process.name, commands: [TOOL_PATH], about: "One process running on this machine: what it uses, what started it and what it started.",
+    notes: [`The process on screen is “${current()?.name ?? process.name}”, process ID ${current()?.pid ?? process.pid}.`],
+    ideas: ["What is this process, and is it safe to stop?"],
+  }));
+  sheet.foot.append(ask, find, h("span", { class: "spacer" }), force, quit);
   sheet.closed.then(page.watch(paint));
   show(key);
 }

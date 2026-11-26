@@ -1,5 +1,6 @@
 import { h } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { query, staleKeeper } from "../../data.js";
 import { button, copyChip, skeleton } from "../../widgets.js";
 import { failNotice, mark, partHead } from "./kit.js";
@@ -20,6 +21,12 @@ export function open(_context, { preset }, section = "setup") {
   wanted = preset?.section ?? section;
   go(HASHES.ssh);
 }
+
+const PLACE = {
+  title: "SSH access", commands: [PATHS.setup, PATHS.addKey, PATHS.debug],
+  about: "Whether other machines can sign in to this one over SSH: the server, the checks it has to pass, and the public keys that are allowed in.",
+  ideas: ["Why can't my other machine sign in here?"],
+};
 
 export function createPart(context) {
   page ??= createSshPage(context);
@@ -100,7 +107,7 @@ function createSshPage({ activity, tools }) {
     { class: "network-part network-ssh", hidden: true },
     partHead({
       title: "SSH access", lede: "Whether other machines can sign in to this one over SSH, whose keys are allowed, and how to switch it on.",
-      actions: [again, button({ label: "All options", glyph: "sliders", title: "The add-a-key command's own form, which can also put a key on another machine", onclick: () => tools.open(PATHS.addKey, { plain: true }) })],
+      actions: [agentButton(activity, PLACE), again, button({ label: "All options", glyph: "sliders", title: "The add-a-key command's own form, which can also put a key on another machine", onclick: () => tools.open(PATHS.addKey, { plain: true }) })],
     }),
     failure,
     hero,

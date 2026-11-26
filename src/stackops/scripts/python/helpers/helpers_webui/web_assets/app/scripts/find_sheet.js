@@ -1,5 +1,6 @@
 import { debounce, h, icon, tildify } from "/assets/scripts/dom.js";
 import { nodeHash, state } from "/assets/scripts/state.js";
+import { agentButton } from "./agent_ask.js";
 import { capture } from "./data.js";
 import { openSheet } from "./overlays.js";
 import { editFile } from "./space_kit.js";
@@ -132,7 +133,7 @@ export function openFind({ activity }) {
     more,
   );
   sheet.foot.hidden = false;
-  sheet.foot.append(h("a", { class: "dev-link", href: `/dev${nodeHash(node)}`, title: "Symbol and meaning-based search, and every other option, are in the developer view" }, icon("code", 14), h("span", { text: "Developer view" })));
+  sheet.foot.append(agentButton(activity, { commands: [node.path] }), h("a", { class: "dev-link", href: `/dev${nodeHash(node)}`, title: "Symbol and meaning-based search, and every other option, are in the developer view" }, icon("code", 14), h("span", { text: "Developer view" })));
   modes.set(last.mode);
   box.input.focus();
   search();

@@ -1,5 +1,7 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { PLACES } from "../agent_places.js";
 import { markStale } from "../data.js";
 import { createPanel } from "../live_panel.js";
 import { rise } from "../motion.js";
@@ -182,7 +184,7 @@ export function createScriptsSpace({ activity }) {
   const element = createView(
     {
       title: "Scripts", lede: "Small programs kept to hand: your own, this project's, and the ones StackOps comes with. Pick one to read it, then run it.",
-      actions: [button({ label: "New script", glyph: "plus", tone: "primary", onclick: add })],
+      actions: [agentButton(activity, PLACES.scripts), button({ label: "New script", glyph: "plus", tone: "primary", onclick: add })],
     },
     panel.element,
   );

@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { markStale } from "../../data.js";
 import { confirmAction, openSheet } from "../../overlays.js";
 import { avatar, button, notice, pill, skeleton } from "../../widgets.js";
@@ -150,7 +151,7 @@ export async function open(context, { preset = {} }) {
 
   sheet.body.append(toolHead(PATH, LEDE), content);
   sheet.foot.hidden = false;
-  sheet.foot.append(everyOption({ tools, sheet, path: PATH, preset }), problem, go);
+  sheet.foot.append(agentButton(context.activity, { commands: [PATH] }), everyOption({ tools, sheet, path: PATH, preset }), problem, go);
   let found;
   try {
     found = await readRuns();

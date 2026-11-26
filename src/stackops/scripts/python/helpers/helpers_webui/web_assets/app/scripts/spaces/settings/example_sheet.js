@@ -1,5 +1,7 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { confirmAction, openSheet } from "../../overlays.js";
 import { button, emojiTile, keyValue, notice, outputActions, pathChip, skeleton } from "../../widgets.js";
 import { quietRun, readExample } from "./model.js";
@@ -59,6 +61,7 @@ export async function openExample({ activity, tools, file, onCreate }) {
   sheet.foot.hidden = false;
   sheet.foot.append(
     ...[
+      agentButton(activity, filePlace({ title: words.title, kind: file.kind, path: file.path }, { notes: ["The page shows the example StackOps ships for this file; `stackops devops config export-example` writes it out."], ideas: [file.exists ? "Explain what each part of this file does" : "Create this file and set it up for me"] })),
       ...outputActions(() => example.text, example.file_name),
       button({ label: "All options", tone: "ghost", title: "Only the file, only the schema, or over your real file", onclick: () => tools.open("devops config export-example", { plain: true, preset: { which: file.kind } }) }),
       h("span", { class: "spacer" }),

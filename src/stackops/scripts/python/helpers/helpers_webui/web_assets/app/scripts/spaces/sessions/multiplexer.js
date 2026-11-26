@@ -1,5 +1,7 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { request, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { markStale, staleKeeper } from "../../data.js";
 import { replay, rise } from "../../motion.js";
 import { backLink, editButton } from "../../space_kit.js";
@@ -90,7 +92,7 @@ export function createPart({ activity, tools }) {
   function fail(error) {
     // The server answers 422 when the settings file is there and does not pass the check every StackOps command gives it.
     const unreadable = error.status === 422;
-    const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }), unreadable && editButton(activity, SETTINGS, { label: "Edit the settings file", small: true }));
+    const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }), unreadable && agentButton(activity, filePlace(SETTINGS, { notes: [`The web UI could not read this file: ${error.message}`], ideas: ["Fix what is wrong with this file"] }), { small: true }), unreadable && editButton(activity, SETTINGS, { label: "Edit the settings file", small: true }));
     // Any other failure is most often a server started before this page's routes existed, which only a restart brings in.
     const body = unreadable ? error.message : `${error.message.replace(/[.\s]*$/, "")}. If StackOps was just updated, restart it and open this page again.`;
     failure.replaceChildren(notice({ glyph: "alert", tone: "bad", title: unreadable ? "The StackOps settings file cannot be read" : "This didn't load", body, action: actions }));
@@ -163,7 +165,7 @@ export function createPart({ activity, tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/sessions", "Sessions"), h("h1", { text: titleOf(state.nodes.get(PATH)) }), h("p", { text: LEDE })),
-      h("div", { class: "view-actions" }, button({ label: "All options", glyph: "sliders", title: "The same two choices as a plain form, run as a task you can watch", onclick: () => tools.open(PATH, { plain: true }) }), again),
+      h("div", { class: "view-actions" }, agentButton(activity, { commands: [PATH] }), button({ label: "All options", glyph: "sliders", title: "The same two choices as a plain form, run as a task you can watch", onclick: () => tools.open(PATH, { plain: true }) }), again),
     ),
     failure,
     defaults,

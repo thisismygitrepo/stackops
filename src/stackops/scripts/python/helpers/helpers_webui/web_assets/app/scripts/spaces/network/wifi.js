@@ -1,5 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
 import { request } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
 import { markStale, query, staleKeeper } from "../../data.js";
 import { button } from "../../widgets.js";
 import { failNotice, partHead } from "./kit.js";
@@ -24,7 +25,7 @@ export function createPart(context) {
   return page;
 }
 
-function createWifiPage({ tools }, preset) {
+function createWifiPage({ activity, tools }, preset) {
   let overview = null;
   let signal = null;
   let nearby = null;
@@ -122,7 +123,7 @@ function createWifiPage({ tools }, preset) {
     { class: "network-part network-wifi", hidden: true },
     partHead({
       title: "Wi-Fi", lede: "The network this machine is on, how strong it is, and the ones it can join.",
-      actions: [button({ label: "Refresh", glyph: "refresh", onclick: () => load() }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(PATHS.wifi, { plain: true }) })],
+      actions: [agentButton(activity, { title: "Wi-Fi", commands: [PATHS.wifi] }), button({ label: "Refresh", glyph: "refresh", onclick: () => load() }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(PATHS.wifi, { plain: true }) })],
     }),
     failure,
     body,

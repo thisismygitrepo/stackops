@@ -1,4 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../agent_ask.js";
+import { filePlace, PLACES } from "../agent_places.js";
 import { createCombo } from "../combo.js";
 import { software, staleKeeper } from "../data.js";
 import { replay, rise } from "../motion.js";
@@ -176,7 +178,7 @@ export function createAppsSpace({ activity }) {
       catalog = null;
       summary.textContent = "";
       selectAll.hidden = bundleButton.hidden = true;
-      const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }), editButton(activity, MY_CATALOG, { label: "Edit my catalog", small: true }));
+      const actions = h("div", { class: "dialog-actions" }, button({ label: "Try again", glyph: "refresh", small: true, onclick: () => keeper.load() }), agentButton(activity, filePlace(MY_CATALOG, { notes: [`The web UI could not load the app catalog: ${error.message}`], ideas: ["Fix what is wrong with this file"] }), { small: true }), editButton(activity, MY_CATALOG, { label: "Edit my catalog", small: true }));
       grid.replaceChildren(notice({ glyph: "alert", tone: "bad", title: "The app catalog didn't load", body: error.message, action: actions }));
       return;
     }
@@ -201,7 +203,7 @@ export function createAppsSpace({ activity }) {
   const element = h(
     "section",
     { class: "view apps", hidden: true },
-    h("header", { class: "store-hero" }, h("div", { class: "store-top" }, h("h1", { text: "Apps" }), editButton(activity, MY_CATALOG, { label: "Edit my catalog" })), lede, h("div", { class: "section-bar" }, picker.element), searchRow),
+    h("header", { class: "store-hero" }, h("div", { class: "store-top" }, h("h1", { text: "Apps" }), h("div", { class: "view-actions" }, agentButton(activity, PLACES.apps), editButton(activity, MY_CATALOG, { label: "Edit my catalog" }))), lede, h("div", { class: "section-bar" }, picker.element), searchRow),
     browse,
     updates.element,
   );

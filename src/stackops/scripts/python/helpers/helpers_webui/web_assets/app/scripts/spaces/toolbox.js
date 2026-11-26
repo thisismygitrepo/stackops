@@ -1,5 +1,6 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
 import { lineage, state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
 import { collectionLoader } from "../features.js";
 import { rise } from "../motion.js";
 import { toolCard } from "../space_kit.js";
@@ -9,7 +10,7 @@ import { friendlyText, plural, titleOf, trailOf } from "../words.js";
 const hashOf = (node) => (node.path === "" ? "#/tools" : `#/tools/${node.path.split(" ").map(encodeURIComponent).join("/")}`);
 
 export function createToolboxSpace(context) {
-  const { tools } = context;
+  const { activity, tools } = context;
   const crumbs = h("nav", { class: "crumbs", "aria-label": "Breadcrumb" });
   const title = h("h1");
   const lede = h("p");
@@ -134,6 +135,10 @@ export function createToolboxSpace(context) {
     else showCards();
   }
 
-  const element = h("section", { class: "view toolbox", hidden: true }, crumbs, h("header", { class: "view-head" }, h("div", { class: "view-title" }, title, lede), h("div", { class: "view-actions" }, filter.element)), content, pageHolder);
+  // The collection on show, or every one of them at the top: the agent starts from the commands the person is looking at.
+  const ask = agentButton(activity, () =>
+    current.kind === "root" ? { title: "Toolbox", about: "Every StackOps command, grouped into collections by what it works on.", commands: current.children.map((child) => child.path) } : { commands: [current.path] },
+  );
+  const element = h("section", { class: "view toolbox", hidden: true }, crumbs, h("header", { class: "view-head" }, h("div", { class: "view-title" }, title, lede), h("div", { class: "view-actions" }, ask, filter.element)), content, pageHolder);
   return { element, show };
 }

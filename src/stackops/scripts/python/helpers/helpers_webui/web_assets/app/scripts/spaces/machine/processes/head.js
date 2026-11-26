@@ -1,4 +1,5 @@
 import { formatClock, h, icon } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
 import { backLink } from "../../../space_kit.js";
 import { button, iconButton } from "../../../widgets.js";
 import { TOOL_PATH } from "./words.js";
@@ -15,7 +16,7 @@ function pauseIcon() {
 
 // The top of the page: the way back, what the page is, and beside it whether the list is following the machine, when it was last read,
 // the ways to hold it still or read it now, and the command's own form for every option the page does not offer.
-export function createHead({ tools, onToggle, onRefresh }) {
+export function createHead({ activity, tools, onToggle, onRefresh }) {
   const word = h("strong");
   const stamp = h("span");
   const status = h("span", { class: "procs-live" }, h("i"), word, stamp);
@@ -27,7 +28,7 @@ export function createHead({ tools, onToggle, onRefresh }) {
     "header",
     { class: "view-head" },
     h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Processes" }), h("p", { text: "Everything running on this machine, read again every few seconds. Find what is slowing it down and stop it." })),
-    h("div", { class: "view-actions" }, status, toggle, refresh, button({ label: "All options", glyph: "sliders", title: "The plain form, with every option of the command behind this page", onclick: () => tools.open(TOOL_PATH, { plain: true }) })),
+    h("div", { class: "view-actions" }, status, agentButton(activity, { commands: [TOOL_PATH] }), toggle, refresh, button({ label: "All options", glyph: "sliders", title: "The plain form, with every option of the command behind this page", onclick: () => tools.open(TOOL_PATH, { plain: true }) })),
   );
   let pausedShown = null;
 

@@ -1,4 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
+import { PLACES } from "../../agent_places.js";
 import { markStale, staleKeeper } from "../../data.js";
 import { button, sectionHead, skeleton } from "../../widgets.js";
 import { createFile, protectFile, readHealth, refreshSchema, runCheck } from "./file_api.js";
@@ -47,7 +49,7 @@ function createFilePage({ activity, tools }) {
   const element = h(
     "div",
     { class: "vault-file", hidden: true },
-    partHead({ title: "Vault file", lede: "Whether each vault file can be used, what is wrong if not, and what it holds. Nothing here reads a value into the page.", actions: [again, optionsButton(tools, FILE_PATHS)] }),
+    partHead({ title: "Vault file", lede: "Whether each vault file can be used, what is wrong if not, and what it holds. Nothing here reads a value into the page.", actions: [agentButton(activity, { ...PLACES.vault, title: "Vault file", commands: FILE_PATHS, about: "Whether each vault file can be used, what is wrong with it if not, and how many logins and values it holds.", ideas: ["Why does my vault file not pass its check?"] }), again, optionsButton(tools, FILE_PATHS)] }),
     failure,
     summary,
     filesSection,

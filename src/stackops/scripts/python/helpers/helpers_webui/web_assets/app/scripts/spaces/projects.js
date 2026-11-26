@@ -1,5 +1,7 @@
 import { h, icon, tildify, toast } from "/assets/scripts/dom.js";
 import { state } from "/assets/scripts/state.js";
+import { agentButton } from "../agent_ask.js";
+import { filePlace, PLACES } from "../agent_places.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { confirmAction } from "../overlays.js";
@@ -9,6 +11,7 @@ import { avatar, button, copyChip, iconButton, notice, pill } from "../widgets.j
 import { plural, relativeTime } from "../words.js";
 
 const CHANGE_WORDS = { m: "modified", n: "new", d: "deleted", r: "renamed", u: "conflicted" };
+const PROJECT_LIST = { title: "the project list", kind: "repos" };
 
 export function createProjectsSpace({ activity, tools }) {
   // Every card action names the repository by its full path: two registered repositories may share a name.
@@ -73,7 +76,8 @@ export function createProjectsSpace({ activity, tools }) {
   }
 
   const panel = createLivePanel({
-    title: "Your projects", path: "devops repos list", extra: ["--json"], surface: { guarded: "Guarded only" }, skeletonShape: "card", actions: [editButton(activity, { title: "the project list", kind: "repos" }, { label: "Edit list", small: true })],
+    title: "Your projects", path: "devops repos list", extra: ["--json"], surface: { guarded: "Guarded only" }, skeletonShape: "card",
+    actions: [agentButton(activity, filePlace(PROJECT_LIST, { ideas: PLACES.projects.ideas }), { small: true }), editButton(activity, PROJECT_LIST, { label: "Edit list", small: true })],
     render: (repos, { setCount }) => {
       if (!Array.isArray(repos) || repos.length === 0) {
         setCount("");
@@ -90,6 +94,7 @@ export function createProjectsSpace({ activity, tools }) {
     {
       title: "Projects", lede: "Every repository StackOps tracks on this machine, and where it stands.",
       actions: [
+        agentButton(activity, PLACES.projects),
         toolButton(tools, "devops repos action", { label: "Pull working folder", glyph: "download", preset: { pull: "on" } }),
         toolButton(tools, "devops repos register", { label: "Register", glyph: "plus" }),
         toolButton(tools, "devops repos sync", { label: "Sync all", glyph: "sync", tone: "primary" }),

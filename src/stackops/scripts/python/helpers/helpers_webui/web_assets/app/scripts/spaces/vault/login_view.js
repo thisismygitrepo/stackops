@@ -1,5 +1,7 @@
 import { h, icon, shellQuote } from "/assets/scripts/dom.js";
 import { api, state } from "/assets/scripts/state.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { markStale } from "../../data.js";
 import { editButton } from "../../space_kit.js";
 import { avatar, button, copyChip, iconButton, keyValue, pathChip, pill } from "../../widgets.js";
@@ -94,7 +96,7 @@ export function createLoginView({ activity, onEdit, onDelete, onBack }) {
           ...Object.entries(login.metadata ?? {}),
         ]),
         ...login.secrets.map((secret, position) => secretBlock(login, secret, position, reveal, whole)),
-        h("footer", { class: "prompt-origin" }, h("span", { text: "Kept in" }), pathChip(login.path), editButton(activity, { title: "the vault file", kind: "secrets", path: login.path }, { label: "Open the file", small: true })),
+        h("footer", { class: "prompt-origin" }, h("span", { text: "Kept in" }), pathChip(login.path), agentButton(activity, filePlace({ title: "the vault file", kind: "secrets", path: login.path }), { small: true }), editButton(activity, { title: "the vault file", kind: "secrets", path: login.path }, { label: "Open the file", small: true })),
       ].filter(Boolean),
     );
     scroll.scrollTop = 0;

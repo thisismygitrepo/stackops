@@ -1,4 +1,6 @@
 import { h, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { openPopover } from "../../overlays.js";
 import { editButton } from "../../space_kit.js";
 import { button, pathChip, pill } from "../../widgets.js";
@@ -62,6 +64,7 @@ export function openPromptFiles(anchor, { activity, sources, onCreate }) {
             h(
               "div",
               { class: "prompt-file-actions" },
+              agentButton(activity, filePlace(editTarget(record), { ideas: [record.exists ? "Save a prompt that …" : "Create this file with a prompt that …"] }), { small: true }),
               record.exists ? edit(record) : button({ label: "Create this file", glyph: "plus", small: true, tone: "primary", onclick: create(record) }),
             ),
         ),

@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { openSheet } from "../../overlays.js";
 import { button, callout, emojiTile } from "../../widgets.js";
 import { setup } from "./model.js";
@@ -62,6 +63,7 @@ export function open({ activity }) {
   let starting = false;
   sheet.foot.hidden = false;
   sheet.foot.append(
+    agentButton(activity, { commands: [WIZARD_PATH] }),
     h("span", { class: "dim", text: "Nothing changes until you tick something there." }),
     h("span", { class: "spacer" }),
     button({ label: "Close", tone: "ghost", onclick: () => sheet.close() }),

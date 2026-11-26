@@ -1,4 +1,5 @@
 import { formatClock, h, icon } from "/assets/scripts/dom.js";
+import { agentButton } from "./agent_ask.js";
 import { confirmCleanup } from "./disk_cleanup_confirm.js";
 import { createCleanupList } from "./disk_cleanup_list.js";
 import { changedOptions, defaultOptions, openCleanupOptions } from "./disk_cleanup_options.js";
@@ -213,7 +214,7 @@ export function createDiskCleanup({ activity }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Free up disk space" }), h("p", { text: "See what is taking up room, tick what you can live without, and remove it in one go. Nothing is deleted until you confirm." })),
-      h("div", { class: "view-actions" }, stamp, optionsButton, rescanButton),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: ["utils machine clean-drive"] }), optionsButton, rescanButton),
     ),
     bannerHolder,
     summary.element,

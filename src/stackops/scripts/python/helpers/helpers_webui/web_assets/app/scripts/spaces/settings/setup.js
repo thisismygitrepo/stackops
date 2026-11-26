@@ -1,4 +1,6 @@
 import { h, icon } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
+import { filePlace } from "../../agent_places.js";
 import { replay, rise } from "../../motion.js";
 import { backLink, editButton } from "../../space_kit.js";
 import { button, callout, emojiTile, notice, skeleton } from "../../widgets.js";
@@ -7,6 +9,12 @@ import { createAgentPicker, describeStep } from "./setup/steps.js";
 import { BACK_LABEL, HASH, SETUP_HASH, STEPS, WIZARD_PATH, WIZARD_TITLE, stepsDone } from "./words.js";
 
 const MARKS = { true: "Set up", false: "Not set up", null: "Cannot be read" };
+const DEFAULTS = { title: "the StackOps defaults", kind: "config" };
+const PLACE = {
+  title: "Guided setup", commands: ["devops config setup"],
+  about: "The things StackOps asks about once: the default cloud, email, coding agent and multiplexer, and a first backup, dotfile, layout and vault.",
+  ideas: ["Set up what is still missing here"],
+};
 // The step whoever opened the tool asked for, and what they filled in, until the page shows them.
 let arrival = { step: "", preset: {} };
 
@@ -50,7 +58,7 @@ export function createPart({ activity, tools }) {
         value.settings_problem &&
           callout({
             tone: "bad", title: "The StackOps defaults file does not pass its check", text: value.settings_problem.replaceAll(`: ${value.settings_path}`, "").replaceAll(value.settings_path, "the file"),
-            extra: editButton(activity, { title: "the StackOps defaults", kind: "config" }, { label: "Edit the file", small: true }),
+            extra: h("div", { class: "view-actions" }, agentButton(activity, filePlace(DEFAULTS, { notes: [`The web UI's check of this file says: ${value.settings_problem}`], ideas: ["Fix what is wrong with this file"] }), { small: true }), editButton(activity, DEFAULTS, { label: "Edit the file", small: true })),
           }),
         !value.dotfiles_folder &&
           callout({ tone: "", title: "Your dotfiles folder is not on this machine yet", text: "Each step creates what it needs there. To bring your settings over from another machine instead, use Dotfiles.", href: "#/dotfiles" }),
@@ -99,7 +107,7 @@ export function createPart({ activity, tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink(HASH, BACK_LABEL), h("h1", { text: "Guided setup" }), h("p", { text: "Eight things StackOps asks about once. See which are set, and set the rest one at a time." })),
-      h("div", { class: "view-actions" }, button({ label: WIZARD_TITLE, glyph: "sparkle", title: "One guided run for a new machine, in the activity panel", onclick: () => tools.open(WIZARD_PATH) }), again),
+      h("div", { class: "view-actions" }, agentButton(activity, PLACE), button({ label: WIZARD_TITLE, glyph: "sparkle", title: "One guided run for a new machine, in the activity panel", onclick: () => tools.open(WIZARD_PATH) }), again),
     ),
     hero,
     notes,

@@ -1,4 +1,6 @@
 import { h, icon } from "/assets/scripts/dom.js";
+import { agentButton } from "../../../agent_ask.js";
+import { filePlace } from "../../../agent_places.js";
 import { editButton } from "../../../space_kit.js";
 import { button, emojiTile, keyValue, pathChip, pill } from "../../../widgets.js";
 import { formatBytes, relativeTime } from "../../../words.js";
@@ -34,8 +36,12 @@ export function fileCard(id, { activity, handlers }) {
       file.exists && file.schema !== "current" &&
       act("schema", h("button", { class: "link", type: "button", text: file.schema === "missing" ? "Put it there" : "Bring it up to date", onclick: () => handlers.onSchema(file) }));
     const example = act("example", button({ label: file.exists ? "Example" : "See the example", glyph: "eye", small: true, title: "What StackOps ships as a starting point for this file", onclick: () => handlers.onExample(file) }));
+    const ask =
+      file.available &&
+      act("ask", agentButton(activity, filePlace({ title: words.title, kind: file.kind, path: file.path }, { notes: problem ? [`The web UI says of this file: ${problem}`] : [], ideas: [file.exists ? "Check this file and fix what is wrong with it" : "Create this file and set it up for me"] }), { small: true }));
     const actions = file.exists
       ? [
+          ask,
           act("edit", editButton(activity, editTarget(file, words), { small: true })),
           act("check", button({ label: "Check", glyph: "check", small: true, title: "Runs the check StackOps runs before it uses this file", onclick: () => handlers.onCheck(file) })),
           example,
@@ -43,6 +49,7 @@ export function fileCard(id, { activity, handlers }) {
           h("a", { class: "settings-file-used", href: words.used.href }, h("span", { text: words.used.label }), icon("arrow", 13)),
         ]
       : [
+          ask,
           file.available && !file.blocked && act("create", button({ label: "Create it", glyph: "plus", small: true, tone: "primary", title: "Starts the file from the example StackOps ships, with its schema beside it", onclick: () => handlers.onCreate(file) })),
           example,
         ];

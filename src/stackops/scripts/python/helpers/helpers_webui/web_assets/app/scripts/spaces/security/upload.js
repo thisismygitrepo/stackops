@@ -1,4 +1,5 @@
 import { h, icon, toast } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { confirmAction, openSheet } from "../../overlays.js";
 import { button, copyChip } from "../../widgets.js";
 import { formatBytes } from "../../words.js";
@@ -135,7 +136,7 @@ export async function open(context, { preset = {} }) {
   });
   sheet.body.append(toolHead(PATH, LEDE), h("div", { class: "sec-tool" }, part("Cloud", cloudCard.element), part("File", box.element, status.element, fileHolder), part("Where it lands", landHolder), runHolder));
   sheet.foot.hidden = false;
-  sheet.foot.append(everyOption({ tools, sheet, path: PATH, preset }), problem, go);
+  sheet.foot.append(agentButton(context.activity, { commands: [PATH] }), everyOption({ tools, sheet, path: PATH, preset }), problem, go);
   paintLanding();
   await look();
 }

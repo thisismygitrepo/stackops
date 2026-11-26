@@ -1,4 +1,5 @@
 import { formatClock, h } from "/assets/scripts/dom.js";
+import { agentButton } from "../../agent_ask.js";
 import { staleKeeper } from "../../data.js";
 import { aimBackLink, backLink } from "../../space_kit.js";
 import { button, notice } from "../../widgets.js";
@@ -67,7 +68,7 @@ export function createPart({ activity, tools }) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, back, h("h1", { text: "Mount a device" }), h("p", { text: "Pick a disk or one of its parts, say where it should appear, and mount it." })),
-      h("div", { class: "view-actions" }, stamp, button({ label: "Every option", glyph: "sliders", title: "The command's own form, with everything it can do", onclick: () => tools.open(MOUNT_PATH, { plain: true }) }), refresh),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [MOUNT_PATH] }), button({ label: "Every option", glyph: "sliders", title: "The command's own form, with everything it can do", onclick: () => tools.open(MOUNT_PATH, { plain: true }) }), refresh),
     ),
     bannerHolder,
     problemHolder,
