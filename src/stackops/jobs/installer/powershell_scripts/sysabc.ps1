@@ -33,8 +33,12 @@ Write-Host "::step::3/5 Windows Terminal"
 winget install --no-upgrade --name "Windows Terminal"             --Id "Microsoft.WindowsTerminal"  --source winget --scope user --accept-package-agreements --accept-source-agreements  # Terminal is is installed by default on W 11
 Write-Host "::step::4/5 Git"
 winget install --no-upgrade --name "Git"                          --Id "Git.Git"                    --source winget --accept-package-agreements --accept-source-agreements  # no --scope: it would hide a machine-wide Git from the already-installed check
+# done with winget: the group install lets the next system installer run while bun downloads
+Write-Host "::system-ready::"
 Write-Host "::step::5/5 bun"
 powershell -c "irm bun.sh/install.ps1|iex"
+# installers the group install starts after this one get bun's folder on their PATH
+Write-Host "::path::$HOME\.bun\bin"
 
 # Install-Module -Name Terminal-Icons -Repository PSGallery -Force -AcceptLicense -PassThru -Confirm  # -RequiredVersion 2.5.10
 # [System.Environment]::SetEnvironmentVariable('PYTHONUTF8', '1', 'User')

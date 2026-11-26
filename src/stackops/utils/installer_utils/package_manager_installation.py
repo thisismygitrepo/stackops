@@ -11,17 +11,13 @@ from rich import print as rich_print
 from rich.console import Group
 from rich.panel import Panel
 
-from stackops.utils.installer_utils.apt_archive_download import build_apt_parallel_download_command
+from stackops.utils.installer_utils.apt_archive_download import APT_UPDATE_THEN_INSTALL_PATTERN, build_apt_parallel_download_command
 from stackops.utils.installer_utils.constants import WINGET_NO_APPLICABLE_UPDATE_CODES
 
 
 _POWERSHELL_DOWNLOAD_AND_EXECUTE_PATTERN = re.compile(
     r"""^\s*(?:powershell(?:\.exe)?\s+(?:.*?\s)?-(?:c|command)\s+"?)?\s*irm\s+(?P<url>https?://\S+)\s*\|\s*iex\s*"?\s*$""", re.IGNORECASE
 )
-
-
-# the catalog's apt form; its archives are fetched side by side between the update and the install
-_APT_UPDATE_THEN_INSTALL_PATTERN = re.compile(r"""sudo apt-get update && sudo apt-get install -y (?P<packages>[A-Za-z0-9.+:\- ]+)""")
 
 
 def _extract_powershell_script_url(command: str) -> str | None:
@@ -59,8 +55,9 @@ def install_with_package_manager(command: str, requested_version: str | None) ->
     print(f"""📦 Using package manager: {command}""")
     powershell_script_url = _extract_powershell_script_url(command=command) if platform.system() == "Windows" else None
     if powershell_script_url is None:
-        apt_install = _APT_UPDATE_THEN_INSTALL_PATTERN.fullmatch(command)
+        apt_install = APT_UPDATE_THEN_INSTALL_PATTERN.fullmatch(command)
         if apt_install is not None:
+            # the archives are fetched side by side between the update and the install
             apt_packages = apt_install.group("packages")
             parallel_download = build_apt_parallel_download_command(packages=apt_packages.split(), privilege_prefix=("sudo",))
             command = f"""sudo apt-get update && {parallel_download} && sudo apt-get install -y {apt_packages}"""

@@ -40,7 +40,9 @@ from stackops.utils.schemas.installer.installer_types import (
 from stackops.utils.source_of_truth import INSTALL_LOGS_ROOT
 
 
-def _launch_install(planned: PlannedInstall, install_request: InstallRequest, log_dir: Path, work_dir: Path, detached_from_terminal: bool) -> RunningInstall:
+def _launch_install(
+    planned: PlannedInstall, install_request: InstallRequest, log_dir: Path, work_dir: Path, detached_from_terminal: bool, announced_path_entries: list[str]
+) -> RunningInstall:
     job_path = work_dir.joinpath(f"""{planned.exe_name}.job.pickle""")
     job_path.write_bytes(pickle.dumps(BulkInstallJob(installer_data=planned.installer_data, install_request=install_request)))
     outcome_path = work_dir.joinpath(f"""{planned.exe_name}.outcome.pickle""")
@@ -54,7 +56,7 @@ def _launch_install(planned: PlannedInstall, install_request: InstallRequest, lo
             stdin=subprocess.DEVNULL,
             stdout=log_file,
             stderr=subprocess.STDOUT,
-            env={**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONUTF8": "1"},
+            env={**os.environ, "PATH": os.pathsep.join((*announced_path_entries, os.environ["PATH"])), "PYTHONUNBUFFERED": "1", "PYTHONUTF8": "1"},
             creationflags=creation_flags,
             start_new_session=detached_from_terminal,
         )
@@ -85,24 +87,33 @@ def _run_planned_installs(
     # sudo keys its cached credentials to the terminal, so installers only share the terminal when those credentials exist;
     # otherwise they get their own session, where nothing can prompt on top of the live view.
     detached_from_terminal = not sudo_credentials_cached
-    pending = sorted(planned_installs, key=lambda planned: not planned.holds_system_installer_lock)
+    pending = sorted(planned_installs, key=lambda planned: (not planned.provides_base_system, not planned.holds_system_installer_lock))
     running: list[RunningInstall] = []
     finished: list[FinishedInstall] = []
     step_progress: dict[str, StepProgress] = {}
+    announced_path_entries: list[str] = []
     started_at = time.monotonic()
     sudo_refreshed_at = started_at
     with tempfile.TemporaryDirectory(prefix="stackops_bulk_install_") as work_dir_name:
         with Live(console=console, auto_refresh=False, transient=True) as live:
             try:
                 while len(pending) > 0 or len(running) > 0:
-                    system_lock_busy = any(item.planned.holds_system_installer_lock for item in running)
+                    still_on_system_installer = [
+                        item for item in running if item.planned.holds_system_installer_lock and not step_progress[item.planned.exe_name].system_ready
+                    ]
+                    system_lock_busy = len(still_on_system_installer) > 0
+                    base_system_pending = any(planned.provides_base_system for planned in pending)
+                    base_system_unfinished = base_system_pending or any(item.planned.provides_base_system for item in running)
+                    base_system_packages_unready = base_system_pending or any(item.planned.provides_base_system for item in still_on_system_installer)
                     for planned in list(pending):
                         if len(running) >= BULK_INSTALL_PARALLEL_JOBS:
                             break
                         if planned.holds_system_installer_lock and system_lock_busy:
                             continue
+                        if planned.needs_base_system and (base_system_packages_unready if planned.holds_system_installer_lock else base_system_unfinished):
+                            continue
                         pending.remove(planned)
-                        step_progress[planned.exe_name] = StepProgress(log_offset=0, title=None, started_at=started_at)
+                        step_progress[planned.exe_name] = StepProgress(log_offset=0, title=None, started_at=started_at, system_ready=False)
                         running.append(
                             _launch_install(
                                 planned=planned,
@@ -110,15 +121,17 @@ def _run_planned_installs(
                                 log_dir=log_dir,
                                 work_dir=Path(work_dir_name),
                                 detached_from_terminal=detached_from_terminal,
+                                announced_path_entries=announced_path_entries,
                             )
                         )
                         system_lock_busy = system_lock_busy or planned.holds_system_installer_lock
                     now = time.monotonic()
                     exited = [item for item in running if item.process.poll() is not None]
                     for item in running:
-                        step_progress[item.planned.exe_name] = advance_steps(
+                        step_progress[item.planned.exe_name], path_entries = advance_steps(
                             running=item, progress=step_progress[item.planned.exe_name], now=now, console=live.console, name_width=name_width
                         )
+                        announced_path_entries.extend(path_entry for path_entry in path_entries if path_entry not in announced_path_entries)
                     for item in exited:
                         running.remove(item)
                         finished_install = _collect_install(running=item, finished_at=now)

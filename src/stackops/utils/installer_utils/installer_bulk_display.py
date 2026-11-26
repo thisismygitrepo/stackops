@@ -10,7 +10,9 @@ from rich.table import Table
 from rich.text import Text
 
 from stackops.utils.installer_utils.constants import (
+    BULK_INSTALL_PATH_MARKER,
     BULK_INSTALL_STEP_MARKER,
+    BULK_INSTALL_SYSTEM_READY_MARKER,
     BULK_INSTALL_FAILURE_EXCERPT_COUNT,
     BULK_INSTALL_FAILURE_TAIL_LINES,
     BULK_INSTALL_LOG_TAIL_BYTES,
@@ -128,7 +130,7 @@ def render_live_view(
         line.append(f""" {SPINNER_FRAMES[int(elapsed * 10) % len(SPINNER_FRAMES)]} """, style="cyan")
         line.append(f"""{item.planned.exe_name:<{name_width}}""", style="bold")
         line.append(f"""{format_duration(elapsed):>7}  """, style="dim")
-        activity = log_tail[0] if len(log_tail) > 0 and not log_tail[0].startswith(BULK_INSTALL_STEP_MARKER) else ""
+        activity = log_tail[0] if len(log_tail) > 0 and not log_tail[0].startswith((BULK_INSTALL_STEP_MARKER, BULK_INSTALL_SYSTEM_READY_MARKER, BULK_INSTALL_PATH_MARKER)) else ""
         step_title = step_progress[item.planned.exe_name].title
         if step_title is None:
             line.append(activity if activity != "" else "starting", style="dim")
@@ -150,6 +152,8 @@ def render_bulk_header(console: Console, batch_label: str, planned_installs: lis
     to_run = [planned for planned in planned_installs if not planned.skip]
     skipped_names = [planned.exe_name for planned in planned_installs if planned.skip]
     locked_count = sum(1 for planned in to_run if planned.holds_system_installer_lock)
+    base_names = [planned.exe_name for planned in to_run if planned.provides_base_system]
+    after_base_count = sum(1 for planned in to_run if planned.needs_base_system)
     console.print()
     console.rule(Text(f"""📦 {batch_label}""", style="bold"), align="left", style="blue")
     overview = f""" {len(to_run)} to install"""
@@ -157,6 +161,8 @@ def render_bulk_header(console: Console, batch_label: str, planned_installs: lis
         overview += f""", {min(parallel_jobs, len(to_run))} at a time"""
     if locked_count > 1:
         overview += f""" ({locked_count} system installers and scripts run one at a time)"""
+    if len(base_names) > 0 and after_base_count > 0:
+        overview += f"""; {after_base_count} start after {", ".join(base_names)}"""
     console.print(Text(overview))
     if len(skipped_names) > 0:
         console.print(Text(f""" · {len(skipped_names)} already installed (use --update to reinstall): {", ".join(skipped_names)}""", style="dim"))

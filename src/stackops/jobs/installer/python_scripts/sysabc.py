@@ -10,7 +10,7 @@ from rich.panel import Panel
 from stackops.jobs.installer import linux_scripts, powershell_scripts
 from stackops.utils.constants import IS_REPO_DEVELOPER
 from stackops.utils.installer_utils.apt_archive_download import build_apt_parallel_download_command
-from stackops.utils.installer_utils.constants import BULK_INSTALL_STEP_MARKER
+from stackops.utils.installer_utils.constants import BULK_INSTALL_PATH_MARKER, BULK_INSTALL_STEP_MARKER, BULK_INSTALL_SYSTEM_READY_MARKER
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.linux_package_manager import (
     LinuxDistribution,
@@ -116,8 +116,12 @@ def _build_linux_install_script(distribution: LinuxDistribution, privilege_prefi
     steps: list[tuple[str, str]] = [("refresh package lists", shlex.join(refresh_command))]
     if distribution.package_manager == "apt":
         steps.append(("download base packages", build_apt_parallel_download_command(packages=packages, privilege_prefix=privilege_prefix)))
-    steps.append((f"""install {len(packages)} base packages""", shlex.join((*privilege_prefix, *install_command))))
-    steps.append(("install bun", '''curl -fsSL https://bun.com/install | bash\nsudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node'''))
+    # bun's installer leaves the system package manager alone, so the batch moves on while it runs
+    steps.append((f"""install {len(packages)} base packages""", f"""{shlex.join((*privilege_prefix, *install_command))}\necho {BULK_INSTALL_SYSTEM_READY_MARKER}"""))
+    # bun adds itself to PATH in the shell's rc file, which the running batch never reads
+    steps.append(
+        ("install bun", f'''curl -fsSL https://bun.com/install | bash\nsudo ln -sfn "$HOME/.bun/bin/bun" /usr/local/bin/node\necho "{BULK_INSTALL_PATH_MARKER}$HOME/.bun/bin"''')
+    )
     lines = ["#!/usr/bin/env bash", "set -euo pipefail"]
     for step_number, (title, command) in enumerate(steps, start=1):
         lines.append(shlex.join(("echo", f"""{BULK_INSTALL_STEP_MARKER}{step_number}/{len(steps)} {title}""")))

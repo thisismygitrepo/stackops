@@ -227,7 +227,7 @@ Parameters:
 | Helper | Purpose |
 | --- | --- |
 | `install_interactively(install_request)` | Shows package groups plus installers, with JSON previews when `tv` is available |
-| `install_group(package_group, install_request)` | Resolves a named package group and installs every matching catalog entry |
+| `install_groups(package_groups, install_request, source, user_path)` | Resolves the named package groups and installs every matching catalog entry as one batch |
 | `install_clis(clis_names, install_request)` | Installs explicit catalog names, aliases, GitHub URLs, or direct binary URLs |
 | `install_if_missing(which, binary_name, verbose)` | Convenience guard that returns `True` if the tool exists or becomes installable |
 

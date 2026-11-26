@@ -1,7 +1,12 @@
+import re
 import shlex
 from collections.abc import Sequence
+from typing import Final
 
 from stackops.utils.installer_utils.constants import APT_DOWNLOAD_PACKAGES_PER_JOB, APT_DOWNLOAD_PARALLEL_JOBS
+
+# the catalog's apt form; several of them merge into one by joining their packages
+APT_UPDATE_THEN_INSTALL_PATTERN: Final[re.Pattern[str]] = re.compile(r"""sudo apt-get update && sudo apt-get install -y (?P<packages>[A-Za-z0-9.+:\- ]+)""")
 
 
 # apt-get install fetches one archive at a time. This asks apt which archives the packages need, fetches them with several

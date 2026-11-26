@@ -9,7 +9,12 @@ from rich.console import Console
 from rich.text import Text
 
 from stackops.utils.cli_utils.command_lookup import check_tool_exists
-from stackops.utils.installer_utils.constants import BULK_INSTALL_SUDO_EXAMPLE_COUNT, SCRIPTS_WITHOUT_SYSTEM_INSTALLER, SYSTEM_INSTALLER_COMMANDS
+from stackops.utils.installer_utils.constants import (
+    BASE_SYSTEM_INSTALLERS,
+    BULK_INSTALL_SUDO_EXAMPLE_COUNT,
+    SCRIPTS_WITHOUT_SYSTEM_INSTALLER,
+    SYSTEM_INSTALLER_COMMANDS,
+)
 from stackops.utils.installer_utils.install_request_logic import (
     InstallTarget,
     build_install_target,
@@ -45,13 +50,17 @@ def plan_bulk_installs(installers_data: list[InstallerData], install_request: In
         installer_value = resolve_installer_pattern(installer_data=installer_data, operating_system=operating_system, architecture=architecture)
         if installer_value is None:
             raise ValueError(f"""No installation pattern for {exe_name} on {operating_system} {architecture}""")
-        system_lock = holds_system_installer_lock(install_target=build_install_target(repo_url=installer_data["repoURL"], installer_value=installer_value))
+        install_target = build_install_target(repo_url=installer_data["repoURL"], installer_value=installer_value)
+        system_lock = holds_system_installer_lock(install_target=install_target)
+        provides_base_system = installer_data["appName"].casefold() in BASE_SYSTEM_INSTALLERS
         was_installed = check_tool_exists(exe_name)
         planned_installs.append(
             PlannedInstall(
                 installer_data=installer_data,
                 exe_name=exe_name,
                 holds_system_installer_lock=system_lock,
+                provides_base_system=provides_base_system,
+                needs_base_system=not provides_base_system and (system_lock or install_target.installer_kind in ("package_manager", "cmd_raw")),
                 may_need_sudo=system_lock or "sudo" in installer_value.split(),
                 was_installed=was_installed,
                 skip=should_skip_install(exe_name=exe_name, install_request=install_request, tool_exists=lambda _tool_name: was_installed),

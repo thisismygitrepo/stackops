@@ -87,8 +87,7 @@ def main_installer_cli(
             typer.echo(f"❌ You must provide at least one {target_name}.")
             raise typer.Exit(1)
         if group:
-            for a_group in requested_names:
-                install_group(package_group=a_group, install_request=install_request, source=source, user_path=path)
+            install_groups(package_groups=requested_names, install_request=install_request, source=source, user_path=path)
             return None
         install_clis(clis_names=requested_names, install_request=install_request, source=source, user_path=path)
         return None
@@ -174,7 +173,7 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
         if a_program_name.startswith("📦 "):
             category_name = category_display_to_name.get(a_program_name)
             if category_name is not None:
-                install_group(package_group=category_name, install_request=install_request, source=source, user_path=user_path)
+                install_groups(package_groups=[category_name], install_request=install_request, source=source, user_path=user_path)
         else:
             an_installer_data = installer_option_to_data[a_program_name]
             installation_result = Installer(an_installer_data).install_robust(install_request=install_request)
@@ -183,30 +182,30 @@ def install_interactively(install_request: InstallRequest, source: InstallerData
         render_installation_summary(results=installation_results, console=Console(), title="📊 Installation Summary")
 
 
-def install_group(package_group: str, install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
+def install_groups(package_groups: list[str], install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None:
     from stackops.utils.installer_utils.installer_runner import get_installers_from_source
     from stackops.utils.installer_utils.installer_bulk_runner import install_bulk
     from stackops.utils.schemas.installer.installer_types import get_normalized_arch, get_os_name
     from rich.console import Console
     from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES, PACKAGE_NAME
-    if package_group in PACKAGE_GROUP2NAMES:
-        console = Console()
-        package_group_typed: PACKAGE_NAME = next(group_name for group_name in PACKAGE_GROUP2NAMES if group_name == package_group)
-        installers_ = get_installers_from_source(
-            source=source,
-            user_path=user_path,
-            os=get_os_name(),
-            arch=get_normalized_arch(),
-            which_cats=[package_group_typed],
-        )
-        if len(installers_) == 0:
-            console.print(f"❌ No installers from source '{source}' are available in group '{package_group}' on this platform.")
-            raise typer.Exit(1)
-        install_bulk(installers_data=installers_, install_request=install_request, batch_label=package_group_typed)
-        return
     console = Console()
-    console.print(f"❌ ERROR: Unknown package group: {package_group}. Available groups are: {list(PACKAGE_GROUP2NAMES.keys())}")
-    raise typer.Exit(1)
+    unknown_groups = [package_group for package_group in package_groups if package_group not in PACKAGE_GROUP2NAMES]
+    if len(unknown_groups) > 0:
+        console.print(f"❌ ERROR: Unknown package group: {', '.join(unknown_groups)}. Available groups are: {list(PACKAGE_GROUP2NAMES.keys())}")
+        raise typer.Exit(1)
+    package_groups_typed: list[PACKAGE_NAME] = [group_name for package_group in package_groups for group_name in PACKAGE_GROUP2NAMES if group_name == package_group]
+    # groups asked for together install as one batch, in the order given
+    installers_ = get_installers_from_source(
+        source=source,
+        user_path=user_path,
+        os=get_os_name(),
+        arch=get_normalized_arch(),
+        which_cats=package_groups_typed,
+    )
+    if len(installers_) == 0:
+        console.print(f"❌ No installers from source '{source}' are available in group '{', '.join(package_groups)}' on this platform.")
+        raise typer.Exit(1)
+    install_bulk(installers_data=installers_, install_request=install_request, batch_label="+".join(package_groups_typed))
 
 
 def install_clis(clis_names: list[str], install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> list[InstallationResult]:

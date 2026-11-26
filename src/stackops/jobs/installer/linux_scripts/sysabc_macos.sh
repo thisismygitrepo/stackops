@@ -9,7 +9,11 @@ fi
 echo "::step::2/3 update Homebrew"
 brew update || true
 
+# done with Homebrew: the group install lets the next system installer run while bun downloads
+echo "::system-ready::"
 echo "::step::3/3 bun"
 curl -fsSL https://bun.com/install | bash
+# installers the group install starts after this one get bun's folder on their PATH
+echo "::path::$HOME/.bun/bin"
 # brew install openssl ffmpeg make curl nano git
 echo "✅ Essential tools installation complete."

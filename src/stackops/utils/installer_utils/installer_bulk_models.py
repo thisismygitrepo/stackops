@@ -25,6 +25,8 @@ class PlannedInstall:
     installer_data: InstallerData
     exe_name: str
     holds_system_installer_lock: bool
+    provides_base_system: bool
+    needs_base_system: bool
     may_need_sudo: bool
     was_installed: bool
     skip: bool
@@ -44,6 +46,7 @@ class StepProgress:
     log_offset: int
     title: str | None
     started_at: float
+    system_ready: bool
 
 
 @dataclass(frozen=True, slots=True)

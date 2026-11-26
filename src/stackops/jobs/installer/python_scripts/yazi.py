@@ -9,12 +9,15 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
+from stackops.utils.cli_utils.command_lookup import check_tool_exists
+from stackops.utils.installer_utils.apt_archive_download import APT_UPDATE_THEN_INSTALL_PATTERN
 from stackops.utils.installer_utils.install_request_logic import build_install_target, resolve_installer_pattern
 from stackops.utils.installer_utils.installer_bulk_plan import holds_system_installer_lock
 from stackops.utils.installer_utils.installer_class import Installer
 from stackops.utils.installer_utils.installer_locator_utils import find_move_delete_linux, find_move_delete_windows
 from stackops.utils.installer_utils.installer_main_protocol import InstallerPythonScriptMain
 from stackops.utils.installer_utils.installer_runner import get_installers
+from stackops.utils.installer_utils.package_manager_installation import install_with_package_manager
 from stackops.utils.schemas.installer.installer_types import InstallerData, get_normalized_arch, get_os_name
 from stackops.utils.source_of_truth import INSTALL_VERSION_ROOT
 
@@ -111,23 +114,37 @@ def main(installer_data: InstallerData, version: str | None, update: bool) -> No
     operating_system = get_os_name()
     architecture = get_normalized_arch()
     catalog = {entry["appName"].casefold(): entry for entry in get_installers(os=operating_system, arch=architecture, which_cats=None)}
+    apt_packages: list[str] = []
     one_at_a_time: list[tuple[str, str | None]] = []
     side_by_side: list[tuple[str, str | None]] = []
     for which, binary_name in PREVIEWERS:
         previewer = catalog.get(which)
         installer_value = None if previewer is None else resolve_installer_pattern(installer_data=previewer, operating_system=operating_system, architecture=architecture)
-        uses_system_installer = (
-            previewer is not None
-            and installer_value is not None
-            and holds_system_installer_lock(install_target=build_install_target(repo_url=previewer["repoURL"], installer_value=installer_value))
-        )
-        (one_at_a_time if uses_system_installer else side_by_side).append((which, binary_name))
+        if (
+            previewer is None
+            or installer_value is None
+            or not holds_system_installer_lock(install_target=build_install_target(repo_url=previewer["repoURL"], installer_value=installer_value))
+        ):
+            side_by_side.append((which, binary_name))
+            continue
+        apt_install = APT_UPDATE_THEN_INSTALL_PATTERN.fullmatch(installer_value)
+        if apt_install is None:
+            one_at_a_time.append((which, binary_name))
+        elif not check_tool_exists(which if binary_name is None else binary_name):
+            apt_packages.extend(apt_install.group("packages").split())
 
-    # downloads run side by side; previewers that go through the system package manager take turns; the plugins need neither
+    def install_system_previewers() -> None:
+        # the apt ones go in a single transaction; any other system package manager takes them one at a time
+        if len(apt_packages) > 0:
+            install_with_package_manager(command=f"""sudo apt-get update && sudo apt-get install -y {" ".join(apt_packages)}""", requested_version=None)
+        for which, binary_name in one_at_a_time:
+            install_if_missing(which=which, binary_name=binary_name, verbose=True)
+
+    # the plugins, the previewers that are plain downloads, and the system-package previewers all run side by side
     jobs: list[Callable[[], object]] = [
-        *(partial(install_if_missing, which=which, binary_name=binary_name, verbose=True) for which, binary_name in side_by_side),
-        lambda: [install_if_missing(which=which, binary_name=binary_name, verbose=True) for which, binary_name in one_at_a_time],
         _install_plugins,
+        *(partial(install_if_missing, which=which, binary_name=binary_name, verbose=True) for which, binary_name in side_by_side),
+        install_system_previewers,
     ]
     with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
         for submitted in [pool.submit(job) for job in jobs]:
