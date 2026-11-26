@@ -6,7 +6,7 @@ from rich.text import Text
 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import ChromiumBrowserName
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_inventory import BrowserProfileInventoryRow
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_sign_in import BrowserProfileSiteSignIn
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_sign_in import BrowserProfileSiteSignIn, LockedProfileDatabase
 
 
 def build_browser_profile_inventory_table(
@@ -19,6 +19,17 @@ def build_browser_profile_inventory_table(
         else "signed in: an unexpired sign-in cookie of a known service · likely: unexpired HttpOnly cookies on a matching host. "
         "The site may still have ended the session. Account names come from the browser's Google sign-in and from saved logins."
     )
+    locked_databases = tuple(
+        dict.fromkeys(
+            locked.path
+            for row in rows
+            for locked in (row.signed_in_services, *(sign_in.saved_usernames for sign_in in row.sites))
+            if isinstance(locked, LockedProfileDatabase)
+        )
+    )
+    if len(locked_databases) > 0:
+        caption = f"""{caption}
+locked: the browser holds the profile database open (Chrome does on Windows while running); close it and run again. Locked: {_shorten(values=tuple(str(path) for path in locked_databases))}"""
     table = Table(
         title=f"""{"Native" if native else "StackOps"} {browser} profiles: {len(rows)} found, {running_count} running""",
         caption=caption,
@@ -42,7 +53,7 @@ def build_browser_profile_inventory_table(
             Text(row.profile),
             state,
             Text("-", style="dim") if row.browser_account is None else Text(row.browser_account),
-            Text("-", style="dim") if len(row.signed_in_services) == 0 else Text(" · ".join(row.signed_in_services), style="green"),
+            _signed_in_services_cell(signed_in_services=row.signed_in_services),
             Text("-", style="dim") if row.last_used is None else Text(_format_age(moment=row.last_used, now=now)),
             *(_site_cell(sign_in=sign_in, now=now) for sign_in in row.sites),
         )
@@ -57,16 +68,33 @@ def _site_cell(*, sign_in: BrowserProfileSiteSignIn, now: datetime) -> Text:
             cell = Text("likely", style="bold yellow")
         case "none":
             cell = Text("no", style="dim")
+        case "unknown":
+            cell = Text("unknown · cookies locked", style="bold yellow")
     if sign_in.last_active is not None:
         cell.append(f""" · {_format_age(moment=sign_in.last_active, now=now)}""", style="dim")
     for account in sign_in.accounts:
         cell.append(f"""\n{account}""", style="white")
-    if len(sign_in.saved_usernames) > 0:
-        cell.append(f"""\nsaved: {_shorten(values=sign_in.saved_usernames)}""", style="white")
+    match sign_in.saved_usernames:
+        case LockedProfileDatabase():
+            cell.append("""\nsaved: unknown · logins locked""", style="yellow")
+        case ():
+            pass
+        case saved_usernames:
+            cell.append(f"""\nsaved: {_shorten(values=saved_usernames)}""", style="white")
     if len(sign_in.hosts) > 0:
         cell.append(f"""\nhosts: {_shorten(values=sign_in.hosts)}""", style="dim")
         cell.append(f"""\ncookies: {_shorten(values=sign_in.cookie_names)}""", style="dim")
     return cell
+
+
+def _signed_in_services_cell(*, signed_in_services: tuple[str, ...] | LockedProfileDatabase) -> Text:
+    match signed_in_services:
+        case LockedProfileDatabase():
+            return Text("unknown · cookies locked", style="bold yellow")
+        case ():
+            return Text("-", style="dim")
+        case services:
+            return Text(" · ".join(services), style="green")
 
 
 def _shorten(*, values: tuple[str, ...]) -> str:

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import CHROMIUM_BACKGROUND_THROTTLING_SWITCHES
+from stackops.scripts.python.helpers.helpers_agents.agents_browser_constants import CHROMIUM_LAUNCH_SWITCHES
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.common import require_profile_path, windows_app_paths
 from stackops.scripts.python.helpers.helpers_agents.browser_launchers.models import BrowserLauncher
 
@@ -26,7 +26,7 @@ def build_command(*, browser_path: Path, port: int, profile_path: Path | None) -
         f"--user-data-dir={required_profile_path}",
         "--no-first-run",
         "--no-default-browser-check",
-        *CHROMIUM_BACKGROUND_THROTTLING_SWITCHES,
+        *CHROMIUM_LAUNCH_SWITCHES,
         "about:blank",
     )
 

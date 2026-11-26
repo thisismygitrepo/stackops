@@ -29,11 +29,16 @@ class ChromiumSavedLogin:
 
 
 @dataclass(frozen=True, slots=True)
+class LockedProfileDatabase:
+    path: Path
+
+
+@dataclass(frozen=True, slots=True)
 class BrowserProfileSiteSignIn:
     site: str
     state: BrowserSignInState
     accounts: tuple[str, ...]
-    saved_usernames: tuple[str, ...]
+    saved_usernames: tuple[str, ...] | LockedProfileDatabase
     hosts: tuple[str, ...]
     cookie_names: tuple[str, ...]
     last_active: datetime | None
@@ -49,7 +54,7 @@ def read_json_object(*, path: Path) -> dict[str, object]:
     return cast(dict[str, object], raw)
 
 
-def read_chromium_live_cookies(*, profile_folder_path: Path, now: datetime) -> tuple[ChromiumLiveCookie, ...]:
+def read_chromium_live_cookies(*, profile_folder_path: Path, now: datetime) -> tuple[ChromiumLiveCookie, ...] | LockedProfileDatabase:
     database_path = next(
         (
             candidate
@@ -61,14 +66,14 @@ def read_chromium_live_cookies(*, profile_folder_path: Path, now: datetime) -> t
     if database_path is None:
         return ()
     now_chromium = int((now.timestamp() + CHROMIUM_EPOCH_OFFSET_SECONDS) * 1_000_000)
-    rows = cast(
-        tuple[tuple[str, str, int, int], ...],
-        _query_profile_database(
-            database_path=database_path,
-            query="select host_key, name, is_httponly, last_access_utc from cookies where has_expires = 0 or expires_utc > ?",
-            parameters=(now_chromium,),
-        ),
+    result = _query_profile_database(
+        database_path=database_path,
+        query="select host_key, name, is_httponly, last_access_utc from cookies where has_expires = 0 or expires_utc > ?",
+        parameters=(now_chromium,),
     )
+    if isinstance(result, LockedProfileDatabase):
+        return result
+    rows = cast(tuple[tuple[str, str, int, int], ...], result)
     return tuple(
         ChromiumLiveCookie(
             host=host.casefold(),
@@ -80,18 +85,18 @@ def read_chromium_live_cookies(*, profile_folder_path: Path, now: datetime) -> t
     )
 
 
-def read_chromium_saved_logins(*, profile_folder_path: Path) -> tuple[ChromiumSavedLogin, ...]:
+def read_chromium_saved_logins(*, profile_folder_path: Path) -> tuple[ChromiumSavedLogin, ...] | LockedProfileDatabase:
     database_path = profile_folder_path.joinpath("Login Data")
     if not database_path.is_file():
         return ()
-    rows = cast(
-        tuple[tuple[str, str], ...],
-        _query_profile_database(
-            database_path=database_path,
-            query="select signon_realm, username_value from logins where blacklisted_by_user = 0 and username_value != '' order by date_last_used desc",
-            parameters=(),
-        ),
+    result = _query_profile_database(
+        database_path=database_path,
+        query="select signon_realm, username_value from logins where blacklisted_by_user = 0 and username_value != '' order by date_last_used desc",
+        parameters=(),
     )
+    if isinstance(result, LockedProfileDatabase):
+        return result
+    rows = cast(tuple[tuple[str, str], ...], result)
     saved_logins: list[ChromiumSavedLogin] = []
     for signon_realm, username in rows:
         host = urlsplit(signon_realm).hostname
@@ -122,31 +127,45 @@ def list_signed_in_known_services(*, cookies: tuple[ChromiumLiveCookie, ...]) ->
 
 
 def resolve_site_sign_in(
-    *, site: str, cookies: tuple[ChromiumLiveCookie, ...], saved_logins: tuple[ChromiumSavedLogin, ...], google_accounts: tuple[str, ...]
+    *,
+    site: str,
+    cookies: tuple[ChromiumLiveCookie, ...] | LockedProfileDatabase,
+    saved_logins: tuple[ChromiumSavedLogin, ...] | LockedProfileDatabase,
+    google_accounts: tuple[str, ...],
 ) -> BrowserProfileSiteSignIn:
     term = site.casefold()
-    site_cookies = tuple(cookie for cookie in cookies if term in cookie.host)
-    known_cookie_names = next((names for service, names in KNOWN_SERVICE_SIGN_IN_COOKIE_NAMES.items() if service in term), None)
     state: BrowserSignInState
-    if known_cookie_names is None:
-        evidence = tuple(cookie for cookie in site_cookies if cookie.is_httponly)
-        state = "likely" if len(evidence) > 0 else "none"
-    else:
-        evidence = tuple(cookie for cookie in site_cookies if cookie.name in known_cookie_names)
-        state = "signed-in" if len(evidence) > 0 else "none"
+    evidence: tuple[ChromiumLiveCookie, ...]
+    match cookies:
+        case LockedProfileDatabase():
+            state = "unknown"
+            evidence = ()
+        case _:
+            site_cookies = tuple(cookie for cookie in cookies if term in cookie.host)
+            known_cookie_names = next((names for service, names in KNOWN_SERVICE_SIGN_IN_COOKIE_NAMES.items() if service in term), None)
+            if known_cookie_names is None:
+                evidence = tuple(cookie for cookie in site_cookies if cookie.is_httponly)
+                state = "likely" if len(evidence) > 0 else "none"
+            else:
+                evidence = tuple(cookie for cookie in site_cookies if cookie.name in known_cookie_names)
+                state = "signed-in" if len(evidence) > 0 else "none"
     last_access_times = tuple(cookie.last_access for cookie in evidence if cookie.last_access is not None)
     return BrowserProfileSiteSignIn(
         site=site,
         state=state,
         accounts=google_accounts if "google" in term else (),
-        saved_usernames=tuple(dict.fromkeys(login.username for login in saved_logins if term in login.host)),
+        saved_usernames=saved_logins
+        if isinstance(saved_logins, LockedProfileDatabase)
+        else tuple(dict.fromkeys(login.username for login in saved_logins if term in login.host)),
         hosts=tuple(sorted({cookie.host for cookie in evidence})),
         cookie_names=tuple(sorted({cookie.name for cookie in evidence})),
         last_active=max(last_access_times) if len(last_access_times) > 0 else None,
     )
 
 
-def _query_profile_database(*, database_path: Path, query: str, parameters: tuple[int, ...]) -> tuple[tuple[object, ...], ...]:
+def _query_profile_database(
+    *, database_path: Path, query: str, parameters: tuple[int, ...]
+) -> tuple[tuple[object, ...], ...] | LockedProfileDatabase:
     try:
         connection = sqlite3.connect(f"""{database_path.as_uri()}?mode=ro&immutable=1""", uri=True)
         try:
@@ -154,4 +173,6 @@ def _query_profile_database(*, database_path: Path, query: str, parameters: tupl
         finally:
             connection.close()
     except sqlite3.Error as error:
+        if error.sqlite_errorname == "SQLITE_CANTOPEN":
+            return LockedProfileDatabase(path=database_path)
         raise RuntimeError(f"""Could not read browser profile database {database_path}: {error}""") from error

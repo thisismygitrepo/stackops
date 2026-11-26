@@ -13,6 +13,7 @@ from stackops.scripts.python.helpers.helpers_agents.agents_browser_process_scan 
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_listing import natural_profile_name_key
 from stackops.scripts.python.helpers.helpers_agents.agents_browser_profile_sign_in import (
     BrowserProfileSiteSignIn,
+    LockedProfileDatabase,
     list_signed_in_known_services,
     read_chromium_google_accounts,
     read_chromium_live_cookies,
@@ -28,7 +29,7 @@ class BrowserProfileInventoryRow:
     running: bool
     debugging_port: int | None
     browser_account: str | None
-    signed_in_services: tuple[str, ...]
+    signed_in_services: tuple[str, ...] | LockedProfileDatabase
     last_used: datetime | None
     sites: tuple[BrowserProfileSiteSignIn, ...]
     browser: ChromiumBrowserName
@@ -114,12 +115,12 @@ def _build_inventory_row(
     details = cast(dict[str, object], raw_details) if isinstance(raw_details, dict) else {}
     user_name = details.get("user_name")
     active_time = details.get("active_time")
-    signed_in_services: tuple[str, ...] = ()
+    signed_in_services: tuple[str, ...] | LockedProfileDatabase = ()
     site_sign_ins: tuple[BrowserProfileSiteSignIn, ...] = ()
     if profile_folder is not None:
         profile_folder_path = user_data_path.joinpath(profile_folder)
         cookies = read_chromium_live_cookies(profile_folder_path=profile_folder_path, now=now)
-        signed_in_services = list_signed_in_known_services(cookies=cookies)
+        signed_in_services = cookies if isinstance(cookies, LockedProfileDatabase) else list_signed_in_known_services(cookies=cookies)
         if len(sites) > 0:
             preferences_path = profile_folder_path.joinpath("Preferences")
             google_accounts = read_chromium_google_accounts(preferences=read_json_object(path=preferences_path)) if preferences_path.is_file() else ()
