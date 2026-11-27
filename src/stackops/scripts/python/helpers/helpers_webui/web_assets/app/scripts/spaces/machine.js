@@ -8,7 +8,6 @@ import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { createParts, linkCard, toolButton, toolGrid, viewHead } from "../space_kit.js";
 import { button, glyphTile, notice, sectionHead } from "../widgets.js";
-import { createStatusPanel } from "./machine/status.js";
 
 // Each opens a page of its own (features.js). What starts automatically is one of them and not a list on this page: it runs to dozens of rows.
 const CARE_TOOLS = ["utils machine kill-process", "utils machine autostart", "utils machine list-devices", "utils machine mount", "utils machine window", "utils machine environment", "devops self update"];
@@ -38,7 +37,6 @@ export function createMachineSpace(context) {
     },
   });
 
-  const status = createStatusPanel();
   const careGrid = toolGrid(tools, CARE_TOOLS);
   careGrid.prepend(linkCard({ href: CLEANUP_HASH, emoji: "🧹", name: "utils machine clean-drive", title: "Free up disk space", blurb: "See what is taking up room, choose what goes, and clean it." }));
   const overview = h(
@@ -48,11 +46,10 @@ export function createMachineSpace(context) {
       title: "Machine", lede: "What this computer is, what runs on it, and how to keep it tidy.",
       actions: [agentButton(activity, PLACES.machine), toolButton(tools, "utils machine kill-process", { label: "Stop a process", glyph: "stop" }), button({ label: "Free up disk space", glyph: "trash", tone: "primary", onclick: () => (location.hash = CLEANUP_HASH) })],
     }),
-    specs.element,
-    status.element,
     h("section", { class: "block" }, sectionHead("Look after it"), careGrid),
+    specs.element,
   );
   const cleanup = createDiskCleanup(context);
   const element = h("section", { class: "view", hidden: true }, overview, cleanup.element);
-  return { element, show: createParts({ element, built: { "": { element: overview, show: () => [specs, status].forEach((panel) => panel.ensure()) }, cleanup }, loaders: partLoaders("machine"), context }) };
+  return { element, show: createParts({ element, built: { "": { element: overview, show: () => specs.ensure() }, cleanup }, loaders: partLoaders("machine"), context }) };
 }
