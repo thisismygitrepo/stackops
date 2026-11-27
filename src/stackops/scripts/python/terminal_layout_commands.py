@@ -26,6 +26,7 @@ def list_layouts(
 
     from stackops.scripts.python.helpers.helpers_sessions.sessions_layout_source import resolve_layout_source
     from stackops.utils.schemas.layouts.layout_constants import DEFAULT_TAB_ARRANGEMENT
+    from stackops.utils.schemas.layouts.layout_enabled import OFF_MARK
 
     try:
         with redirect_stdout(sys.stderr) if json_output else nullcontext():
@@ -48,6 +49,7 @@ def list_layouts(
                 "selector": entry.selector,
                 "name": entry.layout["layoutName"],
                 "source_file": str(entry.source_path) if entry.source_path is not None else None,
+                "enabled": entry.layout.get("enabled", True),
                 "tab_count": len(entry.layout["layoutTabs"]),
                 "pane_count": sum(len(tab["panes"]) for tab in entry.layout["layoutTabs"]),
             }
@@ -75,7 +77,7 @@ def list_layouts(
     table.add_column("Source file")
     for entry in entries:
         table.add_row(
-            Text(entry.selector),
+            Text(entry.selector if entry.layout.get("enabled", True) else f"""{entry.selector}{OFF_MARK}"""),
             str(len(entry.layout["layoutTabs"])),
             str(sum(len(tab["panes"]) for tab in entry.layout["layoutTabs"])),
             Text(str(entry.source_path)),
@@ -115,8 +117,10 @@ def list_layouts(
             for tab in entry.layout["layoutTabs"]:
                 for pane in tab["panes"]:
                     tabs_table.add_row(
-                        Text(entry.selector), Text(tab["tabName"]), Text(tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT) if len(tab["panes"]) > 1 else "—"),
-                        Text(pane["paneName"]), Text(pane["startDir"]), Text(pane["command"]),
+                        Text(entry.selector if entry.layout.get("enabled", True) else f"""{entry.selector}{OFF_MARK}"""),
+                        Text(tab["tabName"] if tab.get("enabled", True) else f"""{tab["tabName"]}{OFF_MARK}"""),
+                        Text(tab.get("arrangement", DEFAULT_TAB_ARRANGEMENT) if len(tab["panes"]) > 1 else "—"),
+                        Text(pane["paneName"] if pane.get("enabled", True) else f"""{pane["paneName"]}{OFF_MARK}"""), Text(pane["startDir"]), Text(pane["command"]),
                         str(tab["tabWeight"]) if "tabWeight" in tab else "—",
                     )
         console.print(tabs_table)

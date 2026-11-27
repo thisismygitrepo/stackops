@@ -12,6 +12,7 @@ from stackops.scripts.python.helpers.helpers_webui.network_routes import network
 from stackops.scripts.python.helpers.helpers_webui.security_routes import security_routes
 from stackops.scripts.python.helpers.helpers_webui.settings_routes import settings_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_ghostty_routes import terminal_ghostty_routes
+from stackops.scripts.python.helpers.helpers_webui.terminal_layouts_routes import terminal_layouts_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_multiplexer_routes import terminal_multiplexer_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_shell_profile_routes import terminal_shell_profile_routes
 from stackops.scripts.python.helpers.helpers_webui.terminal_starship_routes import terminal_starship_routes
@@ -27,6 +28,7 @@ def feature_routes() -> list[Route]:
         *terminal_starship_routes(),
         *terminal_wezterm_routes(),
         *terminal_ghostty_routes(),
+        *terminal_layouts_routes(),
         *machine_processes_routes(),
         *machine_autostart_routes(),
         *machine_devices_routes(),

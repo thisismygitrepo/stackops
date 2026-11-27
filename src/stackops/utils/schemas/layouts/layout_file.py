@@ -4,6 +4,7 @@ from typing import Literal, TypeAlias, cast
 import yaml
 
 from stackops.utils.schemas.layouts.layout_constants import LAYOUT_FILE_SUFFIX, LAYOUT_FILE_VERSION, LAYOUT_SCHEMA_URL
+from stackops.utils.schemas.layouts.layout_enabled import keep_disabled_entries
 from stackops.utils.schemas.layouts.layout_types import LayoutConfig, LayoutsFile
 from stackops.utils.schemas.yaml_document import yaml_document_text
 from stackops.utils.schemas.yaml_schema import JsonValue
@@ -35,6 +36,8 @@ def read_layouts_file(path: Path) -> LayoutsFile:
             raise ValueError(f"""Invalid layout in {location}: expected a mapping.""")
         if not isinstance(layout.get("layoutName"), str):
             raise ValueError(f"""Invalid layout in {location}: 'layoutName' must be a string.""")
+        if not isinstance(layout.get("enabled", True), bool):
+            raise ValueError(f"""Invalid layout in {location}: 'enabled' must be true or false, got {layout["enabled"]!r}.""")
         tabs = layout.get("layoutTabs")
         if not isinstance(tabs, list):
             raise ValueError(f"""Invalid layout in {location}: 'layoutTabs' must be a list.""")
@@ -44,6 +47,8 @@ def read_layouts_file(path: Path) -> LayoutsFile:
                 raise ValueError(f"""Invalid tab in {tab_location}: expected a mapping.""")
             if not isinstance(tab.get("tabName"), str):
                 raise ValueError(f"""Invalid tab in {tab_location}: 'tabName' must be a string.""")
+            if not isinstance(tab.get("enabled", True), bool):
+                raise ValueError(f"""Invalid tab in {tab_location}: 'enabled' must be true or false, got {tab["enabled"]!r}.""")
             if tab.get("arrangement", "grid") not in ("columns", "rows", "grid"):
                 raise ValueError(f"""Invalid tab in {tab_location}: 'arrangement' must be one of columns, rows, grid.""")
             panes = tab.get("panes")
@@ -62,6 +67,8 @@ def read_layouts_file(path: Path) -> LayoutsFile:
                         raise ValueError(f"""Invalid pane in {pane_location}: '{field}' is null. YAML reads a bare ~ or an empty value as null; quote it, e.g. {field}: '~'.""")
                     if not isinstance(field_value, str):
                         raise ValueError(f"""Invalid pane in {pane_location}: '{field}' must be a string, got {field_value!r}.""")
+                if not isinstance(pane.get("enabled", True), bool):
+                    raise ValueError(f"""Invalid pane in {pane_location}: 'enabled' must be true or false, got {pane["enabled"]!r}.""")
                 pane_name = cast(str, pane["paneName"])
                 if pane_name in pane_names:
                     raise ValueError(f"""Invalid pane in {pane_location}: duplicate paneName {pane_name!r} in the tab.""")
@@ -101,7 +108,7 @@ def _merge_layouts_by_name(existing_layouts: list[LayoutConfig], new_layouts: li
             layout_indexes[new_layout_name] = len(merged_layouts)
             merged_layouts.append(new_layout)
         else:
-            merged_layouts[existing_index] = new_layout
+            merged_layouts[existing_index] = keep_disabled_entries(existing_layout=merged_layouts[existing_index], new_layout=new_layout)
     return merged_layouts
 
 

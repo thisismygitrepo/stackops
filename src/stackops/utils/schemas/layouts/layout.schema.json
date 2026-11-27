@@ -38,6 +38,10 @@
             "$ref": "#/definitions/LayoutTab"
           },
           "minItems": 1
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Set to false to keep the layout in the file without launching it. Defaults to true. A layout that is off still launches when it is named with --choose-layouts or picked from the list."
         }
       },
       "required": ["layoutName", "layoutTabs"]
@@ -66,6 +70,10 @@
         "tabWeight": {
           "type": "integer",
           "description": "Optional weight for tab sizing, defaults to 1 if not provided."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Set to false to leave the tab out when its layout launches. Defaults to true. A tab that is off still launches when it is named with --choose-tabs or picked from the list."
         }
       },
       "required": ["tabName", "panes"]
@@ -87,6 +95,10 @@
           "type": "string",
           "description": "Shell command to execute when the pane opens.",
           "examples": ["fire run -mO liveInf.py main -- --arg1=val1"]
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Set to false to leave the pane out when its tab launches. Defaults to true. A tab whose panes are all off is left out too."
         }
       },
       "required": ["paneName", "startDir", "command"]

@@ -35,6 +35,7 @@ def run_all_cli(
             load_selected_layouts_from_source,
             resolve_layout_source,
         )
+        from stackops.utils.schemas.layouts.layout_enabled import drop_disabled
         from stackops.utils.schemas.layouts.layout_types import LayoutConfig
 
         layout_source = resolve_layout_source(
@@ -47,7 +48,7 @@ def run_all_cli(
             layout_source=layout_source,
             choose_layouts="" if layouts_file is None and not test_layout else None,
         )
-        layouts_selected = [entry.layout for entry in layout_entries]
+        layouts_selected = drop_disabled([entry.layout for entry in layout_entries])
         if subsitute_home:
             layouts_selected = substitute_home_in_layouts(layouts_selected)
         merged_tabs = [

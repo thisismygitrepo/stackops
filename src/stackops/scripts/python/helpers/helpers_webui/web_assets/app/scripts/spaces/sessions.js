@@ -3,7 +3,7 @@ import { agentButton } from "../agent_ask.js";
 import { filePlace, PLACES } from "../agent_places.js";
 import { query } from "../data.js";
 import { partLoaders } from "../features.js";
-import { openLayoutView, tabMap } from "../layout_view.js";
+import { entrySwitch, isOn, launchTabs, layoutSize, openLayoutView, tabMap } from "../layout_view.js";
 import { createLivePanel } from "../live_panel.js";
 import { rise } from "../motion.js";
 import { createParts, editButton, editFile, toolButton, toolGrid, viewHead } from "../space_kit.js";
@@ -24,29 +24,33 @@ export function createSessionsSpace(context) {
 
   const fileOf = (layout) => ({ title: layout.selector.startsWith("user:") ? MY_LAYOUTS.title : "this project's layouts", kind: "layouts", path: layout.source_file });
 
+  // The card draws what a launch opens: the tabs and panes that are on. The layout's own switch is on it; the ones of its tabs and panes
+  // are inside. Whatever a switch changed, the list is read again from the file.
   function layoutCard(layout) {
     let cells = 0;
-    const maps = layout.tabs.slice(0, PREVIEW_TABS).map((tab) => {
+    const open = launchTabs(layout);
+    const maps = open.slice(0, PREVIEW_TABS).map((tab) => {
       const map = tabMap(tab, cells);
       cells += tab.panes.length;
       return map;
     });
     const launchButton = button({ label: "Launch", glyph: "play", small: true, tone: "primary", onclick: () => launch(layout) });
+    const reread = () => layouts.load(true);
     const view = () =>
       openLayoutView({
-        layout, onLaunch: () => launch(layout), onTune: () => tools.open("terminal run", { preset: { choose_layouts: layout.selector } }),
+        layout, onLaunch: () => launch(layout), onTune: () => tools.open("terminal run", { preset: { choose_layouts: layout.selector } }), onChange: reread,
         onEdit: layout.source_file && (() => editFile(activity, fileOf(layout))),
         ask: layout.source_file && agentButton(activity, filePlace(fileOf(layout), { notes: [`The layout on screen is “${layout.name}”, which \`stackops terminal run --choose-layouts ${layout.selector}\` starts.`], ideas: ["Change this layout so that …"] })),
       });
     const card = h(
       "article",
-      { class: "layout-card lit", tabindex: "0", title: "See what this layout opens" },
-      h("div", { class: "layout-preview", "aria-hidden": "true" }, maps, layout.tabs.length > PREVIEW_TABS && h("b", { text: `+${layout.tabs.length - PREVIEW_TABS}` })),
+      { class: `layout-card lit${isOn(layout) ? "" : " off"}`, tabindex: "0", title: "See what this layout opens" },
+      h("div", { class: "layout-preview", "aria-hidden": "true" }, maps, open.length > PREVIEW_TABS && h("b", { text: `+${open.length - PREVIEW_TABS}` })),
       h("h3", { text: layout.name }),
-      h("p", { class: "dim", text: `${plural(layout.tab_count, "tab")} · ${plural(layout.pane_count, "pane")}` }),
-      h("footer", {}, pill(layout.selector.split(":")[0], ""), launchButton),
+      h("p", { class: "dim", text: layoutSize(layout) }),
+      h("footer", {}, pill(layout.selector.split(":")[0], ""), h("span", { class: "layout-card-actions" }, layout.source_file && entrySwitch({ layout, label: `Layout ${layout.name} is on`, onChange: reread }), launchButton)),
     );
-    card.addEventListener("click", (event) => !launchButton.contains(event.target) && view());
+    card.addEventListener("click", (event) => !event.target.closest("button") && view());
     card.addEventListener("keydown", (event) => {
       if (event.target !== card || (event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();

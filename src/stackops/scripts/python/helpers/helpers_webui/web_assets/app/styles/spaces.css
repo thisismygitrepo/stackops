@@ -88,6 +88,12 @@
 .layout-preview i { background: linear-gradient(135deg, rgba(106, 92, 255, 0.5), rgba(30, 167, 253, 0.4)); border-radius: 4px; opacity: 1; animation: pop-in 0.5s var(--spring) backwards; animation-delay: calc(var(--i) * 45ms); }
 .layout-preview b { align-self: center; font-size: 11px; color: var(--ink-faint); }
 .layout-card:hover .layout-preview i { animation: wave 0.9s var(--smooth) backwards; animation-delay: calc(var(--i) * 40ms); }
+/* A layout that is switched off keeps its card, drawn without colour. */
+.layout-card.off .layout-preview i { background: var(--line-strong); }
+.layout-card.off h3 { color: var(--ink-soft); }
+.layout-card-actions { display: inline-flex; flex: none; align-items: center; gap: 6px; }
+.entry-switch { display: grid; flex: none; place-items: center; width: 46px; height: 32px; border-radius: 10px; }
+.entry-switch[aria-busy] { opacity: 0.55; }
 @keyframes wave { 40% { transform: scale(0.82); opacity: 0.6; } }
 .session-text { display: grid; flex: 1; min-width: 0; }
 .meter { display: flex; flex: 0 0 120px; height: 7px; overflow: hidden; background: var(--well); border-radius: 999px; }

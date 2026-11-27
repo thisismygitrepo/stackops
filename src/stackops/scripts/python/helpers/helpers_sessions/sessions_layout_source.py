@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
 
@@ -97,46 +97,53 @@ def load_selected_layouts_from_source(
 ) -> list[LayoutEntry]:
     if choose_layouts is None:
         return list(layout_source)
+    selected_entries: list[LayoutEntry]
     if choose_layouts == "":
         from stackops.utils.options_utils.tv_options import choose_from_dict_with_preview
+        from stackops.utils.schemas.layouts.layout_enabled import OFF_MARK
         from stackops.utils.schemas.yaml_document import yaml_document_text
 
-        selected_names = choose_from_dict_with_preview(
+        entries_by_option = {
+            entry.selector if entry.layout.get("enabled", True) else f"""{entry.selector}{OFF_MARK}""": entry
+            for entry in layout_source
+        }
+        chosen_options = choose_from_dict_with_preview(
             options_to_preview_mapping={
-                entry.selector: yaml_document_text(
+                option: yaml_document_text(
                     document={"source_file": str(entry.source_path) if entry.source_path is not None else None, **entry.layout},
                 )
-                for entry in layout_source
+                for option, entry in entries_by_option.items()
             },
             extension="yaml",
             multi=True,
             preview_size_percent=40,
         )
-        if not selected_names:
+        if not chosen_options:
             raise typer.Abort()
+        selected_entries = [entries_by_option[option] for option in chosen_options]
     else:
         selected_names = [token.strip() for token in choose_layouts.split(",") if token.strip()]
         if not selected_names:
             return list(layout_source)
-
-    selected_entries: list[LayoutEntry] = []
-    for selected_name in selected_names:
-        matches = [entry for entry in layout_source if entry.selector == selected_name]
-        if not matches:
-            matches = [entry for entry in layout_source if entry.layout["layoutName"] == selected_name]
-        if not matches:
-            matches = [
-                entry
-                for entry in layout_source
-                if entry.selector.lower() == selected_name.lower()
-                or entry.layout["layoutName"].lower() == selected_name.lower()
-            ]
-        if not matches:
-            available = ", ".join(entry.selector for entry in layout_source)
-            raise ValueError(f"""Layout '{selected_name}' not found. Available layouts: {available}""")
-        if len(matches) > 1:
-            alternatives = ", ".join(entry.selector for entry in matches)
-            raise ValueError(f"""Layout '{selected_name}' is ambiguous. Use one of: {alternatives}""")
-        if matches[0] not in selected_entries:
-            selected_entries.append(matches[0])
-    return selected_entries
+        selected_entries = []
+        for selected_name in selected_names:
+            matches = [entry for entry in layout_source if entry.selector == selected_name]
+            if not matches:
+                matches = [entry for entry in layout_source if entry.layout["layoutName"] == selected_name]
+            if not matches:
+                matches = [
+                    entry
+                    for entry in layout_source
+                    if entry.selector.lower() == selected_name.lower()
+                    or entry.layout["layoutName"].lower() == selected_name.lower()
+                ]
+            if not matches:
+                available = ", ".join(entry.selector for entry in layout_source)
+                raise ValueError(f"""Layout '{selected_name}' not found. Available layouts: {available}""")
+            if len(matches) > 1:
+                alternatives = ", ".join(entry.selector for entry in matches)
+                raise ValueError(f"""Layout '{selected_name}' is ambiguous. Use one of: {alternatives}""")
+            if matches[0] not in selected_entries:
+                selected_entries.append(matches[0])
+    # A layout that was named or picked launches even when it is switched off; its own tabs and panes that are off stay off.
+    return [replace(entry, layout={**entry.layout, "enabled": True}) for entry in selected_entries]

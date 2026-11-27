@@ -18,6 +18,7 @@ class PaneConfig(TypedDict):
     paneName: str
     startDir: str
     command: str
+    enabled: NotRequired[bool]
 
 
 class TabConfig(TypedDict):
@@ -26,6 +27,7 @@ class TabConfig(TypedDict):
     panes: list[PaneConfig]
     arrangement: NotRequired[TabArrangement]
     tabWeight: NotRequired[int]
+    enabled: NotRequired[bool]
 
 
 def single_pane_tab(*, tab_name: str, start_dir: str, command: str) -> TabConfig:
@@ -36,6 +38,7 @@ class LayoutConfig(TypedDict):
     """Configuration for a complete layout with its tabs."""
     layoutName: str
     layoutTabs: list[TabConfig]
+    enabled: NotRequired[bool]
 
 
 class LayoutsFile(TypedDict):
