@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import paramiko
 
 
-STACKOPS_VERSION = "26.11.9"
+STACKOPS_VERSION = "26.11.10"
 STACKOPS_REQUIREMENT = f"stackops>={STACKOPS_VERSION}"
 DEFAULT_PICKLE_SUBDIR = "tmp_results/tmp_scripts/ssh"
 
