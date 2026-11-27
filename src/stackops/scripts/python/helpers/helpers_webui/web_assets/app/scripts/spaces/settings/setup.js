@@ -12,7 +12,7 @@ const MARKS = { true: "Set up", false: "Not set up", null: "Cannot be read" };
 const DEFAULTS = { title: "the StackOps defaults", kind: "config" };
 const PLACE = {
   title: "Guided setup", commands: ["devops config setup"],
-  about: "The things StackOps asks about once: the default cloud, email, coding agent and multiplexer, and a first backup, dotfile, layout and vault.",
+  about: "The things StackOps asks about once: the default cloud, coding agent and multiplexer, and a first backup, dotfile, layout and vault.",
   ideas: ["Set up what is still missing here"],
 };
 // The step whoever opened the tool asked for, and what they filled in, until the page shows them.

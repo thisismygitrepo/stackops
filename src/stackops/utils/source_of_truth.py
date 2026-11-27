@@ -128,10 +128,6 @@ def read_stackops_config() -> StackOpsConfig:
     }
     if "default_rclone_config" in raw_config:
         config["default_rclone_config"] = _require_string(raw_config["default_rclone_config"], "default_rclone_config")
-    if "default_email_config" in raw_config:
-        config["default_email_config"] = _require_string(raw_config["default_email_config"], "default_email_config")
-    if "default_email_address" in raw_config:
-        config["default_email_address"] = _require_string(raw_config["default_email_address"], "default_email_address")
     if "default_agent" in raw_config:
         config["default_agent"] = _require_choice(raw_config["default_agent"], "default_agent", cast(tuple[AGENTS, ...], get_args(AGENTS)))
     if "default_session_multiplexer" in raw_config:
@@ -146,7 +142,7 @@ def read_stackops_config_string(key: StackOpsConfigStringKey) -> str:
     value = config.get(key)
     if value is None:
         raise KeyError(key)
-    return cast(str, value)
+    return value
 
 
 def dotfiles_llm_api_keys_path(provider: str) -> Path:

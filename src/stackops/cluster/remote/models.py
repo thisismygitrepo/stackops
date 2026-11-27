@@ -3,8 +3,6 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 
 from stackops.utils.accessories import randstr
-from stackops.utils.source_of_truth import DOTFILES_STACKOPS_CONFIG_PATH, read_stackops_config_string
-from stackops.utils.schemas.config.config_types import StackOpsConfigStringKey
 
 
 JOB_STATUS: TypeAlias = Literal["queued", "running", "completed", "failed"]
@@ -125,17 +123,6 @@ class JobStatus:
 
 
 @dataclass
-class EmailParams:
-    addressee: str
-    speaker: str
-    ssh_conn_str: str
-    executed_obj: str
-    email_config_name: str
-    to_email: str
-    file_manager_path: str
-
-
-@dataclass
 class LogEntry:
     name: str
     submission_time: str
@@ -164,18 +151,6 @@ class LogEntry:
         )
 
 
-def _read_default_config_value(key: StackOpsConfigStringKey) -> str:
-    try:
-        return read_stackops_config_string(key)
-    except (FileNotFoundError, KeyError, ValueError) as err:
-        setup_domain = "cloud" if key == "default_rclone_config" else "email"
-        raise ValueError(
-            f"Config value '{key}' could not be read from `{DOTFILES_STACKOPS_CONFIG_PATH}`.\n\n"
-            "Create or update it with:\n"
-            f"  devops config setup {setup_domain}"
-        ) from err
-
-
 @dataclass
 class RemoteStackOpsConfig:
     job_id: str = field(default_factory=lambda: randstr(noun=True))
@@ -191,9 +166,6 @@ class RemoteStackOpsConfig:
     cloud_name: str | None = None
 
     allowed_remotes: list[str] | None = None
-    notify_upon_completion: bool = False
-    to_email: str | None = None
-    email_config_name: str | None = None
 
     launch_method: LAUNCH_METHOD = "remotely"
     kill_on_completion: bool = False
@@ -219,7 +191,6 @@ class RemoteStackOpsConfig:
             copy_repo=bool(d.get("copy_repo", False)), update_repo=bool(d.get("update_repo", False)), install_repo=bool(d.get("install_repo", False)), data=_coerce_string_list(d.get("data", [])),
             transfer_method=_coerce_transfer_method(d.get("transfer_method", "sftp")), cloud_name=str(d["cloud_name"]) if d.get("cloud_name") else None,
             allowed_remotes=_coerce_string_list(d["allowed_remotes"]) if d.get("allowed_remotes") else None,
-            notify_upon_completion=bool(d.get("notify_upon_completion", False)), to_email=str(d["to_email"]) if d.get("to_email") else None, email_config_name=str(d["email_config_name"]) if d.get("email_config_name") else None,
             launch_method=_coerce_launch_method(d.get("launch_method", "remotely")), kill_on_completion=bool(d.get("kill_on_completion", False)), interactive=bool(d.get("interactive", False)),
             wrap_in_try_except=bool(d.get("wrap_in_try_except", False)), parallelize=bool(d.get("parallelize", False)), lock_resources=bool(d.get("lock_resources", True)), max_simultaneous_jobs=int(str(d.get("max_simultaneous_jobs", 1))),
             workload_params=wl,
@@ -230,11 +201,6 @@ class RemoteStackOpsConfig:
             print("⚠️ RemoteStackOpsConfig: interactive + lock_resources means the job might never release the lock.")
         if self.transfer_method == "cloud" and self.cloud_name is None:
             raise ValueError("cloud_name must be provided when transfer_method is 'cloud'")
-        if self.notify_upon_completion:
-            if self.to_email is None:
-                self.to_email = _read_default_config_value("default_email_address")
-            if self.email_config_name is None:
-                self.email_config_name = _read_default_config_value("default_email_config")
 
 
 @dataclass

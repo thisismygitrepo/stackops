@@ -4,13 +4,11 @@ from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer, Se
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
 
 
-StackOpsConfigStringKey: TypeAlias = Literal["default_rclone_config", "default_email_config", "default_email_address"]
+StackOpsConfigStringKey: TypeAlias = Literal["default_rclone_config"]
 
 
 class StackOpsConfigValues(TypedDict, total=False):
     default_rclone_config: str
-    default_email_config: str
-    default_email_address: str
     default_agent: AGENTS
     default_session_multiplexer: SessionMultiplexer
     default_agent_multiplexer: AgentMultiplexer

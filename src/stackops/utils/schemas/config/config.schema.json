@@ -18,17 +18,6 @@
       "description": "Default rclone remote/profile name.",
       "minLength": 1
     },
-    "default_email_config": {
-      "type": "string",
-      "description": "Default email profile name used to send notifications.",
-      "minLength": 1
-    },
-    "default_email_address": {
-      "type": "string",
-      "description": "Default recipient email address used for notifications.",
-      "format": "email",
-      "minLength": 1
-    },
     "default_agent": {
       "type": "string",
       "description": "Default agent used by agents commands when --agent is not passed.",

@@ -23,7 +23,7 @@
       "Private names and common CLI command wiring names are excluded.",
       "If a module defines __all__, it narrows include-all member selection to exported names."
     ],
-    "module_count": 92
+    "module_count": 90
   },
   "root": {
     "kind": "root",
@@ -858,13 +858,13 @@
                     "help": "render_execution_script",
                     "doc": "",
                     "signature": {
-                      "text": "def render_execution_script(params_json_path: str, file_manager_json_path: str, execution_line: str, notification_block: str) -> str"
+                      "text": "def render_execution_script(params_json_path: str, file_manager_json_path: str, execution_line: str) -> str"
                     },
                     "source": {
                       "file": "src/stackops/cluster/remote/execution_script.py",
                       "module": "stackops.cluster.remote.execution_script",
                       "object": "render_execution_script",
-                      "line": 88,
+                      "line": 86,
                       "docs_pages": [
                         "docs/api/cluster/remote.md"
                       ]
@@ -1555,29 +1555,6 @@
                 "children": [
                   {
                     "kind": "class",
-                    "name": "EmailParams",
-                    "qualified_name": "stackops.cluster.remote.models.EmailParams",
-                    "fullPath": "stackops.cluster.remote.models.EmailParams",
-                    "help": "EmailParams",
-                    "doc": "",
-                    "signature": {
-                      "text": "class EmailParams"
-                    },
-                    "source": {
-                      "file": "src/stackops/cluster/remote/models.py",
-                      "module": "stackops.cluster.remote.models",
-                      "object": "EmailParams",
-                      "line": 128,
-                      "docs_pages": [
-                        "docs/api/cluster/index.md",
-                        "docs/api/cluster/remote.md",
-                        "docs/api/index.md"
-                      ]
-                    },
-                    "children": []
-                  },
-                  {
-                    "kind": "class",
                     "name": "ExecutionTimings",
                     "qualified_name": "stackops.cluster.remote.models.ExecutionTimings",
                     "fullPath": "stackops.cluster.remote.models.ExecutionTimings",
@@ -1590,7 +1567,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "ExecutionTimings",
-                      "line": 241,
+                      "line": 207,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -1612,7 +1589,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "execution_duration",
-                          "line": 249,
+                          "line": 215,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1635,7 +1612,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "wait_duration",
-                          "line": 253,
+                          "line": 219,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1660,7 +1637,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "JobStatus",
-                      "line": 101,
+                      "line": 99,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -1682,7 +1659,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "from_dict",
-                          "line": 112,
+                          "line": 110,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1705,7 +1682,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "to_dict",
-                          "line": 108,
+                          "line": 106,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1730,7 +1707,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "LogEntry",
-                      "line": 139,
+                      "line": 126,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -1752,7 +1729,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "from_dict",
-                          "line": 152,
+                          "line": 139,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1777,7 +1754,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "RemoteStackOpsConfig",
-                      "line": 180,
+                      "line": 155,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -1799,7 +1776,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "from_dict",
-                          "line": 214,
+                          "line": 186,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1822,7 +1799,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "to_dict",
-                          "line": 207,
+                          "line": 179,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1847,7 +1824,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "WorkloadParams",
-                      "line": 41,
+                      "line": 39,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -1869,7 +1846,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "default",
-                          "line": 86,
+                          "line": 84,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1892,7 +1869,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "from_dict",
-                          "line": 54,
+                          "line": 52,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1915,7 +1892,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "get_section_from_series",
-                          "line": 89,
+                          "line": 87,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1938,7 +1915,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "print_summary",
-                          "line": 95,
+                          "line": 93,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1961,7 +1938,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "save_suffix",
-                          "line": 66,
+                          "line": 64,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -1984,7 +1961,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "split_to_jobs",
-                          "line": 69,
+                          "line": 67,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2007,7 +1984,7 @@
                           "file": "src/stackops/cluster/remote/models.py",
                           "module": "stackops.cluster.remote.models",
                           "object": "to_dict",
-                          "line": 50,
+                          "line": 48,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2028,7 +2005,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "JOB_STATUS",
-                      "line": 10,
+                      "line": 8,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -2047,7 +2024,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "LAUNCH_METHOD",
-                      "line": 12,
+                      "line": 10,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -2066,7 +2043,7 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "MACHINE_TYPE",
-                      "line": 13,
+                      "line": 11,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -2085,301 +2062,11 @@
                       "file": "src/stackops/cluster/remote/models.py",
                       "module": "stackops.cluster.remote.models",
                       "object": "TRANSFER_METHOD",
-                      "line": 11,
+                      "line": 9,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
                         "docs/api/index.md"
-                      ]
-                    },
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "kind": "module",
-                "name": "notification",
-                "qualified_name": "stackops.cluster.remote.notification",
-                "fullPath": "stackops.cluster.remote.notification",
-                "help": "stackops.cluster.remote.notification",
-                "doc": "",
-                "source": {
-                  "file": "src/stackops/cluster/remote/notification.py",
-                  "module": "stackops.cluster.remote.notification",
-                  "docs_pages": [
-                    "docs/api/cluster/remote.md"
-                  ]
-                },
-                "children": [
-                  {
-                    "kind": "function",
-                    "name": "render_notification_block",
-                    "qualified_name": "stackops.cluster.remote.notification.render_notification_block",
-                    "fullPath": "stackops.cluster.remote.notification.render_notification_block",
-                    "help": "render_notification_block",
-                    "doc": "",
-                    "signature": {
-                      "text": "def render_notification_block(email_params: EmailParams) -> str"
-                    },
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notification.py",
-                      "module": "stackops.cluster.remote.notification",
-                      "object": "render_notification_block",
-                      "line": 24,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md"
-                      ]
-                    },
-                    "children": []
-                  },
-                  {
-                    "kind": "constant",
-                    "name": "NOTIFICATION_TEMPLATE",
-                    "qualified_name": "stackops.cluster.remote.notification.NOTIFICATION_TEMPLATE",
-                    "fullPath": "stackops.cluster.remote.notification.NOTIFICATION_TEMPLATE",
-                    "help": "'\\ntry:\\n from stackops.cluster.remote.notifications import Email\\n msg = f\"\"\"\\nHi `{addresse...",
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notification.py",
-                      "module": "stackops.cluster.remote.notification",
-                      "object": "NOTIFICATION_TEMPLATE",
-                      "line": 4,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md"
-                      ]
-                    },
-                    "children": []
-                  }
-                ]
-              },
-              {
-                "kind": "module",
-                "name": "notifications",
-                "qualified_name": "stackops.cluster.remote.notifications",
-                "fullPath": "stackops.cluster.remote.notifications",
-                "help": "Notifications Module",
-                "doc": "Notifications Module",
-                "source": {
-                  "file": "src/stackops/cluster/remote/notifications.py",
-                  "module": "stackops.cluster.remote.notifications",
-                  "docs_pages": [
-                    "docs/api/cluster/remote.md",
-                    "docs/api/utils/interactive-helpers.md"
-                  ]
-                },
-                "children": [
-                  {
-                    "kind": "class",
-                    "name": "Email",
-                    "qualified_name": "stackops.cluster.remote.notifications.Email",
-                    "fullPath": "stackops.cluster.remote.notifications.Email",
-                    "help": "Email",
-                    "doc": "",
-                    "signature": {
-                      "text": "class Email"
-                    },
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notifications.py",
-                      "module": "stackops.cluster.remote.notifications",
-                      "object": "Email",
-                      "line": 70,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md",
-                        "docs/api/utils/interactive-helpers.md"
-                      ]
-                    },
-                    "children": [
-                      {
-                        "kind": "method",
-                        "name": "close",
-                        "qualified_name": "stackops.cluster.remote.notifications.Email.close",
-                        "fullPath": "stackops.cluster.remote.notifications.Email.close",
-                        "help": "close",
-                        "doc": "",
-                        "signature": {
-                          "text": "def close(self)"
-                        },
-                        "source": {
-                          "file": "src/stackops/cluster/remote/notifications.py",
-                          "module": "stackops.cluster.remote.notifications",
-                          "object": "close",
-                          "line": 160,
-                          "docs_pages": [
-                            "docs/api/cluster/remote.md",
-                            "docs/api/utils/interactive-helpers.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "method",
-                        "name": "manage_folders",
-                        "qualified_name": "stackops.cluster.remote.notifications.Email.manage_folders",
-                        "fullPath": "stackops.cluster.remote.notifications.Email.manage_folders",
-                        "help": "manage_folders",
-                        "doc": "",
-                        "signature": {
-                          "text": "def manage_folders(email_add: str, pwd: str)"
-                        },
-                        "source": {
-                          "file": "src/stackops/cluster/remote/notifications.py",
-                          "module": "stackops.cluster.remote.notifications",
-                          "object": "manage_folders",
-                          "line": 152,
-                          "docs_pages": [
-                            "docs/api/cluster/remote.md",
-                            "docs/api/utils/interactive-helpers.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "method",
-                        "name": "send_and_close",
-                        "qualified_name": "stackops.cluster.remote.notifications.Email.send_and_close",
-                        "fullPath": "stackops.cluster.remote.notifications.Email.send_and_close",
-                        "help": "send_and_close",
-                        "doc": "",
-                        "signature": {
-                          "text": "def send_and_close(config_name: str, to: str, subject: str, body: str) -> Any"
-                        },
-                        "source": {
-                          "file": "src/stackops/cluster/remote/notifications.py",
-                          "module": "stackops.cluster.remote.notifications",
-                          "object": "send_and_close",
-                          "line": 164,
-                          "docs_pages": [
-                            "docs/api/cluster/remote.md",
-                            "docs/api/utils/interactive-helpers.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "method",
-                        "name": "send_email",
-                        "qualified_name": "stackops.cluster.remote.notifications.Email.send_email",
-                        "fullPath": "stackops.cluster.remote.notifications.Email.send_email",
-                        "help": "send_email",
-                        "doc": "",
-                        "signature": {
-                          "text": "def send_email(self, to_addrs: str, msg: str)"
-                        },
-                        "source": {
-                          "file": "src/stackops/cluster/remote/notifications.py",
-                          "module": "stackops.cluster.remote.notifications",
-                          "object": "send_email",
-                          "line": 157,
-                          "docs_pages": [
-                            "docs/api/cluster/remote.md",
-                            "docs/api/utils/interactive-helpers.md"
-                          ]
-                        },
-                        "children": []
-                      },
-                      {
-                        "kind": "method",
-                        "name": "send_message",
-                        "qualified_name": "stackops.cluster.remote.notifications.Email.send_message",
-                        "fullPath": "stackops.cluster.remote.notifications.Email.send_message",
-                        "help": "send_message",
-                        "doc": "",
-                        "signature": {
-                          "text": "def send_message(self, to: str, subject: str, body: str, txt_to_html: bool=True, attachments: list[Any] | None=None)"
-                        },
-                        "source": {
-                          "file": "src/stackops/cluster/remote/notifications.py",
-                          "module": "stackops.cluster.remote.notifications",
-                          "object": "send_message",
-                          "line": 128,
-                          "docs_pages": [
-                            "docs/api/cluster/remote.md",
-                            "docs/api/utils/interactive-helpers.md"
-                          ]
-                        },
-                        "children": []
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "function",
-                    "name": "download_to_memory",
-                    "qualified_name": "stackops.cluster.remote.notifications.download_to_memory",
-                    "fullPath": "stackops.cluster.remote.notifications.download_to_memory",
-                    "help": "download_to_memory",
-                    "doc": "",
-                    "signature": {
-                      "text": "def download_to_memory(path: Path, allow_redirects: bool=True, timeout: float | None=None, params: Any=None) -> requests.Response"
-                    },
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notifications.py",
-                      "module": "stackops.cluster.remote.notifications",
-                      "object": "download_to_memory",
-                      "line": 16,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md",
-                        "docs/api/utils/interactive-helpers.md"
-                      ]
-                    },
-                    "children": []
-                  },
-                  {
-                    "kind": "function",
-                    "name": "get_github_markdown_css",
-                    "qualified_name": "stackops.cluster.remote.notifications.get_github_markdown_css",
-                    "fullPath": "stackops.cluster.remote.notifications.get_github_markdown_css",
-                    "help": "get_github_markdown_css",
-                    "doc": "",
-                    "signature": {
-                      "text": "def get_github_markdown_css() -> str"
-                    },
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notifications.py",
-                      "module": "stackops.cluster.remote.notifications",
-                      "object": "get_github_markdown_css",
-                      "line": 22,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md",
-                        "docs/api/utils/interactive-helpers.md"
-                      ]
-                    },
-                    "children": []
-                  },
-                  {
-                    "kind": "function",
-                    "name": "md2html",
-                    "qualified_name": "stackops.cluster.remote.notifications.md2html",
-                    "fullPath": "stackops.cluster.remote.notifications.md2html",
-                    "help": "Convert markdown to HTML using Rich library.",
-                    "doc": "Convert markdown to HTML using Rich library.",
-                    "signature": {
-                      "text": "def md2html(body: str) -> str"
-                    },
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notifications.py",
-                      "module": "stackops.cluster.remote.notifications",
-                      "object": "md2html",
-                      "line": 27,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md",
-                        "docs/api/utils/interactive-helpers.md"
-                      ]
-                    },
-                    "children": []
-                  },
-                  {
-                    "kind": "constant",
-                    "name": "EMAIL_SECRET_KEYS",
-                    "qualified_name": "stackops.cluster.remote.notifications.EMAIL_SECRET_KEYS",
-                    "fullPath": "stackops.cluster.remote.notifications.EMAIL_SECRET_KEYS",
-                    "help": "('email_add', 'password', 'encryption', 'smtp_host', 'smtp_port')",
-                    "source": {
-                      "file": "src/stackops/cluster/remote/notifications.py",
-                      "module": "stackops.cluster.remote.notifications",
-                      "object": "EMAIL_SECRET_KEYS",
-                      "line": 67,
-                      "docs_pages": [
-                        "docs/api/cluster/remote.md",
-                        "docs/api/utils/interactive-helpers.md"
                       ]
                     },
                     "children": []
@@ -2417,7 +2104,7 @@
                       "file": "src/stackops/cluster/remote/remote_machine.py",
                       "module": "stackops.cluster.remote.remote_machine",
                       "object": "RemoteMachine",
-                      "line": 27,
+                      "line": 26,
                       "docs_pages": [
                         "docs/api/cluster/index.md",
                         "docs/api/cluster/remote.md",
@@ -2439,7 +2126,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "check_job_status",
-                          "line": 198,
+                          "line": 181,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2462,7 +2149,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "delete_remote_results",
-                          "line": 246,
+                          "line": 229,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2485,7 +2172,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "download_results",
-                          "line": 234,
+                          "line": 217,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2508,7 +2195,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "fire",
-                          "line": 177,
+                          "line": 160,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2531,7 +2218,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "from_dict",
-                          "line": 59,
+                          "line": 58,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2554,7 +2241,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "from_job_dir",
-                          "line": 85,
+                          "line": 84,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2577,7 +2264,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "generate_scripts",
-                          "line": 98,
+                          "line": 97,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2600,7 +2287,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "run",
-                          "line": 190,
+                          "line": 173,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2623,7 +2310,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "show_scripts",
-                          "line": 159,
+                          "line": 142,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2646,7 +2333,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "submit",
-                          "line": 165,
+                          "line": 148,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -2669,7 +2356,7 @@
                           "file": "src/stackops/cluster/remote/remote_machine.py",
                           "module": "stackops.cluster.remote.remote_machine",
                           "object": "to_dict",
-                          "line": 55,
+                          "line": 54,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/remote.md",
@@ -3248,7 +2935,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_layout.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout",
                               "object": "build_tmux_commands",
-                              "line": 163,
+                              "line": 164,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -3269,7 +2956,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_layout.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout",
                               "object": "build_tmux_merge_commands",
-                              "line": 183,
+                              "line": 184,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -3290,7 +2977,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_layout.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout",
                               "object": "build_tmux_merge_script",
-                              "line": 257,
+                              "line": 258,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -3311,7 +2998,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_layout.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout",
                               "object": "build_tmux_new_window_tab_commands",
-                              "line": 148,
+                              "line": 149,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -3332,7 +3019,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_layout.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout",
                               "object": "build_tmux_script",
-                              "line": 234,
+                              "line": 235,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -3353,7 +3040,7 @@
                               "file": "src/stackops/cluster/sessions_managers/tmux/tmux_utils/tmux_layout.py",
                               "module": "stackops.cluster.sessions_managers.tmux.tmux_utils.tmux_layout",
                               "object": "build_tmux_script_from_commands",
-                              "line": 248,
+                              "line": 249,
                               "docs_pages": [
                                 "docs/api/cluster/layouts.md"
                               ]
@@ -8716,7 +8403,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_bulk_runner.py",
                       "module": "stackops.utils.installer_utils.installer_bulk_runner",
                       "object": "install_bulk",
-                      "line": 130,
+                      "line": 176,
                       "docs_pages": [
                         "docs/api/jobs/installer.md"
                       ]
@@ -8976,7 +8663,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_cli.py",
                       "module": "stackops.utils.installer_utils.installer_cli",
                       "object": "check_installations",
-                      "line": 314,
+                      "line": 313,
                       "docs_pages": [
                         "docs/api/index.md",
                         "docs/api/jobs/installer.md",
@@ -8999,7 +8686,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_cli.py",
                       "module": "stackops.utils.installer_utils.installer_cli",
                       "object": "install_clis",
-                      "line": 212,
+                      "line": 211,
                       "docs_pages": [
                         "docs/api/index.md",
                         "docs/api/jobs/installer.md",
@@ -9010,19 +8697,19 @@
                   },
                   {
                     "kind": "function",
-                    "name": "install_group",
-                    "qualified_name": "stackops.utils.installer_utils.installer_cli.install_group",
-                    "fullPath": "stackops.utils.installer_utils.installer_cli.install_group",
-                    "help": "install_group",
+                    "name": "install_groups",
+                    "qualified_name": "stackops.utils.installer_utils.installer_cli.install_groups",
+                    "fullPath": "stackops.utils.installer_utils.installer_cli.install_groups",
+                    "help": "install_groups",
                     "doc": "",
                     "signature": {
-                      "text": "def install_group(package_group: str, install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None"
+                      "text": "def install_groups(package_groups: list[str], install_request: InstallRequest, source: InstallerDataSource, user_path: Path | None) -> None"
                     },
                     "source": {
                       "file": "src/stackops/utils/installer_utils/installer_cli.py",
                       "module": "stackops.utils.installer_utils.installer_cli",
-                      "object": "install_group",
-                      "line": 186,
+                      "object": "install_groups",
+                      "line": 185,
                       "docs_pages": [
                         "docs/api/index.md",
                         "docs/api/jobs/installer.md",
@@ -9045,7 +8732,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_cli.py",
                       "module": "stackops.utils.installer_utils.installer_cli",
                       "object": "install_if_missing",
-                      "line": 251,
+                      "line": 250,
                       "docs_pages": [
                         "docs/api/index.md",
                         "docs/api/jobs/installer.md",
@@ -9068,7 +8755,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_cli.py",
                       "module": "stackops.utils.installer_utils.installer_cli",
                       "object": "install_interactively",
-                      "line": 125,
+                      "line": 124,
                       "docs_pages": [
                         "docs/api/index.md",
                         "docs/api/jobs/installer.md",
@@ -10184,7 +9871,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_runner.py",
                       "module": "stackops.utils.installer_utils.installer_runner",
                       "object": "get_installers",
-                      "line": 133,
+                      "line": 131,
                       "docs_pages": [
                         "docs/api/jobs/installer.md"
                       ]
@@ -10205,7 +9892,7 @@
                       "file": "src/stackops/utils/installer_utils/installer_runner.py",
                       "module": "stackops.utils.installer_utils.installer_runner",
                       "object": "get_installers_from_source",
-                      "line": 138,
+                      "line": 136,
                       "docs_pages": [
                         "docs/api/jobs/installer.md"
                       ]
@@ -11205,7 +10892,28 @@
                       "file": "src/stackops/utils/repos/stackops_paths.py",
                       "module": "stackops.utils.repos.stackops_paths",
                       "object": "require_current_workspace_stackops_paths",
-                      "line": 60,
+                      "line": 64,
+                      "docs_pages": [
+                        "docs/api/utils/environment-and-projects.md"
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "kind": "function",
+                    "name": "workspace_stackops_paths",
+                    "qualified_name": "stackops.utils.repos.stackops_paths.workspace_stackops_paths",
+                    "fullPath": "stackops.utils.repos.stackops_paths.workspace_stackops_paths",
+                    "help": "workspace_stackops_paths",
+                    "doc": "",
+                    "signature": {
+                      "text": "def workspace_stackops_paths(*, current_dir: Path, path_kind: RepoStackopsPathKind) -> tuple[tuple[str, Path], ...]"
+                    },
+                    "source": {
+                      "file": "src/stackops/utils/repos/stackops_paths.py",
+                      "module": "stackops.utils.repos.stackops_paths",
+                      "object": "workspace_stackops_paths",
+                      "line": 52,
                       "docs_pages": [
                         "docs/api/utils/environment-and-projects.md"
                       ]
@@ -11355,13 +11063,13 @@
                         "help": "StackOpsConfig",
                         "doc": "",
                         "signature": {
-                          "text": "class StackOpsConfig(_StackOpsConfigHeader, StackOpsConfigValues)"
+                          "text": "class StackOpsConfig(StackOpsConfigValues)"
                         },
                         "source": {
                           "file": "src/stackops/utils/schemas/config/config_types.py",
                           "module": "stackops.utils.schemas.config.config_types",
                           "object": "StackOpsConfig",
-                          "line": 23,
+                          "line": 17,
                           "docs_pages": [
                             "docs/api/utils/environment-and-projects.md"
                           ]
@@ -11899,7 +11607,7 @@
                           "file": "src/stackops/utils/schemas/installer/package_groups.py",
                           "module": "stackops.utils.schemas.installer.package_groups",
                           "object": "NETWORK",
-                          "line": 252,
+                          "line": 251,
                           "docs_pages": [
                             "docs/api/index.md",
                             "docs/api/jobs/index.md",
@@ -12008,7 +11716,7 @@
                         "name": "PACKAGES_FILE",
                         "qualified_name": "stackops.utils.schemas.installer.package_groups.PACKAGES_FILE",
                         "fullPath": "stackops.utils.schemas.installer.package_groups.PACKAGES_FILE",
-                        "help": "['fd', 'fzf', 'tv', 'broot', 'rg', 'rga', 'ugrep', 'ouch', 'pistol', 'bat', 'viu', 'superfile...",
+                        "help": "['yazi', 'fd', 'fzf', 'tv', 'rg', 'rga', 'ugrep', 'ouch', 'pistol', 'bat', 'viu', 'superfile'...",
                         "source": {
                           "file": "src/stackops/utils/schemas/installer/package_groups.py",
                           "module": "stackops.utils.schemas.installer.package_groups",
@@ -12127,7 +11835,7 @@
                           "file": "src/stackops/utils/schemas/installer/package_groups.py",
                           "module": "stackops.utils.schemas.installer.package_groups",
                           "object": "PACKAGES_TERMINAL_SHELL",
-                          "line": 267,
+                          "line": 266,
                           "docs_pages": [
                             "docs/api/index.md",
                             "docs/api/jobs/index.md",
@@ -12165,7 +11873,7 @@
                           "file": "src/stackops/utils/schemas/installer/package_groups.py",
                           "module": "stackops.utils.schemas.installer.package_groups",
                           "object": "PACKAGE_NAME",
-                          "line": 279,
+                          "line": 278,
                           "docs_pages": [
                             "docs/api/index.md",
                             "docs/api/jobs/index.md",
@@ -12233,7 +11941,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_file.py",
                           "module": "stackops.utils.schemas.layouts.layout_file",
                           "object": "read_layouts_file",
-                          "line": 19,
+                          "line": 20,
                           "docs_pages": [
                             "docs/api/cluster/layouts.md"
                           ]
@@ -12254,7 +11962,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_file.py",
                           "module": "stackops.utils.schemas.layouts.layout_file",
                           "object": "require_layout_suffix",
-                          "line": 14,
+                          "line": 15,
                           "docs_pages": [
                             "docs/api/cluster/layouts.md"
                           ]
@@ -12275,7 +11983,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_file.py",
                           "module": "stackops.utils.schemas.layouts.layout_file",
                           "object": "serialize_layouts_to_file",
-                          "line": 104,
+                          "line": 115,
                           "docs_pages": [
                             "docs/api/cluster/layouts.md"
                           ]
@@ -12296,7 +12004,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_file.py",
                           "module": "stackops.utils.schemas.layouts.layout_file",
                           "object": "write_layouts_file",
-                          "line": 68,
+                          "line": 79,
                           "docs_pages": [
                             "docs/api/cluster/layouts.md"
                           ]
@@ -12335,7 +12043,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_types.py",
                           "module": "stackops.utils.schemas.layouts.layout_types",
                           "object": "LayoutConfig",
-                          "line": 35,
+                          "line": 37,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/layouts.md"
@@ -12357,7 +12065,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_types.py",
                           "module": "stackops.utils.schemas.layouts.layout_types",
                           "object": "LayoutsFile",
-                          "line": 41,
+                          "line": 44,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/layouts.md"
@@ -12401,7 +12109,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_types.py",
                           "module": "stackops.utils.schemas.layouts.layout_types",
                           "object": "TabConfig",
-                          "line": 23,
+                          "line": 24,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/layouts.md"
@@ -12423,7 +12131,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_types.py",
                           "module": "stackops.utils.schemas.layouts.layout_types",
                           "object": "resolve_start_dir",
-                          "line": 47,
+                          "line": 50,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/layouts.md"
@@ -12445,7 +12153,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_types.py",
                           "module": "stackops.utils.schemas.layouts.layout_types",
                           "object": "single_pane_tab",
-                          "line": 31,
+                          "line": 33,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/layouts.md"
@@ -12467,7 +12175,7 @@
                           "file": "src/stackops/utils/schemas/layouts/layout_types.py",
                           "module": "stackops.utils.schemas.layouts.layout_types",
                           "object": "substitute_home",
-                          "line": 53,
+                          "line": 56,
                           "docs_pages": [
                             "docs/api/cluster/index.md",
                             "docs/api/cluster/layouts.md"
@@ -12964,7 +12672,7 @@
                     "name": "STACKOPS_VERSION",
                     "qualified_name": "stackops.utils.ssh_utils.abc.STACKOPS_VERSION",
                     "fullPath": "stackops.utils.ssh_utils.abc.STACKOPS_VERSION",
-                    "help": "'26.11.9'",
+                    "help": "'26.11.10'",
                     "source": {
                       "file": "src/stackops/utils/ssh_utils/abc.py",
                       "module": "stackops.utils.ssh_utils.abc",
@@ -14946,7 +14654,7 @@
                   "file": "src/stackops/utils/source_of_truth.py",
                   "module": "stackops.utils.source_of_truth",
                   "object": "dotfiles_llm_api_keys_path",
-                  "line": 150,
+                  "line": 148,
                   "docs_pages": [
                     "docs/api/utils/paths-files-config.md"
                   ]
@@ -14988,7 +14696,7 @@
                   "file": "src/stackops/utils/source_of_truth.py",
                   "module": "stackops.utils.source_of_truth",
                   "object": "read_stackops_config_string",
-                  "line": 142,
+                  "line": 140,
                   "docs_pages": [
                     "docs/api/utils/paths-files-config.md"
                   ]
@@ -15259,7 +14967,7 @@
                 "name": "DOTFILES_STACKOPS_CONFIG_PATH",
                 "qualified_name": "stackops.utils.source_of_truth.DOTFILES_STACKOPS_CONFIG_PATH",
                 "fullPath": "stackops.utils.source_of_truth.DOTFILES_STACKOPS_CONFIG_PATH",
-                "help": "DOTFILES_STACKOPS_ROOT.joinpath('config', 'config.json')",
+                "help": "DOTFILES_STACKOPS_ROOT.joinpath('config', 'config.yaml')",
                 "source": {
                   "file": "src/stackops/utils/source_of_truth.py",
                   "module": "stackops.utils.source_of_truth",

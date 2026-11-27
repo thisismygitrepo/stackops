@@ -21,7 +21,7 @@ them as an import pattern.
 | Environment and project wiring | `.venv` discovery, activation helpers, and cloud metadata defaults | `stackops.utils.python_env`, `stackops.utils.cloud_defaults` | [Environment and project wiring](utils/environment-and-projects.md) |
 | Paths, files, and config documents | JSON / INI / pickle IO, GPG helpers, path mutation, path-reference lookup | `stackops.utils.io`, `stackops.utils.path_core`, `stackops.utils.path_helper`, `stackops.utils.path_reference` | [Paths, files, and config](utils/paths-files-config.md) |
 | Scheduling and cache | Repeating routines, memory cache, disk-backed cache | `stackops.utils.scheduler` | [Scheduling and cache](utils/scheduling-and-cache.md) |
-| Interactive helpers and notifications | IDs, list splitting, fuzzy / TV-backed choices, HTML email | `stackops.utils.accessories`, `stackops.utils.options`, `stackops.utils.notifications` | [Interactive helpers and notifications](utils/interactive-helpers.md) |
+| Interactive helpers | IDs, list splitting, fuzzy / TV-backed choices | `stackops.utils.accessories`, `stackops.utils.options` | [Interactive helpers](utils/interactive-helpers.md) |
 | Code generation and command launching | Lambda-to-script conversion, `uv` command builders, shell execution, shell handoff, missing-tool install guards | `stackops.utils.meta`, `stackops.utils.code`, `stackops.utils.installer_utils.installer_cli` | [Code generation and command launching](utils/code-generation.md) |
 | Remote execution and networking | Remote job config and state, transfer, SSH, public-IP and LAN helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh`, `stackops.scripts.python.helpers.helpers_network.*` | [Remote execution and networking](cluster/remote.md) |
 | Installer catalog and package groups | Installer data, package groups, install request handling, install orchestration, direct URL installers | `stackops.utils.schemas.installer.*`, `stackops.jobs.installer.*`, `stackops.utils.installer_utils.*` | [Jobs and installer APIs](jobs/index.md) |
@@ -39,7 +39,7 @@ stackops/
 ├── scripts/python/helpers/
 │   └── helpers_network/           # IP and connectivity helpers
 ├── utils/
-│   ├── accessories, cloud_defaults, code, io, meta, notifications, options, python_env, scheduler, ssh
+│   ├── accessories, cloud_defaults, code, io, meta, options, python_env, scheduler, ssh
 │   ├── installer_utils/           # Runtime installer engine
 │   ├── path_core, path_helper, path_reference
 │   └── schemas/{installer,layouts} # installer_data.yaml and schema types
@@ -58,7 +58,7 @@ Start here if you are importing helper APIs into your own scripts or application
 - [Environment and project wiring](utils/environment-and-projects.md)
 - [Paths, files, and config](utils/paths-files-config.md)
 - [Scheduling and cache](utils/scheduling-and-cache.md)
-- [Interactive helpers and notifications](utils/interactive-helpers.md)
+- [Interactive helpers](utils/interactive-helpers.md)
 - [Code generation and command launching](utils/code-generation.md)
 
 ### Cluster and remote execution

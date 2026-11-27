@@ -1,6 +1,6 @@
 # Utils API
 
-`stackops.utils` is the shared-library layer that most downstream code imports directly. It contains environment discovery, IO and path helpers, schedulers and caches, interactive selection utilities, notification helpers, installer runtime helpers, and the script-generation functions that feed the cluster and remote layers.
+`stackops.utils` is the shared-library layer that most downstream code imports directly. It contains environment discovery, IO and path helpers, schedulers and caches, interactive selection utilities, installer runtime helpers, and the script-generation functions that feed the cluster and remote layers.
 
 ---
 
@@ -11,7 +11,7 @@
 | [Environment and project wiring](environment-and-projects.md) | Discover project virtualenvs and load default cloud settings | `stackops.utils.cloud.defaults` |
 | [Paths, files, and config](paths-files-config.md) | Read and write JSON / INI / pickle files, encrypt files with GPG, resolve paths and path references | `stackops.utils.io`, `stackops.utils.path_core`, `stackops.utils.path_reference` |
 | [Scheduling and cache](scheduling-and-cache.md) | Run recurring routines and reuse expensive results through memory or disk caches | `stackops.cluster.scheduler` |
-| [Interactive helpers and notifications](interactive-helpers.md) | Generate IDs, split work, present interactive choices, and send email | `stackops.utils.accessories`, `stackops.utils.options_utils.options`, `stackops.cluster.remote.notifications` |
+| [Interactive helpers](interactive-helpers.md) | Generate IDs, split work, and present interactive choices | `stackops.utils.accessories`, `stackops.utils.options_utils.options` |
 | [Code generation and command launching](code-generation.md) | Turn callables into scripts, build `uv` commands, run shell snippets, hand off shell work, and ensure CLIs exist | `stackops.utils.meta`, `stackops.utils.code`, `stackops.utils.installer_utils.installer_cli` |
 
 ---

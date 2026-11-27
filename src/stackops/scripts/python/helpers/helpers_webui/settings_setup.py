@@ -35,8 +35,6 @@ class SetupState(TypedDict):
     settings_exists: bool
     settings_problem: str
     cloud: str
-    email_profile: str
-    email_address: str
     agent: str
     agent_in_use: str
     agents: list[str]
@@ -100,8 +98,6 @@ def read_setup_state() -> SetupState:
         "settings_exists": settings_exists,
         "settings_problem": settings_problem,
         "cloud": chosen.get("default_rclone_config", ""),
-        "email_profile": chosen.get("default_email_config", ""),
-        "email_address": chosen.get("default_email_address", ""),
         "agent": chosen.get("default_agent", ""),
         # The CLI's resolver reads the settings file again, so it is asked only once that file is known to be readable.
         "agent_in_use": "" if settings_problem else resolve_agent(agent=None),

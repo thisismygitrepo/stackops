@@ -14,11 +14,10 @@ from stackops.utils.accessories import randstr
 from stackops.utils.io import save_json
 from stackops.utils.files.read import read_json
 from stackops.utils.ssh_utils.ssh import SSH
-from stackops.cluster.remote.models import RemoteStackOpsConfig, EmailParams
+from stackops.cluster.remote.models import RemoteStackOpsConfig
 from stackops.cluster.remote.job_params import JobParams
 from stackops.cluster.remote.file_manager import FileManager
 from stackops.cluster.remote.execution_script import render_execution_script
-from stackops.cluster.remote.notification import render_notification_block
 from stackops.cluster.remote.data_transfer import transfer_sftp, transfer_cloud
 
 console = Console()
@@ -106,21 +105,6 @@ class RemoteMachine:
 
         execution_line = self.job_params.get_execution_line(parallelize=self.config.parallelize, workload_params=self.config.workload_params, wrap_in_try_except=self.config.wrap_in_try_except)
 
-        notification_block = ""
-        if self.config.notify_upon_completion:
-            assert self.config.email_config_name is not None
-            assert self.config.to_email is not None
-            email_params = EmailParams(
-                addressee=self.ssh.get_local_repr(add_machine=True) if self.ssh else "local",
-                speaker=self.ssh.get_remote_repr(add_machine=True) if self.ssh else "local",
-                ssh_conn_str=self.ssh.get_remote_repr(add_machine=False) if self.ssh else "",
-                executed_obj=f"{self.job_params.repo_path_rh}/{self.job_params.file_path_r}",
-                file_manager_path=str(self.file_manager.file_manager_path),
-                to_email=self.config.to_email,
-                email_config_name=self.config.email_config_name,
-            )
-            notification_block = render_notification_block(email_params)
-
         # Save params JSON first so the template can reference it
         params_json_path = self.file_manager.job_root / "data/job_params.json"
         params_json_path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,7 +114,6 @@ class RemoteMachine:
             params_json_path=str(params_json_path),
             file_manager_json_path=str(self.file_manager.file_manager_path),
             execution_line=execution_line,
-            notification_block=notification_block,
         )
 
         shell_script = _build_shell_script(self.job_params, self.config, self.file_manager)

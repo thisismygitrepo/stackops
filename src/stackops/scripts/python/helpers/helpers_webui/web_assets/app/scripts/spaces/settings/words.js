@@ -17,7 +17,7 @@ export const idOf = (file) => (file.scope === "home" && KEPT_TWICE.includes(file
 // The settings files the CLI manages, by `idOf`: what each is called here, what it is for, and the page that works with it. `outside` is
 // what still holds for a project's file while the working folder is in no project.
 export const FILES = {
-  config: { emoji: "⚙️", title: "StackOps defaults", about: "The cloud, coding agent, multiplexers and email that commands use when you name none.", used: { label: "Setup", href: SETUP_HASH } },
+  config: { emoji: "⚙️", title: "StackOps defaults", about: "The cloud, coding agent and multiplexers that commands use when you name none.", used: { label: "Setup", href: SETUP_HASH } },
   layouts: { emoji: "🧩", title: "Terminal layouts", about: "Workspaces of tabs and panes that start in one click.", used: { label: "Sessions", href: "#/sessions" } },
   dotfiles: { emoji: "📂", title: "Dotfiles list", about: "Which settings files are kept in your dotfiles folder, and where each one belongs.", used: { label: "Dotfiles", href: "#/dotfiles" } },
   data: { emoji: "💾", title: "Backup list", about: "The files and folders that are backed up to your cloud storage.", used: { label: "Data", href: "#/data" } },
@@ -71,7 +71,6 @@ export const tidyProblem = (problem, path) => problem.replaceAll(path, "this fil
 // The guided setup, in the CLI's order. `path` is the command behind a step.
 export const STEPS = [
   { id: "cloud", path: "devops config setup cloud", emoji: "⛅", title: "Cloud for backups" },
-  { id: "email", path: "devops config setup email", emoji: "📧", title: "Email notifications" },
   { id: "agent", path: "devops config setup agent", emoji: "🤖", title: "Default coding agent" },
   { id: "multiplexer", path: "devops config setup multiplexer", emoji: "🪟", title: "Default multiplexer" },
   { id: "data", path: "devops config setup data", emoji: "💾", title: "Backup list" },
@@ -86,7 +85,6 @@ export function stepsDone(setup) {
   const filled = (list) => (list.problem ? null : (list.count ?? 0) > 0);
   return {
     cloud: chosen(setup.cloud !== ""),
-    email: chosen(setup.email_profile !== "" && setup.email_address !== ""),
     agent: chosen(setup.agent !== ""),
     multiplexer: chosen(setup.session_multiplexer !== "" && setup.agent_multiplexer !== ""),
     data: filled(setup.backups),

@@ -1,6 +1,6 @@
-# Interactive Helpers and Notifications
+# Interactive Helpers
 
-This slice of the utility API covers the parts of StackOps that talk directly to a person: small formatting helpers, interactive pickers, and email / HTML notification helpers.
+This slice of the utility API covers the parts of StackOps that talk directly to a person: small formatting helpers and interactive pickers.
 
 The current modules are:
 
@@ -9,7 +9,6 @@ The current modules are:
 | `stackops.utils.accessories` | Small shared helpers such as random strings, list/timeframe splitting, rich formatting, and git-root discovery |
 | `stackops.utils.options_utils.options` | Terminal choice helpers, plus cloud and SSH selectors |
 | `stackops.utils.options_utils.tv_options` | Preview-based selection from a mapping of names to payloads |
-| `stackops.cluster.remote.notifications` | Markdown-to-HTML rendering plus SMTP email sending |
 
 ---
 
@@ -100,40 +99,6 @@ The implementation dispatches to Windows- or Unix-specific Television helpers. U
 
 ---
 
-## Notifications
-
-`stackops.cluster.remote.notifications` currently exposes three main layers:
-
-- `download_to_memory()` for fetching a remote asset into memory
-- `md2html()` for turning Markdown into HTML through Rich's HTML exporter
-- `Email` for SMTP-based email sending
-
-Current `Email` behavior:
-
-- `Email.__init__(config_name)` reads config from the `stackops.secrets` module
-- `Email.__init__()` uses `smtplib.SMTP_SSL` when `encryption = ssl`; when `encryption = tls`, it constructs `smtplib.SMTP` and logs in without calling `starttls()`
-- `send_message()` appends an automation footer, converts Markdown to HTML by default, and attaches the body as an HTML MIME part
-- the `attachments` argument is accepted but ignored by the current implementation
-- `send_and_close()` requires a `config_name`
-
-Example:
-
-```python
-from stackops.cluster.remote.notifications import Email, md2html
-
-html = md2html("# Report\nAll tasks finished.")
-print(html[:120])
-
-Email.send_and_close(
-    config_name="primary",
-    to="team@example.com",
-    subject="Job finished",
-    body="# Completed\nAll tasks finished successfully.",
-)
-```
-
----
-
 ## API reference
 
 ## Accessories
@@ -171,14 +136,6 @@ Email.send_and_close(
 ## Terminal helpers
 
 ::: stackops.utils.cli_utils.terminal
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Notifications
-
-::: stackops.cluster.remote.notifications
     options:
       show_root_heading: true
       show_source: false

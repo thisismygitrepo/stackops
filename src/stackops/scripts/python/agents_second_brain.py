@@ -131,7 +131,12 @@ def get_app() -> typer.Typer:
         help="Install bundled instructions at ~/code/agents/second-brain/AGENTS.md. Existing instructions are kept unless --overwrite is set.",
     )(config)
     second_brain_app.command(name="i", no_args_is_help=False, hidden=True)(config)
-    second_brain_app.command(name="append", help="Append one update and create the CSV with its header if needed.")(append)
+    second_brain_app.command(
+        name="append",
+        short_help="➕ <a> Append one update to the CSV",
+        help="Append one update and create the CSV with its header if needed.",
+    )(append)
+    second_brain_app.command(name="a", hidden=True)(append)
     second_brain_app.command(name="status", no_args_is_help=False, short_help="📊 <s> Show Second Brain statistics and invalid updates")(status)
     second_brain_app.command(name="s", no_args_is_help=False, hidden=True)(status)
     second_brain_app.command(name="prune", no_args_is_help=False, short_help="🧹 <p> Preview invalid updates; --apply deletes them")(prune)

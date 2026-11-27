@@ -151,7 +151,6 @@ def setup_agent(
 
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_config_setup_domains as setup_domains
-    from stackops.scripts.python.helpers.helpers_devops import cli_config_setup_email as setup_email
     from stackops.scripts.python.helpers.helpers_devops import cli_config_setup_multiplexer as setup_multiplexer
 
     app = typer.Typer(
@@ -160,8 +159,6 @@ def get_app() -> typer.Typer:
     )
     app.command("cloud", no_args_is_help=False, help=f"⛅ <c> {CLOUD_SETUP_HELP}")(setup_cloud)
     app.command("c", no_args_is_help=False, help=CLOUD_SETUP_HELP, hidden=True)(setup_cloud)
-    app.command("email", no_args_is_help=False, help=f"📧 <e> {setup_email.EMAIL_SETUP_HELP}")(setup_email.setup_email)
-    app.command("e", no_args_is_help=False, help=setup_email.EMAIL_SETUP_HELP, hidden=True)(setup_email.setup_email)
     app.command("agent", no_args_is_help=False, help=f"🤖 <a> {AGENT_SETUP_HELP}")(setup_agent)
     app.command("a", no_args_is_help=False, help=AGENT_SETUP_HELP, hidden=True)(setup_agent)
     app.command("multiplexer", no_args_is_help=False, help=f"🪟 <m> {setup_multiplexer.MULTIPLEXER_SETUP_HELP}")(setup_multiplexer.setup_multiplexer)

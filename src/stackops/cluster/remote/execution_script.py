@@ -77,18 +77,15 @@ pprint(exec_times, "Execution Times")
 ssh_repr_remote = params.ssh_repr_remote or f"{{getpass.getuser()}}@{{platform.node()}}"
 console.print(Panel(f"ftprx {{ssh_repr_remote}} {{res_folder}} -r", title="Pull results:", border_style="bold red"))
 
-{notification_block}
-
 manager.unlock_resources()
 
 console.rule(title="END OF EXECUTION SCRIPT", style="bold green", characters="=")
 '''
 
 
-def render_execution_script(params_json_path: str, file_manager_json_path: str, execution_line: str, notification_block: str) -> str:
+def render_execution_script(params_json_path: str, file_manager_json_path: str, execution_line: str) -> str:
     return EXECUTION_SCRIPT_TEMPLATE.format(
         params_json_path=params_json_path,
         file_manager_json_path=file_manager_json_path,
         execution_line=execution_line,
-        notification_block=notification_block,
     )

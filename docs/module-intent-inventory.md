@@ -92,7 +92,6 @@ These **60** modules need a human decision before source markers are added.
 | `stackops.utils.installer_utils.installer_explore` | `api` | `api-cli-bridge` | api-doc, typer, classes:3, funcs:10 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.installer_utils.installer_offline` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.meta` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:2 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
-| `stackops.utils.notifications` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1, funcs:3 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.options_utils.tv_options` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:3 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.source_of_truth` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:11 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.ssh` | `api` | `api-cli-bridge` | api-doc, __main__, classes:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
@@ -141,7 +140,6 @@ These **96** modules are the strongest candidates for `api` markers after manual
 | `stackops.cluster.remote.file_manager` | `python-api` | `high` | api-doc, classes:1, funcs:6 | src/stackops/cluster/remote/file_manager.py |  |
 | `stackops.cluster.remote.job_params` | `python-api` | `high` | api-doc, classes:1, funcs:2 | src/stackops/cluster/remote/job_params.py |  |
 | `stackops.cluster.remote.models` | `python-api` | `high` | api-doc, classes:6, funcs:4 | src/stackops/cluster/remote/models.py |  |
-| `stackops.cluster.remote.notification` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/cluster/remote/notification.py |  |
 | `stackops.cluster.remote.remote_machine` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/cluster/remote/remote_machine.py |  |
 | `stackops.cluster.sessions_managers.helpers.load_balancer_helper` | `python-api` | `high` | api-doc, funcs:8 | src/stackops/cluster/sessions_managers/helpers/load_balancer_helper.py |  |
 | `stackops.cluster.sessions_managers.session_conflict` | `python-api` | `high` | api-doc, classes:2, funcs:8 | src/stackops/cluster/sessions_managers/session_conflict.py |  |
@@ -663,7 +661,6 @@ These **203** modules are package markers, settings/config packages, or executab
 | `stackops.cluster.remote.file_manager` | `api` | `python-api` | `high` | 3 | 244 | api-doc, classes:1, funcs:6 | src/stackops/cluster/remote/file_manager.py |  |
 | `stackops.cluster.remote.job_params` | `api` | `python-api` | `high` | 3 | 133 | api-doc, classes:1, funcs:2 | src/stackops/cluster/remote/job_params.py |  |
 | `stackops.cluster.remote.models` | `api` | `python-api` | `high` | 8 | 244 | api-doc, classes:6, funcs:4 | src/stackops/cluster/remote/models.py |  |
-| `stackops.cluster.remote.notification` | `api` | `python-api` | `high` | 1 | 33 | api-doc, funcs:1 | src/stackops/cluster/remote/notification.py |  |
 | `stackops.cluster.remote.remote_machine` | `api` | `python-api` | `high` | 3 | 275 | api-doc, classes:1, funcs:1 | src/stackops/cluster/remote/remote_machine.py |  |
 | `stackops.cluster.sessions_managers` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/cluster/sessions_managers/__init__.py |  |
 | `stackops.cluster.sessions_managers.helpers.enhanced_command_runner` | `api` | `api-cli-bridge` | `medium` | 2 | 137 | api-doc, __main__, funcs:2 | src/stackops/cluster/sessions_managers/helpers/enhanced_command_runner.py |  |

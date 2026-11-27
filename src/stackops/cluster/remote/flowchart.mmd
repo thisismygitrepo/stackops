@@ -11,7 +11,6 @@ flowchart TD
     • JobParams extracts func metadata
     • Renders Python wrapper from template
     • Renders shell launcher script
-    • Embeds notification block
     • Saves configs to JSON"]
 
     GenScripts --> Submit["submit()"]
@@ -37,8 +36,7 @@ flowchart TD
     2. Record start time
     3. Execute user function
     4. Record end time & status
-    5. unlock_resources()
-    6. Send email notification"]
+    5. unlock_resources()"]
 
     RemoteExec --> Monitor["check_job_status()
     Poll logs: queued → running → completed/failed"]

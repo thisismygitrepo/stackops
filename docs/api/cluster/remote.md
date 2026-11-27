@@ -58,7 +58,6 @@ graph LR
 | `transfer_method` | `sftp` or `cloud` |
 | `cloud_name` | Required when `transfer_method="cloud"` |
 | `allowed_remotes` | Optional list stored with the config for callers that restrict eligible remotes |
-| `notify_upon_completion`, `to_email`, `email_config_name` | Email notification controls |
 | `launch_method` | `remotely` or `cloud_manager` |
 | `kill_on_completion` | Stored on the config for callers that want completion cleanup policy |
 | `interactive` | Runs the generated Python wrapper with `python -i` instead of `python` |
@@ -70,7 +69,6 @@ Important current validation rules:
 
 - `cloud_name` must be set for cloud transfers
 - `interactive=True` with `lock_resources=True` prints a warning because an interactive job can hold its lock indefinitely
-- enabling notifications auto-fills `to_email` and `email_config_name` from defaults when they were not passed explicitly
 
 ---
 
@@ -110,7 +108,6 @@ config = RemoteStackOpsConfig(
     ssh_host="gpu-box",
     base_dir="~/tmp_results/remote_machines/jobs",
     transfer_method="sftp",
-    notify_upon_completion=False,
 )
 
 job = RemoteMachine(
@@ -309,22 +306,6 @@ Representative operations include:
 ## Cluster distributor
 
 ::: stackops.cluster.remote.distribute
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Remote notifications
-
-::: stackops.cluster.remote.notification
-    options:
-      show_root_heading: true
-      show_source: false
-      members_order: source
-
-## Notifications
-
-::: stackops.cluster.remote.notifications
     options:
       show_root_heading: true
       show_source: false

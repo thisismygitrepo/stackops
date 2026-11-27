@@ -82,19 +82,6 @@ export function describeStep(step, { value, done, activity, tools, agentPicker }
         state: unread ? UNREAD : value.cloud ? `Backups go to ${value.cloud}.` : "No cloud chosen. Backing up asks which one every time.",
         actions: unread ? [] : [main(button({ label: value.cloud ? "Change" : "Choose a cloud", small: true, tone: value.cloud ? "plain" : "primary", onclick: () => tools.open(step.path) })), pageLink("#/data", "Data")],
       };
-    case "email": {
-      const half = value.email_profile || value.email_address;
-      return {
-        about: "The address StackOps writes to when a long job ends, and the mail account it sends from.",
-        state: unread ? UNREAD : done.email ? `Notifications go to ${value.email_address}, sent through ${value.email_profile}.` : half ? "Half set up: it needs both a mail account and an address." : "Not set up.",
-        actions: unread
-          ? []
-          : [
-              guided(done.email ? "Change" : "Set up email", "Set up email notifications", "Asks its questions in the activity panel. A mail password is typed there and stays hidden."),
-              button({ label: "All options", small: true, tone: "ghost", title: "The command's own form: name a mail account and an address without the questions", onclick: () => tools.open(step.path, { plain: true }) }),
-            ],
-      };
-    }
     case "agent":
       return {
         about: "The coding agent that agent commands start when you name none.",

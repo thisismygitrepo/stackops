@@ -6016,199 +6016,6 @@
                   },
                   {
                     "kind": "command",
-                    "name": "email",
-                    "fullPath": "devops config setup email",
-                    "shortPath": "d c s e",
-                    "help": "📧 <e> Select or create an SMTP profile and save the default recipient.",
-                    "source": {
-                      "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_setup_email.py",
-                      "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_setup_email",
-                      "callable": "setup_email"
-                    },
-                    "signature": {
-                      "raw_lines": [
-                        "def setup_email(",
-                        "    profile: Annotated[str | None, typer.Option(\"--profile\", \"-p\", help=\"Use an existing SMTP profile by exact name.\")] = None,",
-                        "    recipient: Annotated[str | None, typer.Option(\"--recipient\", \"-r\", help=\"Default notification recipient.\")] = None,",
-                        "    input_path: Annotated[Path | None, typer.Option(\"--input\", \"-i\", help=\"Create an SMTP profile from JSON file or - for stdin.\")] = None,",
-                        "    schema: Annotated[bool, typer.Option(\"--schema\", \"-S\", help=\"Print the input JSON Schema without accessing configuration.\")] = False,",
-                        "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Write without confirmation; requires explicit profile/input and recipient.\")] = False,",
-                        "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print a receipt without credentials; never prompts.\")] = False,",
-                        "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-d\", help=\"Validate without writing configuration or secrets.\")] = False,",
-                        ") -> None:"
-                      ],
-                      "name": "setup_email",
-                      "parameters": [
-                        {
-                          "name": "profile",
-                          "kind": "positional_or_keyword",
-                          "type": "str | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--profile', '-p', help='Use an existing SMTP profile by exact name.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--profile",
-                              "-p"
-                            ],
-                            "long_flags": [
-                              "--profile"
-                            ],
-                            "short_flags": [
-                              "-p"
-                            ],
-                            "help": "Use an existing SMTP profile by exact name."
-                          }
-                        },
-                        {
-                          "name": "recipient",
-                          "kind": "positional_or_keyword",
-                          "type": "str | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--recipient', '-r', help='Default notification recipient.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--recipient",
-                              "-r"
-                            ],
-                            "long_flags": [
-                              "--recipient"
-                            ],
-                            "short_flags": [
-                              "-r"
-                            ],
-                            "help": "Default notification recipient."
-                          }
-                        },
-                        {
-                          "name": "input_path",
-                          "kind": "positional_or_keyword",
-                          "type": "Path | None",
-                          "default": null,
-                          "required": false,
-                          "annotation_raw": "Annotated[Path | None, typer.Option('--input', '-i', help='Create an SMTP profile from JSON file or - for stdin.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--input",
-                              "-i"
-                            ],
-                            "long_flags": [
-                              "--input"
-                            ],
-                            "short_flags": [
-                              "-i"
-                            ],
-                            "help": "Create an SMTP profile from JSON file or - for stdin."
-                          }
-                        },
-                        {
-                          "name": "schema",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--schema', '-S', help='Print the input JSON Schema without accessing configuration.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--schema",
-                              "-S"
-                            ],
-                            "long_flags": [
-                              "--schema"
-                            ],
-                            "short_flags": [
-                              "-S"
-                            ],
-                            "help": "Print the input JSON Schema without accessing configuration."
-                          }
-                        },
-                        {
-                          "name": "yes",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--yes', '-y', help='Write without confirmation; requires explicit profile/input and recipient.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--yes",
-                              "-y"
-                            ],
-                            "long_flags": [
-                              "--yes"
-                            ],
-                            "short_flags": [
-                              "-y"
-                            ],
-                            "help": "Write without confirmation; requires explicit profile/input and recipient."
-                          }
-                        },
-                        {
-                          "name": "json_output",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print a receipt without credentials; never prompts.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--json",
-                              "-j"
-                            ],
-                            "long_flags": [
-                              "--json"
-                            ],
-                            "short_flags": [
-                              "-j"
-                            ],
-                            "help": "Print a receipt without credentials; never prompts."
-                          }
-                        },
-                        {
-                          "name": "dry_run",
-                          "kind": "positional_or_keyword",
-                          "type": "bool",
-                          "default": false,
-                          "required": false,
-                          "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-d', help='Validate without writing configuration or secrets.')]",
-                          "typer": {
-                            "kind": "option",
-                            "param_decls": [
-                              "--dry-run",
-                              "-d"
-                            ],
-                            "long_flags": [
-                              "--dry-run"
-                            ],
-                            "short_flags": [
-                              "-d"
-                            ],
-                            "help": "Validate without writing configuration or secrets."
-                          }
-                        }
-                      ],
-                      "return": "None"
-                    },
-                    "typer": {
-                      "no_args_is_help": false
-                    },
-                    "aliases": [
-                      {
-                        "name": "e",
-                        "hidden": true,
-                        "help": "Select or create an SMTP profile and save the default recipient."
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "command",
                     "name": "agent",
                     "fullPath": "devops config setup agent",
                     "shortPath": "d c s a",
@@ -20000,7 +19807,12 @@
             ]
           }
         ],
-        "command_context_settings": "{**ctx_settings, 'allow_interspersed_args': False}",
+        "command_context_settings": {
+          "allow_extra_args": true,
+          "allow_interspersed_args": false,
+          "ignore_unknown_options": true,
+          "help_option_names": []
+        },
         "doc": "🔧 <d> DevOps related commands.",
         "aliases": [
           {
@@ -21942,7 +21754,7 @@
         ],
         "command_context_settings": {
           "allow_extra_args": true,
-          "allow_interspersed_args": true,
+          "allow_interspersed_args": false,
           "ignore_unknown_options": true,
           "help_option_names": []
         },
@@ -24461,7 +24273,7 @@
         ],
         "command_context_settings": {
           "allow_extra_args": true,
-          "allow_interspersed_args": true,
+          "allow_interspersed_args": false,
           "ignore_unknown_options": true,
           "help_option_names": []
         },
@@ -25402,6 +25214,21 @@
                     "        BrowserName | None,",
                     "        typer.Option(\"--browser\", \"-b\", help=\"Only show this browser. Omit to show all browsers.\", case_sensitive=False, show_choices=True),",
                     "    ] = None,",
+                    "    tabs: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--tabs\",",
+                    "            \"-t\",",
+                    "            help=(",
+                    "                \"Also list the title and URL of every open tab. With --all on macOS, Chromium browsers without a debug port are read \"",
+                    "                \"through Apple events, which macOS asks to allow once.\"",
+                    "            ),",
+                    "        ),",
+                    "    ] = False,",
+                    "    focus: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--focus\", \"-f\", help=\"Pick one open tab interactively, then bring its browser window to the front with that tab selected.\"),",
+                    "    ] = False,",
                     "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print collected browser status records as JSON.\")] = False,",
                     ") -> None:"
                   ],
@@ -25449,6 +25276,50 @@
                           "-b"
                         ],
                         "help": "Only show this browser. Omit to show all browsers."
+                      }
+                    },
+                    {
+                      "name": "tabs",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--tabs', '-t', help='Also list the title and URL of every open tab. With --all on macOS, Chromium browsers without a debug port are read through Apple events, which macOS asks to allow once.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--tabs",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--tabs"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Also list the title and URL of every open tab. With --all on macOS, Chromium browsers without a debug port are read through Apple events, which macOS asks to allow once."
+                      }
+                    },
+                    {
+                      "name": "focus",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--focus', '-f', help='Pick one open tab interactively, then bring its browser window to the front with that tab selected.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--focus",
+                          "-f"
+                        ],
+                        "long_flags": [
+                          "--focus"
+                        ],
+                        "short_flags": [
+                          "-f"
+                        ],
+                        "help": "Pick one open tab interactively, then bring its browser window to the front with that tab selected."
                       }
                     },
                     {
@@ -26743,6 +26614,96 @@
                 "aliases": [
                   {
                     "name": "i",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "append",
+                "fullPath": "agents second-brain append",
+                "shortPath": "a B a",
+                "help": "Append one update and create the CSV with its header if needed.",
+                "source": {
+                  "file": "src/stackops/scripts/python/agents_second_brain.py",
+                  "module": "stackops.scripts.python.agents_second_brain",
+                  "callable": "append"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def append(",
+                    "    directory: Annotated[Path, typer.Argument(help=\"Work-item directory containing update.csv.\")],",
+                    "    agent: str,",
+                    "    session_id: str,",
+                    "    topic: str,",
+                    "    actions_taken: str,",
+                    "    updated_on: str,",
+                    ") -> None:"
+                  ],
+                  "name": "append",
+                  "parameters": [
+                    {
+                      "name": "directory",
+                      "kind": "positional_or_keyword",
+                      "type": "Path",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[Path, typer.Argument(help='Work-item directory containing update.csv.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Work-item directory containing update.csv."
+                      }
+                    },
+                    {
+                      "name": "agent",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "str"
+                    },
+                    {
+                      "name": "session_id",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "str"
+                    },
+                    {
+                      "name": "topic",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "str"
+                    },
+                    {
+                      "name": "actions_taken",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "str"
+                    },
+                    {
+                      "name": "updated_on",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "str"
+                    }
+                  ],
+                  "return": "None"
+                },
+                "short_help": "➕ <a> Append one update to the CSV",
+                "aliases": [
+                  {
+                    "name": "a",
                     "hidden": true
                   }
                 ]
@@ -30811,7 +30772,7 @@
         ],
         "command_context_settings": {
           "allow_extra_args": true,
-          "allow_interspersed_args": true,
+          "allow_interspersed_args": false,
           "ignore_unknown_options": true,
           "help_option_names": []
         },
@@ -34970,7 +34931,7 @@
         ],
         "command_context_settings": {
           "allow_extra_args": true,
-          "allow_interspersed_args": true,
+          "allow_interspersed_args": false,
           "ignore_unknown_options": true,
           "help_option_names": []
         },
@@ -36319,7 +36280,12 @@
             ]
           }
         ],
-        "command_context_settings": "{**ctx_settings, 'allow_interspersed_args': False}",
+        "command_context_settings": {
+          "allow_extra_args": true,
+          "allow_interspersed_args": false,
+          "ignore_unknown_options": true,
+          "help_option_names": []
+        },
         "aliases": [
           {
             "name": "f",

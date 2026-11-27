@@ -115,7 +115,7 @@ cloud remote.
 
 That does not mean StackOps is offline. A requested operation may contact PyPI,
 GitHub, package repositories, vendor installers, Bitwarden, VirusTotal, rclone
-remotes, OneDrive, email servers, SSH hosts, `temp.sh`, AI providers, MCP
+remotes, OneDrive, SSH hosts, `temp.sh`, AI providers, MCP
 servers, or other configured services. Those services receive the data needed
 for the operation, and installed third-party tools may have their own telemetry
 and privacy behavior. StackOps settings that attempt to disable telemetry in

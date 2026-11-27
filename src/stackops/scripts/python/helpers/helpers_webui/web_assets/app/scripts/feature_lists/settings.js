@@ -16,7 +16,6 @@ export const SETTINGS_FEATURES = [
   { path: "devops config validate", space: "home", part: "files", load: files("validate") },
   { path: "devops config edit", space: "home", part: "files", load: files("edit") },
   { path: "devops config export-example", space: "home", part: "files", load: files("export-example") },
-  { path: "devops config setup email", space: "home", part: "setup", load: step("email") },
   { path: "devops config setup agent", space: "home", part: "setup", load: step("agent") },
   { path: "devops config setup data", space: "home", part: "setup", load: step("data") },
   { path: "devops config setup dotfiles", space: "home", part: "setup", load: step("dotfiles") },
