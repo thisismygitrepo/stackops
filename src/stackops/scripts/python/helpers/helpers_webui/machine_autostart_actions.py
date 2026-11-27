@@ -4,8 +4,8 @@ from typing import cast
 
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants import GONE_MESSAGE, LAUNCHCTL, LOCKED_MESSAGE, OSASCRIPT
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_detail import find_launchd_job
-from stackops.scripts.python.helpers.helpers_webui.machine_autostart_launchd import loaded_services, session_domain, user_agents_location, user_domain
-from stackops.scripts.python.helpers.helpers_webui.machine_autostart_macos import read_own_launchd_entries
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_launchd import launchd_locations, loaded_services, session_domain, user_domain
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_macos import read_session_launchd_entries
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_model import EntryAction, StartupEntry, StartupProblem
 
 # The system's own way of putting a file in the Trash, so it lands where the person expects and can be dragged back out. Answers with what
@@ -22,12 +22,14 @@ def _said(process: subprocess.CompletedProcess[str]) -> str:
     return " ".join((process.stderr or process.stdout).split()) or f"""It ended with code {process.returncode}."""
 
 
-# What is asked for is looked up in a fresh read of the person's own launch agents and only done when that read offers it. So a request can
-# name nothing but a file in that one folder, and nothing that belongs to the system or to every account, whatever the page sends.
+# What is asked for is looked up in a fresh read of the launch agents that start in the person's own session and only done when that read
+# offers it. So a request can name nothing but a file in those two folders, and nothing that is part of macOS or starts with the computer,
+# whatever the page sends.
 def _offered(identifier: str, action: EntryAction) -> StartupEntry | StartupProblem:
-    if Path(identifier.removeprefix("launchd:")).parent != user_agents_location().directory:
-        return StartupProblem(reason="refused", message=f"""It is not one of your own startup programs. {LOCKED_MESSAGE}""")
-    entry = next((candidate for candidate in read_own_launchd_entries() if candidate["id"] == identifier), None)
+    session_folders = [location.directory for location in launchd_locations() if location.scope == "login" and not location.stock]
+    if Path(identifier.removeprefix("launchd:")).parent not in session_folders:
+        return StartupProblem(reason="refused", message=f"""It does not start in your own session. {LOCKED_MESSAGE}""")
+    entry = next((candidate for candidate in read_session_launchd_entries() if candidate["id"] == identifier), None)
     if entry is None:
         return StartupProblem(reason="unknown_entry", message=GONE_MESSAGE)
     if action not in entry["actions"]:

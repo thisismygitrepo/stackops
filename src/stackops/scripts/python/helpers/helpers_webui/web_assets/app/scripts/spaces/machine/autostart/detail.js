@@ -32,7 +32,7 @@ export function openDetail({ activity, entry, platform, tools, handlers }) {
     const processes = entry.pid && button({ label: "Show in Processes", glyph: "arrow", small: true, onclick: act(() => tools.open(PROCESSES_COMMAND, { preset: { pid: String(entry.pid) } })) });
     facts.replaceChildren(
       keyValue([
-        [entry.kind === "login_item" ? "Opens" : "Runs", entry.program && pathChip(entry.program)],
+        [entry.kind === "login_item" || entry.kind === "sign_in" ? "Opens" : "Runs", entry.program && pathChip(entry.program)],
         ["Given", detail?.arguments.length > 0 && h("code", { class: "autostart-code", text: detail.arguments.map(shellQuote).join(" ") })],
         ["Belongs to", entry.owner],
         ["Starts", h("ul", { class: "autostart-starts" }, triggerLines(entry, detail ?? null).map((line) => h("li", { text: line })))],
@@ -60,7 +60,7 @@ export function openDetail({ activity, entry, platform, tools, handlers }) {
       pill(MANNERS[entry.manner].label),
       pill(whoseWords(platform)[entry.whose].label, entry.whose === "yours" ? "accent" : ""),
     ),
-    h("p", { class: "autostart-sheet-lede", text: entry.kind === "listed" && entry.description ? entry.description : `${whenText(entry)}.` }),
+    h("p", { class: "autostart-sheet-lede", text: (entry.kind === "listed" || entry.kind === "systemd") && entry.description ? entry.description : `${whenText(entry)}.` }),
     facts,
     trouble,
   );
@@ -71,9 +71,9 @@ export function openDetail({ activity, entry, platform, tools, handlers }) {
   if (changeable) {
     sheet.foot.append(
       ask,
-      button({ label: entry.enabled ? "Turn off" : "Turn back on", glyph: "power", tone: entry.enabled ? "plain" : "primary", onclick: act(handlers.toggle) }),
+      button({ label: entry.enabled ? "Turn off" : "Turn back on", glyph: "power", tone: entry.enabled ? "plain" : "primary", onclick: act((shown) => handlers.toggle(shown, platform)) }),
       h("span", { class: "spacer" }),
-      button({ label: "Move to the Trash", glyph: "trash", tone: "ghost", title: "Stops it and puts its file in the Trash", onclick: act(handlers.remove) }),
+      ...(entry.actions.includes("remove") ? [button({ label: "Move to the Trash", glyph: "trash", tone: "ghost", title: "Stops it and puts its file in the Trash", onclick: act(handlers.remove) })] : []),
     );
   } else if (entry.actions.includes("remove")) {
     sheet.foot.append(ask, button({ label: "Stop opening it at sign-in", glyph: "close", onclick: act(handlers.remove) }));

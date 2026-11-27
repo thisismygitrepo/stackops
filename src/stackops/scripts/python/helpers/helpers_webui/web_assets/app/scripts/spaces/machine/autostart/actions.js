@@ -4,6 +4,7 @@ import { replay } from "../../../motion.js";
 import { confirmAction } from "../../../overlays.js";
 import { iconButton } from "../../../widgets.js";
 import { change } from "./api.js";
+import { switchWords } from "./words.js";
 
 // What the last change did, in a line above the list, with a way to take it back where there is one.
 export function createOutcome() {
@@ -44,11 +45,9 @@ export function createActions({ view, repaint, reload, outcome }) {
   const off = (entry) => carry(entry, "turn-off", { said: `${entry.title} is turned off.`, undoLabel: "Turn it back on", onUndo: () => on(entry) });
   const on = (entry) => carry(entry, "turn-on", { said: `${entry.title} is on again.`, undoLabel: "Turn it off again", onUndo: () => off(entry) });
 
-  async function toggle(entry) {
-    const now = entry.live === "running" ? "macOS stops it now and" : entry.live === "waiting" ? "macOS unloads it now and" : "macOS";
-    const asked = entry.enabled
-      ? { title: `Turn off ${entry.title}?`, body: `${now} no longer starts it when you sign in. Its file stays where it is, so you can turn it back on from this page.`, confirm: "Turn off" }
-      : { title: `Turn ${entry.title} back on?`, body: `macOS loads it again now, the way it does when you sign in${entry.manner === "always" ? ", so it starts right away" : ""}. From then on it starts on its own at every sign-in.`, confirm: "Turn on" };
+  async function toggle(entry, platform) {
+    const words = switchWords(entry, platform);
+    const asked = entry.enabled ? { title: `Turn off ${entry.title}?`, body: words.off, confirm: "Turn off" } : { title: `Turn ${entry.title} back on?`, body: words.on, confirm: "Turn on" };
     if (await confirmAction(asked)) await (entry.enabled ? off(entry) : on(entry));
   }
 

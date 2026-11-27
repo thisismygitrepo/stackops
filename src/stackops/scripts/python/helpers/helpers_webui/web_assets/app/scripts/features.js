@@ -21,6 +21,7 @@ const FEATURES = [
   { path: "devops config terminal ghostty-theme", load: () => import("./spaces/sessions/ghostty_theme.js") },
   { path: "utils machine kill-process", space: "machine", part: "processes", load: () => import("./spaces/machine/processes.js") },
   { path: "utils machine autostart", space: "machine", part: "autostart", load: () => import("./spaces/machine/autostart.js") },
+  { path: "utils machine autostart-add", load: () => import("./spaces/machine/autostart_add.js") },
   { path: "utils machine list-devices", space: "machine", part: "devices", load: () => import("./spaces/machine/devices.js") },
   { path: "utils machine mount", space: "machine", part: "mount", load: () => import("./spaces/machine/mount.js") },
   { path: "utils machine window", space: "machine", part: "windows", load: () => import("./spaces/machine/windows.js") },

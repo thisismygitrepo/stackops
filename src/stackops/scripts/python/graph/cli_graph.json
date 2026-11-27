@@ -31112,6 +31112,135 @@
               },
               {
                 "kind": "command",
+                "name": "autostart-add",
+                "fullPath": "utils machine autostart-add",
+                "shortPath": "u m A",
+                "help": "➕ <A> Start one of your scripts every time you sign in.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.machine_utils_app",
+                  "callable": "add_autostart_script"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def add_autostart_script(",
+                    "    ctx: typer.Context,",
+                    "    name: Annotated[",
+                    "        str,",
+                    "        typer.Argument(help=\"Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows.\"),",
+                    "    ],",
+                    "    source: Annotated[LocalScriptSource, typer.Option(\"--source\", \"-s\", help=\"Source to search for the script.\")] = \"all\",",
+                    ") -> None:"
+                  ],
+                  "name": "add_autostart_script",
+                  "parameters": [
+                    {
+                      "name": "ctx",
+                      "kind": "positional_or_keyword",
+                      "type": "typer.Context",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "typer.Context"
+                    },
+                    {
+                      "name": "name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows."
+                      }
+                    },
+                    {
+                      "name": "source",
+                      "kind": "positional_or_keyword",
+                      "type": "LocalScriptSource",
+                      "default": "all",
+                      "required": false,
+                      "annotation_raw": "Annotated[LocalScriptSource, typer.Option('--source', '-s', help='Source to search for the script.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Source to search for the script."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "A",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "autostart-remove",
+                "fullPath": "utils machine autostart-remove",
+                "shortPath": "u m R",
+                "help": "➖ <R> Stop starting a script when you sign in.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.machine_utils_app",
+                  "callable": "remove_autostart_script"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def remove_autostart_script(",
+                    "    name: Annotated[str, typer.Argument(help=\"The script as it was added: its name or file path. The script itself is kept.\")],",
+                    ") -> None:"
+                  ],
+                  "name": "remove_autostart_script",
+                  "parameters": [
+                    {
+                      "name": "name",
+                      "kind": "positional_or_keyword",
+                      "type": "str",
+                      "default": null,
+                      "required": true,
+                      "annotation_raw": "Annotated[str, typer.Argument(help='The script as it was added: its name or file path. The script itself is kept.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "The script as it was added: its name or file path. The script itself is kept."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true
+                },
+                "aliases": [
+                  {
+                    "name": "R",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
                 "name": "mount",
                 "fullPath": "utils machine mount",
                 "shortPath": "u m m",

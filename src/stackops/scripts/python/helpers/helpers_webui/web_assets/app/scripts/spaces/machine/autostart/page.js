@@ -1,4 +1,4 @@
-import { formatClock, h } from "/assets/scripts/dom.js";
+import { formatClock, h, toast } from "/assets/scripts/dom.js";
 import { agentButton } from "../../../agent_ask.js";
 import { staleKeeper } from "../../../data.js";
 import { recall, remember } from "../../../memory.js";
@@ -6,6 +6,7 @@ import { rise } from "../../../motion.js";
 import { backLink } from "../../../space_kit.js";
 import { button, callout, notice, skeleton } from "../../../widgets.js";
 import { createActions, createOutcome } from "./actions.js";
+import { ADD_COMMAND, REMOVE_COMMAND, openAddScript } from "./add_script.js";
 import { readStartup } from "./api.js";
 import { openDetail } from "./detail.js";
 import { buildModel, emptyPicks, groupsOf, inUniverse, matching } from "./model.js";
@@ -70,6 +71,7 @@ export function createStartupPage({ activity, tools }, takeArrival) {
 
   // What another view opened the page with, by the command's parameter names. It replaces what the list was narrowed to.
   function applyPreset(preset) {
+    if (preset.add_script) addScript();
     const kinds = [preset.category ?? []].flat().map((option) => Object.keys(KINDS).find((id) => KINDS[id].option === String(option).toLowerCase())).filter(Boolean);
     const term = String(preset.name ?? preset.source ?? "").trim();
     const everything = preset.show_all === true || preset.show_all === "true";
@@ -81,6 +83,16 @@ export function createStartupPage({ activity, tools }, takeArrival) {
     view.system = view.system || everything || kinds.some((id) => id === "system-os");
     if (model) changed();
   }
+
+  // One of the scripts StackOps keeps, picked in a dialog and set to start at sign-in. The list is read again once it is added.
+  const addScript = () =>
+    openAddScript({
+      activity,
+      onAdded: (file) => {
+        outcome.show({ said: `${file} starts when you sign in, from your next sign-in on.` });
+        keeper.load(true);
+      },
+    }).catch((error) => toast(error.message));
 
   const stamp = h("span", { class: "autostart-stamp" });
   const refresh = button({ label: "Refresh", glyph: "refresh", onclick: () => keeper.load() });
@@ -177,7 +189,7 @@ export function createStartupPage({ activity, tools }, takeArrival) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Startup programs" }), h("p", { text: "The services and programs that start on their own, when this computer starts or when you sign in." })),
-      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [COMMAND] }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [COMMAND, ADD_COMMAND, REMOVE_COMMAND] }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh, button({ label: "Add a script", glyph: "plus", tone: "primary", title: "Start one of your scripts every time you sign in", onclick: addScript })),
     ),
     problemHolder,
     waiting,

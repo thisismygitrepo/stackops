@@ -14,7 +14,7 @@ from stackops.scripts.python.helpers.helpers_utils.autostart_macos import (
     _launch_triggers,  # pyright: ignore[reportPrivateUsage]
 )
 from stackops.scripts.python.helpers.helpers_utils.autostart_macos_login import collect_login_items
-from stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants import LAUNCHD_SYSTEM_SOURCE, LAUNCHD_USER_SOURCE, LOGIN_ITEMS_REFUSED
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants import LAUNCHD_SYSTEM_SOURCE, LAUNCHD_USER_SOURCE, LOGIN_ITEMS_REFUSED, MANAGED_LABEL_STARTS
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_launchd import (
     LaunchdJob,
     LaunchdLocation,
@@ -24,10 +24,9 @@ from stackops.scripts.python.helpers.helpers_webui.machine_autostart_launchd imp
     program_of,
     read_jobs,
     session_domain,
-    user_agents_location,
     user_domain,
 )
-from stackops.scripts.python.helpers.helpers_webui.machine_autostart_model import StartManner, StartupEntry, StartupPicture
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_model import EntryAction, LockReason, StartManner, StartupEntry, StartupPicture
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_naming import app_of, owner_of, readable_title
 
 
@@ -43,6 +42,9 @@ def _location_jobs(location: LaunchdLocation) -> list[LaunchdJob]:
 
 # The same jobs, names, descriptions and categories as the command gives, plus the ones that are turned off: the command leaves those out, and
 # a page that can turn one off has to keep showing it so it can be turned back on. `loaded` is searched in order, first match wins.
+# The person's own agents can be switched and removed. An agent an app installed for every account starts in the person's own session, where
+# launchd's switch for the account covers it as well, so it can be switched but not removed: its file is the administrator's. The ones that
+# guard or manage the computer are left out of that. What starts with the computer is the administrator's altogether.
 def _launchd_entries(location: LaunchdLocation, jobs: list[LaunchdJob], turned_off: dict[str, bool], loaded: list[dict[str, LoadedService]]) -> list[StartupEntry]:
     entries: list[StartupEntry] = []
     for job in jobs:
@@ -54,6 +56,14 @@ def _launchd_entries(location: LaunchdLocation, jobs: list[LaunchdJob], turned_o
         enabled = not turned_off.get(job.label, job.keys.get("Disabled") is True)
         service = next((services[job.label] for services in loaded if job.label in services), None)
         yours = location.whose == "yours"
+        switch: EntryAction = "turn_off" if enabled else "turn_on"
+        lock: LockReason = (
+            "" if yours
+            else "system" if location.stock
+            else "administrator" if location.scope == "boot"
+            else "managed" if job.label.lower().startswith(MANAGED_LABEL_STARTS)
+            else ""
+        )
         entries.append(
             StartupEntry(
                 id=f"""launchd:{job.path}""",
@@ -75,7 +85,8 @@ def _launchd_entries(location: LaunchdLocation, jobs: list[LaunchdJob], turned_o
                 live="idle" if service is None else "waiting" if service.pid is None else "running",
                 pid=service.pid if service is not None else None,
                 last_exit=service.last_exit if service is not None else None,
-                actions=[] if not yours else ["turn_off", "remove"] if enabled else ["turn_on", "remove"],
+                actions=[switch, "remove"] if yours else [switch] if lock == "" else [],
+                lock=lock,
             )
         )
     return entries
@@ -117,6 +128,7 @@ def read_login_item_entries() -> tuple[list[StartupEntry], list[str]]:
                 pid=pid,
                 last_exit=None,
                 actions=["remove"] if path and not item.stock else [],
+                lock="system" if item.stock else "" if path else "unlocated",
             )
         )
     return entries, [line for line in lines if line.startswith(LOGIN_ITEMS_REFUSED)]
@@ -149,12 +161,14 @@ def read_macos() -> StartupPicture:
     return StartupPicture(platform="macOS", entries=[*entries, *login_entries], notes=notes)
 
 
-# Only what belongs to the person, read afresh: what an action is checked against before it is carried out.
-def read_own_launchd_entries() -> list[StartupEntry]:
-    location = user_agents_location()
-    return _launchd_entries(
-        location=location,
-        jobs=_location_jobs(location),
-        turned_off=_disabled_overrides(user_domain()),
-        loaded=[loaded_services(session_domain()), loaded_services(user_domain())],
-    )
+# Only what starts in the person's own session and is not part of macOS, read afresh: what an action is checked against before it is
+# carried out.
+def read_session_launchd_entries() -> list[StartupEntry]:
+    turned_off = _disabled_overrides(user_domain())
+    loaded = [loaded_services(session_domain()), loaded_services(user_domain())]
+    return [
+        entry
+        for location in launchd_locations()
+        if location.scope == "login" and not location.stock
+        for entry in _launchd_entries(location=location, jobs=_location_jobs(location), turned_off=turned_off, loaded=loaded)
+    ]

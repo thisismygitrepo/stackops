@@ -11,12 +11,17 @@ from starlette.routing import Route
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_actions import remove_launch_agent, turn_off, turn_on
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants import GONE_MESSAGE
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_detail import read_startup_detail
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_linux_actions import switch_linux_entry
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_login_items import remove_login_item, restore_login_item
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_model import ProblemReason, RemovedLoginItem, StartupProblem
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_read import read_startup
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts import add_tracked_script
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_windows import switch_windows_entry
 
 PROBLEM_STATUS: dict[ProblemReason, int] = {"unsupported": 501, "failed": 409, "unknown_entry": 404, "refused": 403}
 LAUNCHD_ACTIONS: dict[str, Callable[[str], StartupProblem | None]] = {"turn-off": turn_off, "turn-on": turn_on, "remove": remove_launch_agent}
+# The two actions that flip an entry's switch, with whether the entry is on afterwards.
+SWITCH_ACTIONS: dict[str, bool] = {"turn-off": False, "turn-on": True}
 
 
 def _refusal(problem: StartupProblem) -> JSONResponse:
@@ -25,9 +30,11 @@ def _refusal(problem: StartupProblem) -> JSONResponse:
 
 # What the Startup programs page reads and does. The list is what `utils machine autostart` lists, read through the command's own helpers,
 # with more about each entry than the command prints. A system it cannot be read on answers with `unavailable` and the reason, which the
-# page shows in place of the list. Turning an entry off, back on, or removing it has no command, so it is done here, on macOS, and only
-# for what belongs to the person: their own launch agents and login items. A login item taken off the list is remembered until this
-# server stops, so the page can put it back.
+# page shows in place of the list. Turning an entry off, back on, or removing it has no command, so it is done here, and only for what
+# starts for the person's own account and needs no administrator: on macOS their launch agents, the agents apps installed for every
+# account (for this account only) and their login items, on Linux the units of their own service manager and the desktop files in their
+# autostart folder, on Windows their Run key and their Startup folder. Removing is for macOS alone. A login item taken off the list is
+# remembered until this server stops, so the page can put it back.
 def machine_autostart_routes() -> list[Route]:
     taken_off: dict[str, RemovedLoginItem] = {}
 
@@ -50,8 +57,13 @@ def machine_autostart_routes() -> list[Route]:
                 return JSONResponse(result)
 
     def change(action: str, identifier: str) -> StartupProblem | None:
-        if platform.system() != "Darwin":
-            return StartupProblem(reason="unsupported", message="Startup programs can only be changed from here on macOS.")
+        system = platform.system()
+        if system == "Linux" and action in SWITCH_ACTIONS:
+            return switch_linux_entry(identifier=identifier, on=SWITCH_ACTIONS[action])
+        if system == "Windows" and action in SWITCH_ACTIONS:
+            return switch_windows_entry(identifier=identifier, on=SWITCH_ACTIONS[action])
+        if system != "Darwin":
+            return StartupProblem(reason="refused", message="That cannot be done to this entry on this system.")
         if identifier.startswith("launchd:") and action in LAUNCHD_ACTIONS:
             return LAUNCHD_ACTIONS[action](identifier)
         if identifier.startswith("login:") and action == "remove":
@@ -82,8 +94,21 @@ def machine_autostart_routes() -> list[Route]:
         problem = await run_in_threadpool(change, request.path_params["action"], identifier)
         return _refusal(problem) if problem is not None else Response(status_code=204)
 
+    # One of the scripts the Scripts page lists, added to what starts at sign-in. `base` is the folder that list was read from.
+    async def add_script(request: Request) -> Response:
+        if request.headers.get("content-type") != "application/json":
+            return JSONResponse({"error": "Send the script as application/json."}, status_code=415)
+        body = await request.json()
+        fields = cast(dict[str, object], body) if isinstance(body, dict) else {}
+        base, script = fields.get("base"), fields.get("path")
+        if not isinstance(base, str) or not isinstance(script, str):
+            return JSONResponse({"error": "Name the script to add and the folder its list was read from."}, status_code=400)
+        problem = await run_in_threadpool(add_tracked_script, base, script)
+        return _refusal(problem) if problem is not None else Response(status_code=204)
+
     return [
         Route("/api/machine/autostart", read),
         Route("/api/machine/autostart/detail", detail),
+        Route("/api/machine/autostart/scripts", add_script, methods=["POST"]),
         Route("/api/machine/autostart/{action}", act, methods=["POST"]),
     ]

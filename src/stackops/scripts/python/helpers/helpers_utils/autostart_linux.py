@@ -138,6 +138,9 @@ def _xdg_autostart_entries() -> list[AutostartEntry]:
             content = desktop_file.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
+        # `Hidden=true` is the standard's way of saying a file is to be passed over, which is how an entry is turned off.
+        if any(line.replace(" ", "").lower() == "hidden=true" for line in content.splitlines()):
+            continue
         display_name = desktop_file.stem
         for line in content.splitlines():
             if line.startswith("Name="):

@@ -4,12 +4,12 @@ import { KINDS, lockText, stateWords, whenText } from "./words.js";
 
 const ROW_STEP = 40;
 
-// What can be done to an entry straight from its row: a switch for a launch agent of the person's own, a way off the list for a login
-// item, and for everything else a padlock that says why not.
+// What can be done to an entry straight from its row: a switch for what starts for the person's own account, a way off the list for a
+// login item, and for everything else a padlock that says why not.
 function control(entry, { platform, busy, handlers }) {
   if (busy) return h("span", { class: "autostart-busy" }, h("i", { class: "ring" }));
   if (entry.actions.includes("turn_off") || entry.actions.includes("turn_on")) {
-    return h("button", { class: "autostart-switch", type: "button", role: "switch", "aria-checked": String(entry.enabled), "aria-label": `${entry.title} starts on its own`, title: entry.enabled ? "Turn it off" : "Turn it back on", onclick: () => handlers.toggle(entry) }, h("i", { class: "switch" }));
+    return h("button", { class: "autostart-switch", type: "button", role: "switch", "aria-checked": String(entry.enabled), "aria-label": `${entry.title} starts on its own`, title: entry.enabled ? "Turn it off" : "Turn it back on", onclick: () => handlers.toggle(entry, platform) }, h("i", { class: "switch" }));
   }
   if (entry.actions.includes("remove")) return h("button", { class: "icon-btn danger", type: "button", title: "Stop opening it when you sign in", "aria-label": `Stop opening ${entry.title} when you sign in`, onclick: () => handlers.remove(entry) }, icon("close", 15));
   return h("span", { class: "autostart-lock", title: lockText(entry, platform) }, icon("lock", 14));
@@ -29,7 +29,7 @@ function entryRow(entry, context) {
         "span",
         { class: "autostart-row-text" },
         h("span", { class: "autostart-row-title" }, h("strong", {}, highlight(entry.title, context.term)), entry.kind === "login_item" ? h("em", { text: "Login item" }) : entry.owner && entry.owner !== entry.title && h("em", {}, highlight(entry.owner, context.term))),
-        h("span", { class: "autostart-row-line" }, h("span", {}, entry.kind === "listed" && entry.description ? highlight(entry.description, context.term) : whenText(entry)), entry.name !== entry.title && h("code", {}, highlight(entry.name, context.term))),
+        h("span", { class: "autostart-row-line" }, h("span", {}, (entry.kind === "listed" || entry.kind === "systemd") && entry.description ? highlight(entry.description, context.term) : whenText(entry)), entry.name !== entry.title && h("code", {}, highlight(entry.name, context.term))),
       ),
     ),
     state && h("span", { class: "autostart-state", "data-tone": state.tone, title: state.text }, h("i"), h("span", { text: state.short })),

@@ -29,6 +29,7 @@ ProcessSearchField: TypeAlias = Literal[
 ]
 EnvironmentSelector: TypeAlias = Literal["PATH", "p", "ENV", "e"]
 MountBackendOption: TypeAlias = Literal["mount", "dislocker", "udisksctl"]
+LocalScriptSource: TypeAlias = Literal["all", "a", "workspace", "w", "user", "u", "library", "l"]
 
 
 class AutostartCategoryOption(StrEnum):
@@ -228,6 +229,46 @@ def list_autostart(
         raise typer.Exit(1)
 
 
+def add_autostart_script(
+    ctx: typer.Context,
+    name: Annotated[
+        str,
+        typer.Argument(help="Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows."),
+    ],
+    source: Annotated[LocalScriptSource, typer.Option("--source", "-s", help="Source to search for the script.")] = "all",
+) -> None:
+    import os
+    import shlex
+
+    from stackops.scripts.python.helpers.helpers_devops.script_resolution import resolve_script
+    from stackops.scripts.python.helpers.helpers_utils.autostart_script import StartupScriptFailure, add_startup_script
+
+    script_path = resolve_script(ctx=ctx, name=name, source=source, interactive=False, allow_dynamic=False)
+    result = add_startup_script(script_path=script_path, search_path=os.environ["PATH"])
+    match result:
+        case StartupScriptFailure():
+            typer.echo(f"""Not added to startup: {result.message}""", err=True)
+            raise typer.Exit(1)
+        case _:
+            typer.echo(f"""✅ {script_path.name} starts when you sign in, from the next sign-in on.""")
+            typer.echo(f"""   Entry: {result.entry_file}""")
+            typer.echo(f"""   Runs:  {shlex.join(result.command)}""")
+
+
+def remove_autostart_script(
+    name: Annotated[str, typer.Argument(help="The script as it was added: its name or file path. The script itself is kept.")],
+) -> None:
+    from stackops.scripts.python.helpers.helpers_utils.autostart_script import StartupScriptFailure, remove_startup_script
+
+    result = remove_startup_script(script_name=name)
+    match result:
+        case StartupScriptFailure():
+            typer.echo(f"""Not removed from startup: {result.message}""", err=True)
+            raise typer.Exit(1)
+        case _:
+            typer.echo(f"""✅ {Path(name).name} no longer starts when you sign in. Removed {result.entry_file}""")
+
+
 def mount_device(
     key_file: Annotated[Path | None, typer.Option("--key-file", "-k", exists=True, dir_okay=False, help="Unlock key file for dislocker or udisksctl.")] = None,
     device_query: Annotated[str | None, typer.Option("--device", "-d", help="Device query (path, key, or label).")] = None,
@@ -283,6 +324,14 @@ def get_app() -> typer.Typer:
         name="autostart", no_args_is_help=False, help="🚀 <a> List services and programs that start automatically."
     )(list_autostart)
     machine_app.command(name="a", no_args_is_help=False, hidden=True)(list_autostart)
+    machine_app.command(
+        name="autostart-add", no_args_is_help=True, help="➕ <A> Start one of your scripts every time you sign in.",
+    )(add_autostart_script)
+    machine_app.command(name="A", no_args_is_help=True, hidden=True)(add_autostart_script)
+    machine_app.command(
+        name="autostart-remove", no_args_is_help=True, help="➖ <R> Stop starting a script when you sign in.",
+    )(remove_autostart_script)
+    machine_app.command(name="R", no_args_is_help=True, hidden=True)(remove_autostart_script)
     machine_app.command(name="mount", no_args_is_help=True, help="🔌 <m> Mount a device to a mount point.")(mount_device)
     machine_app.command(name="m", no_args_is_help=True, hidden=True)(mount_device)
     machine_app.command(

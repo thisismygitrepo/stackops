@@ -139,3 +139,14 @@
   .autostart-tools .search-input { max-width: none; }
   .autostart-pick > span { display: none; }
 }
+
+/* The dialog a script is added to startup from. Its rows are the Scripts page's (agents_prompts.css), in a list that scrolls inside the dialog. */
+.dialog.autostart-add { display: flex; flex-direction: column; width: min(600px, 100%); max-height: 84vh; margin-top: -5vh; }
+.dialog.autostart-add .dialog-body { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.autostart-add-tools { padding: 0 22px 12px; }
+.autostart-add-tools .search-input { width: 100%; }
+/* On a narrow window the Scripts page lets its list run down the page; here the list keeps scrolling inside the dialog. */
+.dialog.autostart-add .autostart-add-list { flex: 1; min-height: 96px; margin: 0 14px 0 16px; padding: 2px 6px 2px 2px; overflow-y: auto; }
+.autostart-add-blank:not(:empty) { padding: 0 22px 8px; }
+.autostart-add-hint { padding: 12px 22px 14px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); overflow-wrap: anywhere; }
+.autostart-add-hint:empty { display: none; }

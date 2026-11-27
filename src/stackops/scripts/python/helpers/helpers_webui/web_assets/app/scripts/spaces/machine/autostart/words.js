@@ -70,8 +70,8 @@ const everyOf = (entry) => {
 // One line for the list: when the entry starts, in the fewest words that are still true.
 export function whenText(entry) {
   const { moment } = SCOPES[entry.scope];
-  if (entry.kind === "login_item") return `Opens ${moment}`;
-  if (entry.kind === "listed") return `Starts ${moment}`;
+  if (entry.kind === "login_item" || entry.kind === "sign_in") return `Opens ${moment}`;
+  if (entry.kind === "listed" || entry.kind === "systemd") return `Starts ${moment}`;
   const timed = everyOf(entry) || (entry.triggers.includes("scheduled") ? "at set times" : "");
   if (entry.triggers.includes("kept alive")) return `Starts ${moment} and is kept running`;
   if (entry.triggers.includes("at load")) return timed ? `Starts ${moment}, then again ${timed}` : `Starts ${moment}`;
@@ -119,10 +119,39 @@ export function lastEndText(entry) {
   return entry.last_exit > 0 ? `It stopped with an error, code ${entry.last_exit}.` : `Something else stopped it, with signal ${-entry.last_exit}.`;
 }
 
-// Why an entry has no switch, with the way forward where there is one.
-export function lockText(entry, platform) {
-  if (entry.stock) return `It is part of ${systemName(platform)}, so StackOps leaves it alone.`;
-  if (entry.kind === "listed") return `On ${platform}, StackOps shows what starts on its own and does not change it. Use the system's own settings for that.`;
-  if (entry.kind === "login_item") return "macOS does not say where this item is, so it cannot be taken off the list from here. System Settings lists it under General, Login Items & Extensions.";
-  return "It is installed for every account on this Mac. Turning it off or removing it takes an administrator password, which StackOps does not ask for. The app it belongs to may have a setting for it, and System Settings lists it under General, Login Items & Extensions.";
+// Why an entry has no switch, by the reason the server gives, with the way forward where there is one.
+const LOCKS = {
+  system: (_entry, platform) => `It is part of ${systemName(platform)}, so StackOps leaves it alone.`,
+  administrator: (entry, platform) =>
+    platform === "macOS"
+      ? "It starts with this Mac, for every account. Turning it off or removing it takes an administrator password, which StackOps does not ask for. The app it belongs to may have a setting for it, and System Settings lists it under General, Login Items & Extensions."
+      : `It starts for every account on this computer${entry.scope === "boot" ? ", when the computer starts" : ""}. Changing that takes administrator rights, which StackOps does not ask for.`,
+  managed: () => "It belongs to the software that guards or manages this Mac, so StackOps leaves it alone.",
+  unlocated: () => "macOS does not say where this item is, so it cannot be taken off the list from here. System Settings lists it under General, Login Items & Extensions.",
+  no_switch: (entry) => `StackOps has no switch for this kind of entry (${entry.source}). Use the system's own tools for it.`,
+};
+
+// A server older than this page gives no reason: then the entry is only said to have no switch.
+export const lockText = (entry, platform) => (LOCKS[entry.lock] ?? LOCKS.no_switch)(entry, platform);
+
+// What turning an entry off, and back on, does, for the question asked before it is done. A launch agent or a unit is stopped and started
+// by the system then and there. A program that is only opened at sign-in is left as it is until the next one.
+export function switchWords(entry, platform) {
+  const system = platform === "Linux" ? "The system" : platform;
+  if (entry.kind === "sign_in") {
+    const kept = platform === "Windows" ? "It stays in this list, and in Task Manager under Startup apps" : "Its file stays where it is";
+    return {
+      off: `${system} no longer opens it when you sign in. If it is open now, it stays open. ${kept}, so you can turn it back on from this page.`,
+      on: `${system} opens it again when you sign in, from the next sign-in on.`,
+    };
+  }
+  const now = entry.live === "running" ? `${system} stops it now and` : entry.live === "waiting" && entry.kind === "launchd" ? `${system} unloads it now and` : system;
+  const yoursOnly = entry.whose === "apps" ? " That holds for your account only, and the app it belongs to may turn it back on." : "";
+  return {
+    off: `${now} no longer starts it when you sign in.${yoursOnly} Its file stays where it is, so you can turn it back on from this page.`,
+    on:
+      entry.kind === "launchd"
+        ? `macOS loads it again now, the way it does when you sign in${entry.manner === "always" ? ", so it starts right away" : ""}. From then on it starts on its own at every sign-in.`
+        : `${system} starts it now, and from then on at every sign-in.`,
+  };
 }
