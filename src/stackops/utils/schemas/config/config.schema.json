@@ -2,20 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/thisismygitrepo/stackops/schemas/config.schema.json",
   "title": "StackOps User Config Schema",
-  "version": "1.0.0",
-  "description": "Schema for the StackOps user configuration file at ~/dotfiles/stackops/config/config.json.",
+  "version": "2.0.0",
+  "description": "Schema for the StackOps user configuration file at ~/dotfiles/stackops/config/config.yaml.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string",
-      "description": "Optional link to the JSON Schema used for this file."
-    },
     "version": {
       "type": "string",
       "description": "Config format version.",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "examples": ["1.0.0"]
+      "examples": ["2.0.0"]
     },
     "default_rclone_config": {
       "type": "string",

@@ -1,4 +1,4 @@
-from typing import Literal, NotRequired, TypeAlias, TypedDict
+from typing import Literal, Required, TypeAlias, TypedDict
 
 from stackops.utils.schemas.config.multiplexer_types import AgentMultiplexer, SessionMultiplexer
 from stackops.utils.schemas.fire_agents.fire_agents_types import AGENTS
@@ -16,9 +16,5 @@ class StackOpsConfigValues(TypedDict, total=False):
     default_agent_multiplexer: AgentMultiplexer
 
 
-_StackOpsConfigHeader = TypedDict("_StackOpsConfigHeader", {"$schema": NotRequired[str], "version": str})
-
-
-# Pylint cannot infer the functional TypedDict required for the "$schema" key.
-class StackOpsConfig(_StackOpsConfigHeader, StackOpsConfigValues):  # pylint: disable=inherit-non-class,inconsistent-mro
-    pass
+class StackOpsConfig(StackOpsConfigValues):
+    version: Required[str]

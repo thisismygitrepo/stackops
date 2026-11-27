@@ -3,7 +3,7 @@ from stackops.utils.schemas.config.config_types import (
     StackOpsConfigStringKey,
 )
 
-CONFIG_PATH_REFERENCE = "config.json"
+CONFIG_PATH_REFERENCE = "config.yaml"
 CONFIG_SCHEMA_PATH_REFERENCE = "config.schema.json"
 
 __all__ = [

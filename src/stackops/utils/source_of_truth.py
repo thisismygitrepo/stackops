@@ -29,7 +29,7 @@ DOTFILES_STACKOPS_SCRIPTS_MACOS_ROOT = DOTFILES_STACKOPS_SCRIPTS_ROOT.joinpath("
 DOTFILES_STACKOPS_INIT_LINUX_PATH = DOTFILES_STACKOPS_SCRIPTS_LINUX_ROOT.joinpath("init.sh")
 
 CONFIG_ROOT = Path.home().joinpath(".config/stackops")
-DOTFILES_STACKOPS_CONFIG_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "config.json")
+DOTFILES_STACKOPS_CONFIG_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "config.yaml")
 DOTFILES_LAYOUT_YAML_PATH = DOTFILES_STACKOPS_ROOT.joinpath("config", "layout.yaml")
 DOTFILES_USER_MAPPER_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "dotfiles.yaml")
 DOTFILES_USER_BACKUP_PATH = DOTFILES_STACKOPS_ROOT.joinpath("mapper", "data.yaml")
@@ -84,16 +84,16 @@ def _reject_unknown_keys(data: dict[str, object], allowed_keys: set[str], path: 
 
 def _require_object(value: object, path: str) -> dict[str, object]:
     if not isinstance(value, dict):
-        raise ValueError(f"StackOps config value at {path} must be an object: {DOTFILES_STACKOPS_CONFIG_PATH}")
+        raise ValueError(f"StackOps config value at {path} must be a mapping: {DOTFILES_STACKOPS_CONFIG_PATH}")
     if not all(isinstance(key, str) for key in value):
-        raise ValueError(f"StackOps config object at {path} must use string keys: {DOTFILES_STACKOPS_CONFIG_PATH}")
+        raise ValueError(f"StackOps config mapping at {path} must use string keys: {DOTFILES_STACKOPS_CONFIG_PATH}")
     return cast(dict[str, object], value)
 
 
-def _require_string(value: object, path: str, *, non_empty: bool = True) -> str:
+def _require_string(value: object, path: str) -> str:
     if not isinstance(value, str):
-        raise ValueError(f"StackOps config value at {path} must be a string: {DOTFILES_STACKOPS_CONFIG_PATH}")
-    if non_empty and value == "":
+        raise ValueError(f"StackOps config value at {path} must be a string, got {value!r}: {DOTFILES_STACKOPS_CONFIG_PATH}")
+    if value == "":
         raise ValueError(f"StackOps config value at {path} must be a non-empty string: {DOTFILES_STACKOPS_CONFIG_PATH}")
     return value
 
@@ -113,17 +113,19 @@ def _require_choice[T: str](value: object, path: str, choices: tuple[T, ...]) ->
 
 
 def read_stackops_config() -> StackOpsConfig:
-    import json
+    import yaml
 
     if not DOTFILES_STACKOPS_CONFIG_PATH.is_file():
         raise FileNotFoundError(f"StackOps config file not found: {DOTFILES_STACKOPS_CONFIG_PATH}")
-    raw_config = _require_object(json.loads(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8")), "root")
+    try:
+        document: object = yaml.load(DOTFILES_STACKOPS_CONFIG_PATH.read_text(encoding="utf-8"), Loader=yaml.CSafeLoader)
+    except yaml.YAMLError as error:
+        raise ValueError(f"Invalid YAML in StackOps config {DOTFILES_STACKOPS_CONFIG_PATH}: {error}") from error
+    raw_config = _require_object(document, "root")
     _reject_unknown_keys(raw_config, set(StackOpsConfig.__required_keys__ | StackOpsConfig.__optional_keys__), "root")
     config: StackOpsConfig = {
         "version": _require_version(raw_config.get("version")),
     }
-    if "$schema" in raw_config:
-        config["$schema"] = _require_string(raw_config["$schema"], "$schema", non_empty=False)
     if "default_rclone_config" in raw_config:
         config["default_rclone_config"] = _require_string(raw_config["default_rclone_config"], "default_rclone_config")
     if "default_email_config" in raw_config:

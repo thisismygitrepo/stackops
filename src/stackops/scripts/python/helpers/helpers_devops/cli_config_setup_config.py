@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 from pathlib import Path
@@ -57,6 +56,8 @@ def _write_text_atomically(path: Path, content: str, mode: int) -> None:
 def write_stackops_config(*, existing_config: StackOpsConfig | None, values: StackOpsConfigValues) -> None:
     from stackops.utils.managed_files import get_managed_file_spec, managed_schema_path
     from stackops.utils.schemas.config.constants import STACKOPS_CONFIG_VERSION
+    from stackops.utils.schemas.yaml_document import yaml_document_text
+    from stackops.utils.schemas.yaml_schema import yaml_language_server_schema_comment
 
     spec = get_managed_file_spec("config")
     config_path = spec.user_path
@@ -65,13 +66,14 @@ def write_stackops_config(*, existing_config: StackOpsConfig | None, values: Sta
         exit_with_setup_error(f"StackOps schema path exists but is not a file: {schema_path}")
 
     if existing_config is None:
-        updated_config: StackOpsConfig = {**values, "$schema": f"./{schema_path.name}", "version": STACKOPS_CONFIG_VERSION}
+        updated_config: StackOpsConfig = {"version": STACKOPS_CONFIG_VERSION, **values}
         config_mode = spec.file_mode
     else:
-        updated_config = {**existing_config, **values, "$schema": f"./{schema_path.name}"}
+        updated_config = {**existing_config, **values}
         config_mode = S_IMODE(config_path.stat().st_mode)
 
     schema_mode = S_IMODE(schema_path.stat().st_mode) if schema_path.exists() else spec.file_mode
     _write_text_atomically(path=schema_path, content=spec.schema_source_path.read_text(encoding="utf-8"), mode=schema_mode)
-    config_content = json.dumps(updated_config, indent=2, ensure_ascii=False) + "\n"
+    config_content = f"""{yaml_language_server_schema_comment(yaml_path=config_path)}
+{yaml_document_text(document=updated_config)}"""
     _write_text_atomically(path=config_path, content=config_content, mode=config_mode)

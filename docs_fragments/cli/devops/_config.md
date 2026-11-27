@@ -30,11 +30,13 @@ Current `devops config --help` exposes:
 
 | Kind | User file | Schema |
 |------|-----------|--------|
-| `config` | `~/dotfiles/stackops/config/config.json` | `config.schema.json` |
+| `config` | `~/dotfiles/stackops/config/config.yaml` | `config.schema.json` |
 | `layouts` | `~/dotfiles/stackops/config/layout.yaml` | `layout.schema.json` |
 | `dotfiles` | `~/dotfiles/stackops/mapper/dotfiles.yaml` | `dotfiles.schema.json` |
 | `data` | `~/dotfiles/stackops/mapper/data.yaml` | `data.schema.json` |
 | `secrets` | `~/dotfiles/stackops/secrets/secrets.json` | `secrets.schema.json` |
+
+The `config` file used to be `config.json`. Until January 2028, any StackOps command that finds a `config.json` there and no `config.yaml` converts it to `config.yaml`, refreshes the schema beside it, and keeps the old file as `config.json.before_stackops_yaml_migration`.
 
 ### interactive
 
@@ -242,7 +244,7 @@ Open one StackOps user file in `hx`, `nano`, or `code`.
 devops config edit <config|layouts|dotfiles|data|secrets> [--custom-path PATH] [--editor hx|nano|code]
 ```
 
-When the file does not exist yet, it is created with the smallest valid content for its kind, and its schema is installed next to it: a versioned `config.json`, an empty dotfiles or data mapper with its YAML header, and the packaged starters for `layout.yaml` (with its YAML header) and `secrets.json`, which require at least one entry. Secrets files are created with mode `0600`.
+When the file does not exist yet, it is created with the smallest valid content for its kind, and its schema is installed next to it: a versioned `config.yaml` and an empty dotfiles or data mapper, each with its YAML header, and the packaged starters for `layout.yaml` (with its YAML header) and `secrets.json`, which require at least one entry. Secrets files are created with mode `0600`.
 
 Use `--custom-path`, `-p` to edit a file of the same kind somewhere else, for example a workspace secrets file:
 

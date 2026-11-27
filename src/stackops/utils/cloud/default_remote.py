@@ -22,7 +22,7 @@ def read_default_rclone_remote() -> str:
             "No default rclone remote is configured.\n"
             f"Reason: {reason}\n"
             f"Location: {DOTFILES_STACKOPS_CONFIG_PATH}\n\n"
-            "Guided setup (selects a real rclone remote and writes the JSON + schema):\n"
+            "Guided setup (selects a real rclone remote and writes the YAML + schema):\n"
             "  devops config setup cloud\n\n"
             "No rclone remote yet? Create one first:\n"
             "  rclone config"

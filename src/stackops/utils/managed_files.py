@@ -51,7 +51,7 @@ def get_managed_file_spec(kind: ManagedFileKind) -> ManagedFileSpec:
 
             return ManagedFileSpec(
                 user_path=DOTFILES_STACKOPS_CONFIG_PATH,
-                example_source_path=get_path_reference_path(module=config_assets, path_reference="config.example.json"),
+                example_source_path=get_path_reference_path(module=config_assets, path_reference="config.example.yaml"),
                 schema_source_path=get_path_reference_path(module=config_assets, path_reference=config_assets.CONFIG_SCHEMA_PATH_REFERENCE),
                 file_mode=STACKOPS_CONFIG_FILE_MODE,
             )
