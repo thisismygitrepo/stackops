@@ -55,6 +55,7 @@ SHORT_OVERRIDES: dict[tuple[str, str], str] = {
     ("devops vault search", "--scope"): "-S",
     ("devops vault load", "--scope"): "-S",
     ("devops vault rotate", "--scope"): "-S",
+    ("devops vault delete", "--scope"): "-S",
     ("agents add-mcp", "--source"): "-S",
     ("devops network share-terminal", "--password"): "-w",
     ("devops network share-server", "--password"): "-w",

@@ -18,13 +18,21 @@ def add_secrets_entry(
     *,
     read_entry: Callable[[], object],
     create: bool,
+    replace: bool,
     dry_run: bool,
 ) -> Login:
     from stackops.secrets.loader import parse_secret_login
 
     secrets_file, created_file = _load_or_initialize_add_target(secrets_path=secrets_path, create=create)
     entry = parse_secret_login(entry=read_entry(), entry_index=0)
-    _secrets_entries(secrets_file).append(entry)
+    entries = _secrets_entries(secrets_file)
+    if replace:
+        same_name_indices = [index for index, existing in enumerate(entries) if isinstance(existing, dict) and existing.get("name") == entry["name"]]
+        if len(same_name_indices) != 1:
+            raise ValueError(f"""--replace needs exactly one login named '{entry["name"]}' in {secrets_path}, found {len(same_name_indices)}.""")
+        entries[same_name_indices[0]] = entry
+    else:
+        entries.append(entry)
     if dry_run:
         return entry
     _write_secrets_file(secrets_path=secrets_path, secrets_file=secrets_file, created_file=created_file)

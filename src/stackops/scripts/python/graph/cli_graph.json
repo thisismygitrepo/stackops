@@ -9721,7 +9721,7 @@
                 "name": "add",
                 "fullPath": "devops vault add",
                 "shortPath": "d v a",
-                "help": "➕ <a> Append a new login entry to a StackOps secrets file.",
+                "help": "➕ <a> Append a new login entry to a StackOps secrets file, or replace one with --replace.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets_add.py",
                   "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_add",
@@ -9742,6 +9742,13 @@
                     "    ] = \"workspace\",",
                     "    create: Annotated[",
                     "        bool, typer.Option(\"--create\", \"-c\", help=\"Allow creating a missing secrets JSON file and its schema.\")",
+                    "    ] = False,",
+                    "    replace: Annotated[",
+                    "        bool,",
+                    "        typer.Option(",
+                    "            \"--replace\", \"-r\",",
+                    "            help=\"Replace the one existing login with the same name instead of appending, to add or remove bundles and keys or change labels.\",",
+                    "        ),",
                     "    ] = False,",
                     "    input_path: Annotated[",
                     "        str | None,",
@@ -9827,6 +9834,28 @@
                           "-c"
                         ],
                         "help": "Allow creating a missing secrets JSON file and its schema."
+                      }
+                    },
+                    {
+                      "name": "replace",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--replace', '-r', help='Replace the one existing login with the same name instead of appending, to add or remove bundles and keys or change labels.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--replace",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--replace"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Replace the one existing login with the same name instead of appending, to add or remove bundles and keys or change labels."
                       }
                     },
                     {
@@ -10338,13 +10367,430 @@
                 },
                 "typer": {
                   "no_args_is_help": true,
-                  "epilog": "Examples:\n  devops vault rotate --source user --name github-personal\n  devops vault rotate --name aws-dev --key AWS_SECRET_ACCESS_KEY\n  devops vault rotate --name aws-dev --input new-keys.json --json\n\nSelection works as in devops vault load and must match exactly one bundle.\nWithout --input, hidden prompts ask for each key (only --key keys when given); leave one blank to keep it.\n--input reads a JSON object of existing keys to new values from a file, or - for stdin.\nOnly existing keys are replaced, and rotation.lastRotated becomes today. Values are never printed.\nEdit the secrets JSON directly to add keys or change labels.\n"
+                  "epilog": "Examples:\n  devops vault rotate --source user --name github-personal\n  devops vault rotate --name aws-dev --key AWS_SECRET_ACCESS_KEY\n  devops vault rotate --name aws-dev --input new-keys.json --json\n\nSelection works as in devops vault load and must match exactly one bundle.\nWithout --input, hidden prompts ask for each key (only --key keys when given); leave one blank to keep it.\n--input reads a JSON object of existing keys to new values from a file, or - for stdin.\nOnly existing keys are replaced, and rotation.lastRotated becomes today. Values are never printed.\nUse devops vault add --replace to add keys or change labels, and devops vault delete to remove keys or bundles.\n"
                 },
                 "aliases": [
                   {
                     "name": "r",
                     "hidden": true,
                     "help": "Alias for rotate."
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "delete",
+                "fullPath": "devops vault delete",
+                "shortPath": "d v d",
+                "help": "🧹 <d> Remove secret bundles, whole logins, or single keys from a secrets file.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_devops/cli_config_secrets_delete.py",
+                  "module": "stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_delete",
+                  "callable": "delete"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def delete(",
+                    "    terms: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Argument(",
+                    "            help=(",
+                    "                \"Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, \"",
+                    "                \"secret name/tags/scopes, metadata, or env var keys.\"",
+                    "            )",
+                    "        ),",
+                    "    ] = None,",
+                    "    custom_path: Annotated[Path | None, typer.Option(\"--custom-path\", \"-p\", help=\"Use only this secrets JSON file, overriding --source.\")] = None,",
+                    "    secrets_source: Annotated[",
+                    "        SecretsSource | None,",
+                    "        typer.Option(",
+                    "            \"--source\", \"-s\", case_sensitive=False,",
+                    "            help=\"Secrets file source to search: workspace/w, user/u, or all/a. The selection must sit in one file, which is the one updated.\",",
+                    "        ),",
+                    "    ] = None,",
+                    "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Choose the secret bundle with a TV fuzzy picker.\")] = False,",
+                    "    preview_secrets: Annotated[",
+                    "        bool, typer.Option(\"--preview-secrets\", \"-P\", help=\"Include secret values in the interactive TV preview. Only applies with --interactive/-i.\")",
+                    "    ] = False,",
+                    "    all_matches: Annotated[bool, typer.Option(\"--all-matches\", \"-a\", help=\"Remove every matching secret bundle instead of requiring exactly one.\")] = False,",
+                    "    login_name: Annotated[str | None, typer.Option(\"--name\", \"-n\", help=\"Exact login name at entries[].name to require.\")] = None,",
+                    "    secret_name: Annotated[str | None, typer.Option(\"--secret-name\", \"-N\", help=\"Exact entries[].secrets[].name value to require.\")] = None,",
+                    "    tags: Annotated[list[str] | None, typer.Option(\"--tag\", \"--tags\", \"-t\", help=\"Exact login or secret tag to require. Repeat for multiple tags.\")] = None,",
+                    "    login_tags: Annotated[list[str] | None, typer.Option(\"--login-tag\", \"-l\", help=\"Exact login tag at entries[].tags to require. Repeat for multiple tags.\")] = None,",
+                    "    secret_tags: Annotated[",
+                    "        list[str] | None, typer.Option(\"--secret-tag\", \"-T\", help=\"Exact entries[].secrets[].tags value to require. Repeat for multiple tags.\")",
+                    "    ] = None,",
+                    "    scopes: Annotated[list[str] | None, typer.Option(\"--scope\", \"-S\", help=\"Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.\")] = None,",
+                    "    keys: Annotated[",
+                    "        list[str] | None,",
+                    "        typer.Option(\"--key\", \"-k\", help=\"Exact env var key in keyValues to require. Only these keys are removed, and the bundle is kept. Repeat for multiple keys.\"),",
+                    "    ] = None,",
+                    "    dry_run: Annotated[bool, typer.Option(\"--dry-run\", \"-d\", help=\"List what would be removed without writing the secrets file.\")] = False,",
+                    "    yes: Annotated[bool, typer.Option(\"--yes\", \"-y\", help=\"Delete without confirmation.\")] = False,",
+                    "    json_output: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Print a JSON receipt without secret values. Requires --yes or --dry-run.\")] = False,",
+                    ") -> None:"
+                  ],
+                  "name": "delete",
+                  "parameters": [
+                    {
+                      "name": "terms",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help='Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys.')]",
+                      "typer": {
+                        "kind": "argument",
+                        "param_decls": [],
+                        "long_flags": [],
+                        "short_flags": [],
+                        "help": "Case-insensitive terms used to match secret bundles. All terms must match across login name/tags/accountName, secret name/tags/scopes, metadata, or env var keys."
+                      }
+                    },
+                    {
+                      "name": "custom_path",
+                      "kind": "positional_or_keyword",
+                      "type": "Path | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[Path | None, typer.Option('--custom-path', '-p', help='Use only this secrets JSON file, overriding --source.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--custom-path",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--custom-path"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Use only this secrets JSON file, overriding --source."
+                      }
+                    },
+                    {
+                      "name": "secrets_source",
+                      "kind": "positional_or_keyword",
+                      "type": "SecretsSource | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[SecretsSource | None, typer.Option('--source', '-s', case_sensitive=False, help='Secrets file source to search: workspace/w, user/u, or all/a. The selection must sit in one file, which is the one updated.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--source",
+                          "-s"
+                        ],
+                        "long_flags": [
+                          "--source"
+                        ],
+                        "short_flags": [
+                          "-s"
+                        ],
+                        "help": "Secrets file source to search: workspace/w, user/u, or all/a. The selection must sit in one file, which is the one updated."
+                      }
+                    },
+                    {
+                      "name": "interactive",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--interactive', '-i', help='Choose the secret bundle with a TV fuzzy picker.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--interactive",
+                          "-i"
+                        ],
+                        "long_flags": [
+                          "--interactive"
+                        ],
+                        "short_flags": [
+                          "-i"
+                        ],
+                        "help": "Choose the secret bundle with a TV fuzzy picker."
+                      }
+                    },
+                    {
+                      "name": "preview_secrets",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--preview-secrets', '-P', help='Include secret values in the interactive TV preview. Only applies with --interactive/-i.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--preview-secrets",
+                          "-P"
+                        ],
+                        "long_flags": [
+                          "--preview-secrets"
+                        ],
+                        "short_flags": [
+                          "-P"
+                        ],
+                        "help": "Include secret values in the interactive TV preview. Only applies with --interactive/-i."
+                      }
+                    },
+                    {
+                      "name": "all_matches",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--all-matches', '-a', help='Remove every matching secret bundle instead of requiring exactly one.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--all-matches",
+                          "-a"
+                        ],
+                        "long_flags": [
+                          "--all-matches"
+                        ],
+                        "short_flags": [
+                          "-a"
+                        ],
+                        "help": "Remove every matching secret bundle instead of requiring exactly one."
+                      }
+                    },
+                    {
+                      "name": "login_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--name', '-n', help='Exact login name at entries[].name to require.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--name",
+                          "-n"
+                        ],
+                        "long_flags": [
+                          "--name"
+                        ],
+                        "short_flags": [
+                          "-n"
+                        ],
+                        "help": "Exact login name at entries[].name to require."
+                      }
+                    },
+                    {
+                      "name": "secret_name",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--secret-name', '-N', help='Exact entries[].secrets[].name value to require.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--secret-name",
+                          "-N"
+                        ],
+                        "long_flags": [
+                          "--secret-name"
+                        ],
+                        "short_flags": [
+                          "-N"
+                        ],
+                        "help": "Exact entries[].secrets[].name value to require."
+                      }
+                    },
+                    {
+                      "name": "tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--tag', '--tags', '-t', help='Exact login or secret tag to require. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--tag",
+                          "--tags",
+                          "-t"
+                        ],
+                        "long_flags": [
+                          "--tag",
+                          "--tags"
+                        ],
+                        "short_flags": [
+                          "-t"
+                        ],
+                        "help": "Exact login or secret tag to require. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "login_tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--login-tag', '-l', help='Exact login tag at entries[].tags to require. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--login-tag",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--login-tag"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Exact login tag at entries[].tags to require. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "secret_tags",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--secret-tag', '-T', help='Exact entries[].secrets[].tags value to require. Repeat for multiple tags.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--secret-tag",
+                          "-T"
+                        ],
+                        "long_flags": [
+                          "--secret-tag"
+                        ],
+                        "short_flags": [
+                          "-T"
+                        ],
+                        "help": "Exact entries[].secrets[].tags value to require. Repeat for multiple tags."
+                      }
+                    },
+                    {
+                      "name": "scopes",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--scope', '-S', help='Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--scope",
+                          "-S"
+                        ],
+                        "long_flags": [
+                          "--scope"
+                        ],
+                        "short_flags": [
+                          "-S"
+                        ],
+                        "help": "Exact entries[].secrets[].scopes value to require. Repeat for multiple scopes."
+                      }
+                    },
+                    {
+                      "name": "keys",
+                      "kind": "positional_or_keyword",
+                      "type": "list[str] | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Option('--key', '-k', help='Exact env var key in keyValues to require. Only these keys are removed, and the bundle is kept. Repeat for multiple keys.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--key",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--key"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "Exact env var key in keyValues to require. Only these keys are removed, and the bundle is kept. Repeat for multiple keys."
+                      }
+                    },
+                    {
+                      "name": "dry_run",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--dry-run', '-d', help='List what would be removed without writing the secrets file.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--dry-run",
+                          "-d"
+                        ],
+                        "long_flags": [
+                          "--dry-run"
+                        ],
+                        "short_flags": [
+                          "-d"
+                        ],
+                        "help": "List what would be removed without writing the secrets file."
+                      }
+                    },
+                    {
+                      "name": "yes",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--yes', '-y', help='Delete without confirmation.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--yes",
+                          "-y"
+                        ],
+                        "long_flags": [
+                          "--yes"
+                        ],
+                        "short_flags": [
+                          "-y"
+                        ],
+                        "help": "Delete without confirmation."
+                      }
+                    },
+                    {
+                      "name": "json_output",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='Print a JSON receipt without secret values. Requires --yes or --dry-run.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "Print a JSON receipt without secret values. Requires --yes or --dry-run."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": true,
+                  "epilog": "Examples:\n  devops vault delete --name github-personal --dry-run\n  devops vault delete --source user --name aws-dev --secret-name iam-access-key --yes\n  devops vault delete --name aws-dev --all-matches --yes --json\n  devops vault delete --name aws-dev --key AWS_SESSION_TOKEN --yes\n\nSelection works as in devops vault load and must match exactly one bundle unless --all-matches is given.\nThe matching bundle is removed. With --key, only those keys are removed and the bundle is kept.\nA login left without a bundle is removed too, so --name LOGIN --all-matches removes a whole login.\nA secrets file left without a login is deleted; devops vault add --create starts it again.\nWithout --yes, the selection is listed and confirmed in a terminal. Values are never printed.\nUse devops vault add --replace to change a login in place.\n"
+                },
+                "aliases": [
+                  {
+                    "name": "d",
+                    "hidden": true,
+                    "help": "Alias for delete."
                   }
                 ]
               },
@@ -10650,6 +11096,7 @@
                         "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass the local search cache and query Bitwarden directly.\")] = False,",
                         "    sync: Annotated[bool, typer.Option(\"--sync\", \"-y\", help=\"Sync the vault with the server before searching and bypass the local search cache.\")] = False,",
                         "    silent: Annotated[bool, typer.Option(\"--silent\", \"-q\", help=\"Suppress progress and hints; only results are printed.\")] = False,",
+                        "    plain: Annotated[bool, typer.Option(\"--plain\", \"-p\", help=\"List items as plain text lines with full URLs instead of a table, for agents and scripts.\")] = False,",
                         ") -> None:"
                       ],
                       "name": "search",
@@ -10932,13 +11379,35 @@
                             ],
                             "help": "Suppress progress and hints; only results are printed."
                           }
+                        },
+                        {
+                          "name": "plain",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--plain', '-p', help='List items as plain text lines with full URLs instead of a table, for agents and scripts.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--plain",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--plain"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "List items as plain text lines with full URLs instead of a table, for agents and scripts."
+                          }
                         }
                       ],
                       "return": "None"
                     },
                     "typer": {
                       "no_args_is_help": true,
-                      "epilog": "Examples:\n  devops vault bitwarden search github\n  devops vault bitwarden search github --copy password\n  devops vault bitwarden search --interactive --copy totp\n  devops vault bitwarden search --load github-token\n  devops vault bitwarden search --all-matches --json mail\n\nSearch lists matching items without secret values and does nothing else.\nAdd --copy/-C to put one field on the system clipboard, --load/-L to define the item's variables in the calling shell, or --show/-w to print credentials.\nThe name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.\nUse --json to print the selected items as JSON, including values.\n"
+                      "epilog": "Examples:\n  devops vault bitwarden search github\n  devops vault bitwarden search github --copy password\n  devops vault bitwarden search --interactive --copy totp\n  devops vault bitwarden search --load github-token\n  devops vault bitwarden search --all-matches --json mail\n\nSearch lists matching items without secret values and does nothing else.\nAdd --copy/-C to put one field on the system clipboard, --load/-L to define the item's variables in the calling shell, or --show/-w to print credentials.\nThe name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.\nUse --json to print the selected items as JSON, including values.\nAgents and scripts: add --plain/-p to list items as text lines instead of a table.\n"
                     },
                     "doc": "Inspect Bitwarden (`bw`) items without exposing secrets; copying, loading and showing are explicit.",
                     "aliases": [
@@ -10973,6 +11442,7 @@
                         "    fresh: Annotated[bool, typer.Option(\"--fresh\", \"-f\", help=\"Bypass the local search cache and query Bitwarden directly.\")] = False,",
                         "    sync: Annotated[bool, typer.Option(\"--sync\", \"-y\", help=\"Sync the vault with the server before searching and bypass the local search cache.\")] = False,",
                         "    verbose: Annotated[bool, typer.Option(\"--verbose\", \"-v\", help=\"Print the selected items and env var keys without secret values.\")] = False,",
+                        "    plain: Annotated[bool, typer.Option(\"--plain\", \"-p\", help=\"List items as plain text lines with full URLs instead of a table, for agents and scripts.\")] = False,",
                         ") -> None:"
                       ],
                       "name": "load",
@@ -11145,13 +11615,35 @@
                             ],
                             "help": "Print the selected items and env var keys without secret values."
                           }
+                        },
+                        {
+                          "name": "plain",
+                          "kind": "positional_or_keyword",
+                          "type": "bool",
+                          "default": false,
+                          "required": false,
+                          "annotation_raw": "Annotated[bool, typer.Option('--plain', '-p', help='List items as plain text lines with full URLs instead of a table, for agents and scripts.')]",
+                          "typer": {
+                            "kind": "option",
+                            "param_decls": [
+                              "--plain",
+                              "-p"
+                            ],
+                            "long_flags": [
+                              "--plain"
+                            ],
+                            "short_flags": [
+                              "-p"
+                            ],
+                            "help": "List items as plain text lines with full URLs instead of a table, for agents and scripts."
+                          }
                         }
                       ],
                       "return": "None"
                     },
                     "typer": {
                       "no_args_is_help": true,
-                      "epilog": "Examples:\n  devops vault bitwarden load github-token\n  devops vault bitwarden load --command 'gh auth status' github-token\n  devops vault bitwarden load --interactive\n\nEach custom field of the item becomes one environment variable: the field name is the variable name.\nA linked custom field takes the login's username or password as its value.\nLoad prepares the variables for the calling shell, or with --command runs one program with them.\nThe name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.\n"
+                      "epilog": "Examples:\n  devops vault bitwarden load github-token\n  devops vault bitwarden load --command 'gh auth status' github-token\n  devops vault bitwarden load --interactive\n\nEach custom field of the item becomes one environment variable: the field name is the variable name.\nA linked custom field takes the login's username or password as its value.\nLoad prepares the variables for the calling shell, or with --command runs one program with them.\nThe name must identify one item; use --interactive to pick one, --id for an exact item, or --all-matches for every match.\nAgents and scripts: add --plain/-p to list items as text lines instead of a table.\n"
                     },
                     "doc": "Load a Bitwarden item's custom fields into environment variables.",
                     "aliases": [

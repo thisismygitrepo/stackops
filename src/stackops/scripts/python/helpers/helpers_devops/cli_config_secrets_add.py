@@ -25,6 +25,13 @@ def add(
     create: Annotated[
         bool, typer.Option("--create", "-c", help="Allow creating a missing secrets JSON file and its schema.")
     ] = False,
+    replace: Annotated[
+        bool,
+        typer.Option(
+            "--replace", "-r",
+            help="Replace the one existing login with the same name instead of appending, to add or remove bundles and keys or change labels.",
+        ),
+    ] = False,
     input_path: Annotated[
         str | None,
         typer.Option("--input", "-i", help="Read one login JSON object from a file, or - for stdin, without prompts. Use --schema for its format."),
@@ -58,7 +65,7 @@ def add(
         secret_source = resolve_single_secret_source(secrets_path=custom_path, secrets_source=secrets_source)
     read_entry = partial(_read_input_entry, input_path) if input_path is not None else prompt_secret_login
     try:
-        entry = add_secrets_entry(secrets_path=secret_source.path, read_entry=read_entry, create=create, dry_run=dry_run)
+        entry = add_secrets_entry(secrets_path=secret_source.path, read_entry=read_entry, create=create, replace=replace, dry_run=dry_run)
     except UnicodeError as error:
         typer.echo("Error: Secrets input and destination must contain UTF-8 text.", err=True)
         raise typer.Exit(code=1) from error
@@ -67,10 +74,14 @@ def add(
         raise typer.Exit(code=1) from error
 
     if json_output:
-        typer.echo(json.dumps({"status": "validated" if dry_run else "added", "name": entry["name"], "path": str(secret_source.path)}))
+        status = "validated" if dry_run else "replaced" if replace else "added"
+        typer.echo(json.dumps({"status": status, "name": entry["name"], "path": str(secret_source.path)}))
+    elif dry_run:
+        typer.echo(f"""Validated secrets entry '{entry['name']}' for {secret_source.path}""")
+    elif replace:
+        typer.echo(f"""Replaced secrets entry '{entry['name']}' in {secret_source.path}""")
     else:
-        action = "Validated" if dry_run else "Added"
-        typer.echo(f"""{action} secrets entry '{entry['name']}' {'for' if dry_run else 'to'} {secret_source.path}""")
+        typer.echo(f"""Added secrets entry '{entry['name']}' to {secret_source.path}""")
 
 
 def _read_input_entry(input_path: str) -> object:

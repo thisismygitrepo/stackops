@@ -140,6 +140,7 @@ def subset(
 def get_app() -> typer.Typer:
     from stackops.scripts.python.helpers.helpers_devops import cli_vault
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_add import add
+    from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_delete import SECRETS_DELETE_EPILOG, SECRETS_DELETE_HELP, delete
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_files import init_secrets, path_secrets, validate_secrets
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_rotate import SECRETS_ROTATE_EPILOG, SECRETS_ROTATE_HELP, rotate
     from stackops.scripts.python.helpers.helpers_devops.cli_config_secrets_search import load, search
@@ -160,11 +161,14 @@ def get_app() -> typer.Typer:
     app.command("subset", no_args_is_help=True, help=f"📦 <u> {SECRETS_SUBSET_HELP}")(subset)
     app.command("u", no_args_is_help=True, help="Alias for subset.", hidden=True)(subset)
 
-    app.command("add", no_args_is_help=False, help="➕ <a> Append a new login entry to a StackOps secrets file.")(add)
+    app.command("add", no_args_is_help=False, help="➕ <a> Append a new login entry to a StackOps secrets file, or replace one with --replace.")(add)
     app.command("a", no_args_is_help=False, help="Alias for add.", hidden=True)(add)
 
     app.command("rotate", no_args_is_help=True, help=f"🔁 <r> {SECRETS_ROTATE_HELP}", epilog=SECRETS_ROTATE_EPILOG)(rotate)
     app.command("r", no_args_is_help=True, help="Alias for rotate.", epilog=SECRETS_ROTATE_EPILOG, hidden=True)(rotate)
+
+    app.command("delete", no_args_is_help=True, help=f"🧹 <d> {SECRETS_DELETE_HELP}", epilog=SECRETS_DELETE_EPILOG)(delete)
+    app.command("d", no_args_is_help=True, help="Alias for delete.", epilog=SECRETS_DELETE_EPILOG, hidden=True)(delete)
 
     app.command("path", help="📍 <p> Print secrets file and schema paths as JSON.")(path_secrets)
     app.command("p", hidden=True)(path_secrets)

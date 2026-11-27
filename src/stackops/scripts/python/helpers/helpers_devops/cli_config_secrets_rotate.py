@@ -16,7 +16,7 @@ Selection works as in devops vault load and must match exactly one bundle.
 Without --input, hidden prompts ask for each key (only --key keys when given); leave one blank to keep it.
 --input reads a JSON object of existing keys to new values from a file, or - for stdin.
 Only existing keys are replaced, and rotation.lastRotated becomes today. Values are never printed.
-Edit the secrets JSON directly to add keys or change labels.
+Use devops vault add --replace to add keys or change labels, and devops vault delete to remove keys or bundles.
 """
 
 

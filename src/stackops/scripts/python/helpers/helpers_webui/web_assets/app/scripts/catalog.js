@@ -67,7 +67,7 @@ export const TOOL_TITLES = {
   "devops security scan": "Scan apps or a file", "devops security status": "Security overview", "devops security list": "Installed apps",
   "devops security history": "Scan history", "devops security report": "Look at one scan", "devops security export": "Export a scan",
   "devops security install": "Install from a scan", "devops security upload": "Upload a file to cloud storage", "devops security download": "Download from Google Drive",
-  "devops vault stats": "What the vault holds", "devops vault validate": "Check the vault file", "devops vault add": "Add a secret", "devops vault rotate": "Replace a secret",
+  "devops vault stats": "What the vault holds", "devops vault validate": "Check the vault file", "devops vault add": "Add a secret", "devops vault rotate": "Replace a secret", "devops vault delete": "Remove a secret",
   "devops vault subset": "Copy part of the vault", "devops vault init": "Create a vault file", "devops vault path": "Where the vault is kept", "devops vault search": "Search the vault",
   "devops vault load": "Load secrets into a terminal", "devops vault bitwarden": "Bitwarden", "devops vault bitwarden search": "Find a Bitwarden login",
   "devops vault bitwarden load": "Load a Bitwarden item into a terminal",
