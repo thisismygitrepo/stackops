@@ -114,10 +114,13 @@ def switch_windows_entry(identifier: str, on: bool) -> StartupProblem | None:
     if action not in entry["actions"]:
         return StartupProblem(reason="refused", message=f"""{entry["title"]}: {LOCKED_MESSAGE}""")
     kind, _, name = identifier.partition(":")
-    moment = int((time.time() + WINDOWS_CLOCK_OFFSET_SECONDS) * 10_000_000).to_bytes(8, "little")
+    if on:
+        approval = STARTUP_APPROVED_ON
+    else:
+        approval = STARTUP_APPROVED_OFF_START + int((time.time() + WINDOWS_CLOCK_OFFSET_SECONDS) * 10_000_000).to_bytes(8, "little")
     try:
         with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, f"""{APPROVED_KEY}\\{"Run" if kind == "run" else "StartupFolder"}""", 0, winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY) as key:
-            winreg.SetValueEx(key, name, 0, winreg.REG_BINARY, STARTUP_APPROVED_ON if on else STARTUP_APPROVED_OFF_START + moment)
+            winreg.SetValueEx(key, name, 0, winreg.REG_BINARY, approval)
     except OSError as error:
         return StartupProblem(reason="failed", message=f"""Windows could not turn {entry["title"]} {"back on" if on else "off"}: {error}""")
     return None
