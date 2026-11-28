@@ -33,9 +33,9 @@ utils machine [OPTIONS] COMMAND [ARGS]...
 | `specs` | Print machine specifications |
 | `list-devices` | List available devices for mounting |
 | `autostart` | List services and programs that start automatically |
-| `autostart-add` | Start one of your scripts every time you sign in, or when the computer starts |
-| `autostart-remove` | Stop starting a script on its own |
-| `autostart-apply` | Start here the scripts your `startup.yaml` lists for this system |
+| `autostart-add` | Start one of your scripts or layouts every time you sign in, or when the computer starts |
+| `autostart-remove` | Stop starting a script or layout on its own |
+| `autostart-apply` | Start here what your `startup.yaml` lists for this system |
 | `mount` | Mount a device by query or through an interactive picker |
 | `window` | Minimize, maximize, unminimize, focus, or close desktop windows on macOS, Windows, and Linux X11 |
 | `clean-drive` | Measure and reclaim disk space from caches, Docker, trash, logs, and project build folders |
@@ -48,8 +48,8 @@ Key behavior:
 - `specs` prints machine specifications; `--json`/`-j` prints them as JSON and `--save`/`-s PATH` also writes them to that JSON file. `specs --hardware`/`-H` shows compute capability details instead and cannot be combined with `--json` or `--save`.
 - `list-devices --json`/`-j` prints device and partition identifiers as JSON.
 - `autostart` lists notable startup entries; `--all`/`-a` adds standard OS services. Filter with `--category`/`-c network|storage|apps|monitoring|desktop|system|other` (repeatable), `--scope`/`-s boot|login`, `--name`/`-n`, and `--source`/`-S` (both case-insensitive substrings); `--json`/`-j` prints the filtered inventory.
-- `autostart-add NAME` takes a script name or file path as `devops scripts run` does: a `.py` (run by uv), a `.sh` on macOS and Linux, or a `.ps1` on Windows. `--source`/`-s all|workspace|user|library` selects where the script is searched. `--when`/`-w login|boot` chooses between sign-in (the default) and the start of the computer; `boot` can be set up on Linux only, where it relies on the account's services starting with the computer (lingering, which an administrator may have to allow once with `sudo loginctl enable-linger USER`). `autostart-remove NAME` removes the startup entry and keeps the script.
-- A script kept in `~/dotfiles/stackops/scripts` is also recorded in `~/dotfiles/stackops/config/startup.yaml` (`kind`, `name`, `os`, `when`) when it is added, for this system plus any named with `--os`/`-o linux,darwin,windows`, and `autostart-remove` takes this system off its entry. A script kept anywhere else starts on the machine it was added on only. On another machine, `autostart-apply` adds the entries the file lists for that system; scripts from the dotfiles that start there without being listed are reported, and stopped with `--prune`/`-p`.
+- `autostart-add NAME` takes a script name or file path as `devops scripts run` does: a `.py` (run by uv), a `.sh` on macOS and Linux, or a `.ps1` on Windows. `--source`/`-s all|workspace|user|library` selects where the script is searched. With `--kind`/`-k layout` (the default is `script`), `NAME` is instead a layout in the `layout.yaml` of your dotfiles; it is launched in the background the way `terminal run --source user --choose-layouts NAME` launches it, and `--source` does not apply. `--when`/`-w login|boot` chooses between sign-in (the default) and the start of the computer; `boot` can be set up on Linux only, where it relies on the account's services starting with the computer (lingering, which an administrator may have to allow once with `sudo loginctl enable-linger USER`). `autostart-remove NAME` (with `--kind layout` for a layout) removes the startup entry and keeps the script or layout; sessions a layout has already launched keep running.
+- A layout, or a script kept in `~/dotfiles/stackops/scripts`, is also recorded in `~/dotfiles/stackops/config/startup.yaml` (`kind`, `name`, `os`, `when`) when it is added, for this system plus any named with `--os`/`-o linux,darwin,windows`, and `autostart-remove` takes this system off its entry. A script kept anywhere else starts on the machine it was added on only. On another machine, `autostart-apply` adds the entries the file lists for that system; layouts and scripts from the dotfiles that start there without being listed are reported, and stopped with `--prune`/`-p`.
 - `mount` requires `--device` unless `--interactive` is set, and requires `--mount-point` unless `--interactive` is set or `--backend udisksctl` is used.
 - `mount --backend` accepts `mount`, `dislocker`, or `udisksctl`; `--key-file`/`-k` supplies an unlock key file for `dislocker` or `udisksctl`.
 - `window` picks a window and an action interactively when options are omitted. `--action`/`-a` accepts `minimize`, `maximize`, `unminimize`, `focus`, or `close`; `--title`/`-t` matches titles case-insensitively and selects directly when exactly one window matches; `--id`/`-I` takes an exact identifier from `--list --json`. `--list`/`-l` lists open windows, including minimized ones, and `--json`/`-j` prints the list or the action receipt without prompting.
@@ -71,6 +71,8 @@ utils machine autostart --scope login
 utils machine autostart-add backup.py
 utils machine autostart-add backup.py --os linux,darwin
 utils machine autostart-add linux/mount_drives.sh --when boot
+utils machine autostart-add work --kind layout
+utils machine autostart-remove work --kind layout
 utils machine autostart-apply
 utils machine autostart-apply --prune
 utils machine mount --interactive
@@ -109,7 +111,7 @@ Key behavior:
 - `generate-upgrade-script [ROOT]` writes `pyproject_init.sh` without running it. After writing the script, `--clean-group` immediately clears selected dependency groups or extras, `--clean-all-groups` clears all groups and extras, and `--delete-venv` deletes the project's `.venv`. Repeat `--clean-group` to select multiple groups. Run the generated script separately to upgrade dependencies.
 - `type-check [REPO]` resolves the repository root from the nearest `pyproject.toml` and passes exclusions through the lint/type-check script. `--tools`/`-t` runs one tool or a comma-separated list of `pyright`, `mypy`, `pylint`, `pyrefly`, `ty`, and `ruff` (all when omitted). `--tool-versions`/`-v` accepts `latest` (the default: newest releases for this run, project files untouched), `upgrade` (upgrade the tools in `uv.lock`, then run the locked versions), or `pinned` (run the versions already in `uv.lock`).
 - `type-check` always excludes `tests`, `.github`, `.codex`, `.ai`, `.links`, `.venv`, and `build`; each `--exclude`/`-x` adds an existing directory inside the repository to that list.
-- `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, prints JSON to stdout by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups. Use `--format/-F` for `json` (the default), `jsonic` (currently the same JSON output), or `html`, and `--output/-o` for a destination file.
+- `check-deps [TARGET]` runs either `pyan3` or `pydeps` through `uv run --with`, prints JSON to stdout by default, can write interactive HTML under `./.ai/check_deps`, and highlights direct mutual dependencies plus larger cycle groups. Use `--format/-F` for `json` (the default), `jsonic` (currently the same JSON output), or `html`, and `--output/-o` for a destination file. `--rankdir`/`-r` `TB|BT|LR|RL` (default `TB`) sets the graph rank direction where the backend supports it.
 - `configure-linters [DIRECTORY]` writes the standard `ruff`, `mypy`, `pylint`, `flake8`, and `ty` configurations at the git working-tree root. Use `--linter/-t` to select one; existing divergent files are never overwritten.
 - `cleanup [REPO]` cleans one git working tree by default. Use `--recursive/-r` to discover and clean repositories below a directory.
 - `test-reference [REPO]` supports `--search-root`, `--verbose`, and `--json`.

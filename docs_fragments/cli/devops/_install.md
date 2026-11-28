@@ -171,9 +171,9 @@ devops software install https://github.com/jesseduffield/lazygit
 | `uninstall WHICH` | Remove apps: delete the program file StackOps installed, or run the package manager's uninstall command |
 | `check WHICH` | Report whether executables are installed, without installing; `--group` takes one check group (currently only `agents`), not an install group |
 | `list [QUERY]` | List catalog definitions, filtered by name, description, or category; `--json` prints full definitions |
-| `report` | Rank entries by their saved GitHub commit dates; `--reverse` shows newest first |
-| `update-attrs` | Refresh the saved GitHub commit dates of the library or user catalog |
+| `report` | Rank entries by their saved GitHub commit dates; `--reverse` shows newest first; `--limit`, `-n` sets how many entries to show (default 10) |
+| `update-attrs` | Refresh the saved GitHub commit dates of the library or user catalog; `--report-path`, `-o` sets the CSV output path (default `profile/records/github_commit_dates.csv` in the config root) |
 | `path` | Print catalog, schema, and installer-script paths as JSON |
-| `init` / `edit` / `validate` | Create, edit, or validate the user catalog |
+| `init` / `edit` / `validate` | Create, edit, or validate the user catalog; `edit --install-lsp`, `-l` installs the required language server when it is missing (Helix only) |
 
 ---

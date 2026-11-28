@@ -17,7 +17,7 @@ operation is safe or reversible.
 | Global StackOps secrets | `~/dotfiles/stackops/secrets/secrets.json` | Plaintext JSON. On POSIX, the canonical writer creates a `0700` directory and `0600` file, but other edit paths and pre-existing files may retain broader permissions. StackOps does not configure Windows ACLs. |
 | Project-local StackOps secrets | `<project>/.stackops/secrets/secrets.json`, or an explicit `--custom-path` | Plaintext JSON. Do not commit it; a repository is not guaranteed to ignore this path. |
 | Secret shell handoff | `~/tmp_results/tmp_scripts/stackops/*.secrets.env.sh` or `*.secrets.env.ps1` | Temporary plaintext, set to mode `0600` on POSIX and intended to be deleted after it is sourced. StackOps does not configure a private Windows ACL. An interruption can leave it behind. Under the Nushell wrapper, every handoff also writes the complete shell environment beside the handoff script as `*.before` and `*.after` snapshots (created under `umask 077` on POSIX) and removes them afterwards; the `.after` snapshot includes the loaded values. Values then remain in the current shell environment and are inherited by child processes. |
-| Other shell handoff scripts | `~/tmp_results/tmp_scripts/stackops/*.sh` or `*.ps1` | Written with the default umask and not deleted by the shell wrappers after they are run. Most hold only commands, but the handoff of `devops network receive`, and of `devops network send --code`, contains the croc transfer code (`export CROC_SECRET=...` on POSIX, a `croc` argument on Windows). Delete it after a sensitive transfer. |
+| Other shell handoff scripts | `~/tmp_results/tmp_scripts/stackops/*.sh` or `*.ps1` | Written with the default umask and not deleted by the shell wrappers after they are run. Most hold only commands, but the handoff of `devops network receive CODE`, and of `devops network send --code`, contains the croc transfer code (`export CROC_SECRET=...` on POSIX, a `croc` argument on Windows). Delete it after a sensitive transfer. |
 | Bitwarden login material | The global StackOps secrets file | `BW_CLIENTID`, `BW_CLIENTSECRET`, and `BW_PASSWORD` are plaintext at rest in that file and are placed in the `bw` child-process environment during login. |
 | Bitwarden session and search cache | `~/tmp_results/cache/pwdmgr/cache.json.gpg` | GPG-encrypted to the user's default self-recipient. The cache contains `BW_SESSION` and raw cached `bw list items` results. At runtime, the session is passed to `bw` in its environment and may appear in shell state or command output; retrieved credential data can also be copied to the clipboard. |
 | OneDrive CLI authentication | The global StackOps secrets file | Client IDs and refresh tokens are plaintext JSON. Rotated refresh tokens are written back to this file. |
@@ -70,6 +70,18 @@ HTTPS, SSH, and provider APIs can protect data in transit, but they do not make 
 remote object encrypted end to end. Share links may grant other people access.
 The local file name, size, remote path, provider metadata, and access logs can
 remain visible even when the payload is GPG-encrypted.
+
+`devops network receive --propose` makes up the croc code and the GPG password
+on the receiving machine and shows both on its terminal, as a QR code or, with
+`--json`, as text. The receiver does not write them to disk: croc gets the code
+through `CROC_SECRET` (as an argument on Windows), gpg gets the password on
+standard input, and so does the process that draws the QR code. Whatever can see
+that terminal has both secrets: a camera, a screen share, scrollback, a session
+log. So does every system the scanned command passes through on its way to the
+sender, such as a phone's photo backup or a chat with a hosted agent. On the
+sender, `devops network send ... --password ...` puts the password on a command
+line, where the process list and shell history can record it. The two secrets
+are meant for one transfer; the receiver forgets them when it exits.
 
 ## Remote code and installer provenance
 

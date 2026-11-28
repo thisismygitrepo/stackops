@@ -154,7 +154,7 @@ devops data subset ./laptop-data.yaml --on-conflict append
 
 ### Editing the backup file
 
-Open the user backup file with `devops data edit` or `devops config edit data`. It is created from the packaged example, together with its schema, if it does not exist yet. To edit another file, pass its path with `--custom-path`.
+Open the user backup file with `devops data edit` or `devops config edit data`. It is created from the packaged example, together with its schema, if it does not exist yet. To edit another file, pass its path with `--custom-path`. `devops data edit --install-lsp`, `-l` installs the required language server when it is missing (Helix only).
 
 ### Backup File Layout
 

@@ -137,16 +137,19 @@ devops network send ./report.pdf --encryption asymmetric --recipient alice@examp
 Receive files or text with croc using a codephrase or explicit relay arguments.
 
 ```bash
-devops network receive CODE_ARGS... [OPTIONS]
+devops network receive [CODE_ARGS...] [OPTIONS]
 ```
 
 The argument may be a plain receive code such as `7121-donor-olympic-bicycle` or a full relay invocation such as `--relay 10.17.62.206:443 7121-donor-olympic-bicycle`; put `--` before relay arguments so they are passed through. `--install-dep`, `-D` installs croc when it is missing. A transfer sent with `--backend wormhole` is received with `uvx --from magic-wormhole wormhole receive <code>` instead.
+
+`--propose`, `-p` lets the receiving side choose the secrets: it takes no code argument, makes up a 32-character code and a 32-character encryption password, and shows a QR code holding the matching `devops network send <path> --code ... --encryption symmetric --password ...` command. It then waits for the sender, retrying every few seconds until one connects (`Ctrl+C` stops), and decrypts what arrives into the current directory. A sender that starts in the instant after a retry can stop at once with `EOF`; running the send command again is enough. It needs `croc` and `gpg`, and `uv` fetches the `qrcode` package the first time a QR code is drawn. It receives files and folders only; a transfer that was not sent with `--encryption symmetric` is reported as an error and kept as received. `--json`, `-j` (only with `--propose`) prints the code, password and send command as one JSON line instead of the QR code, and the decrypted paths as a second JSON line when the transfer completes.
 
 Examples:
 
 ```bash
 devops network receive 7121-donor-olympic-bicycle
 devops network receive -- --relay 10.17.62.206:443 7121-donor-olympic-bicycle
+devops network receive --propose
 ```
 
 ### share-temp-file

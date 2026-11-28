@@ -47,7 +47,7 @@ Location filters follow the [terminal layout convention](terminal.md#layout-file
 | `--tab` / `-t` | Workspace name or number | Tab label or ID | Agent session title or ID |
 | `--pane` / `-p` | Window name or ID | Pane label, title, or ID | Agent session title or ID |
 
-`--pane` always selects the leaf target. For AoE, this target can be a tmux pane or a structured worker without a terminal pane. `--exclude-pane` / `-x` omits matching leaf targets.
+`--pane` always selects the leaf target. For AoE, this target can be a tmux pane or a structured worker without a terminal pane. `--exclude-pane` / `-x` omits matching leaf targets. `--include-self`/`-i` includes the observer's own pane, which is excluded by default. `--history`/`-H` `auto|none` (default `auto`) uses linked transcripts, AoE structured history or supported hooks, or skips history. `--lines`/`-n` sets the lines captured per agent (default 200; `0` captures all TUIOS scrollback, Herdr's default retained output or the AoE viewport), `--messages`/`-m` the newest retained messages per agent (default `0`, all), and `--text-limit`/`-T` the character limit per message or evidence text (default 8000; `0` keeps full text).
 
 `--agent-session` / `-A` matches the registered agent name in TUIOS (also its pane name), the agent name in Herdr (separate from the pane label), or the session title/ID in AoE. It also matches a linked harness conversation ID when available; it does not search transcript titles. Missing identity metadata does not match. Reports show the available agent name and conversation ID. Other filters include `--harness` / `-a` and `--state` / `-S` (`working`, `waiting`, `blocked`, `idle`, `completed`, `failed`, `unknown`, or `unavailable`).
 
@@ -135,7 +135,7 @@ agents second-brain prune --apply
 - `--list`/`-l` to list the saved prompts without running an agent, honoring `--source`, `--custom-path`, and `--group`; `--json`/`-j` prints that catalog as JSON
 - `--t3`/`-t` to launch the prompt as a T3 Code thread instead of running the agent here; it requires `--model`/`-m` and cannot be combined with `--interactive` or `--sandbox`
 - `--second-brain`/`-b` to run from the Second Brain repository
-- `--sandbox`/`-S` (`none`, `docker`, `podman`, `bwrap`, `srt`, `ai-jail`, or `openshell`); `docker`, `podman`, and `openshell` require `--sandbox-image`/`-I`, and `srt` requires `--sandbox-settings`/`-J`
+- `--sandbox`/`-S` (`none`, `docker`, `podman`, `bwrap`, `srt`, `ai-jail`, or `openshell`); `docker`, `podman`, and `openshell` require `--sandbox-image`/`-I`, and `srt` requires `--sandbox-settings`/`-J`; OpenShell also takes `--sandbox-provider`/`-p` (repeatable), `--sandbox-name`/`-N`, and `--sandbox-sync`/`-z` `copy-back|manual` (default `copy-back`)
 - free-form prompt parts after `--`; option-looking tokens after the delimiter are prompt text, not StackOps flags
 
 For `run-prompt`, omitting `--agent` uses `default_agent` from the StackOps config, else `codex`. `--source workspace` selects `<workspace-root>/.stackops/agents/prompts.yaml`. The workspace root is the enclosing Git repository root, or the current directory when it contains at least two immediate child Git repositories. It also reads `.stackops/agents/prompts.yaml` from each immediate child directory of the root that has one, labelled `workspace:<child>`; templates are only created at the root. Selecting `workspace` requires one of these roots, while `all` includes the workspace file when a root is available, followed by user and library files. Use `--custom-path` to select an explicit file in any directory.
@@ -168,7 +168,7 @@ agents run-prompt --show-format
 - `--headroom`/`-H` launches `codex` or `copilot` through headroom
 - `--followup`/`-f` chooses a session recorded in Second Brain `update.csv` files and resumes it; add `--fork`/`-F` to fork it into a new session instead
 - `--second-brain`/`-b` runs from the Second Brain repository
-- `--sandbox`/`-S` and the other `--sandbox-*` options select a sandbox provider, as in `run-prompt`
+- `--sandbox`/`-S` and the other `--sandbox-*` options select a sandbox provider, as in `run-prompt`; here `--sandbox-name` is `-n` and `--sandbox-sync` is `-s`
 
 Examples:
 
@@ -325,7 +325,7 @@ agents add-mcp agent-desktop --agent codex --scope workspace
 
 ## Local models
 
-`agents local doctor` inspects server health, models, and resource usage for `--backend ollama` (the default) or `vllm`; `--host`/`-H` defaults to `OLLAMA_HOST` or `VLLM_BASE_URL`, then the backend's local address. `agents local discover [QUERY]` lists models from the Ollama catalog, or Hugging Face models for vLLM, within an advertised parameter count range (`--min-params`/`-l` and `--max-params`/`-m`, in billions, defaulting to `20` and `32`). `agents local install` installs vLLM for Linux CUDA with uv, or vLLM Metal for Apple Silicon with Homebrew. `agents local serve MODEL` starts a vLLM server in the foreground on `--host`/`-H` (default `127.0.0.1`) and `--port`/`-p` (default `8000`); additional vLLM options go after `--`. `doctor` and `discover` accept `--json`/`-j`.
+`agents local doctor` inspects server health, models, and resource usage for `--backend ollama` (the default) or `vllm`; `--host`/`-H` defaults to `OLLAMA_HOST` or `VLLM_BASE_URL`, then the backend's local address. `agents local discover [QUERY]` lists models from the Ollama catalog, or Hugging Face models for vLLM, within an advertised parameter count range (`--min-params`/`-l` and `--max-params`/`-m`, in billions, defaulting to `20` and `32`). `agents local install` installs vLLM for Linux CUDA with uv, or vLLM Metal for Apple Silicon with Homebrew. `agents local serve MODEL` starts a vLLM server in the foreground on `--host`/`-H` (default `127.0.0.1`) and `--port`/`-p` (default `8000`); additional vLLM options go after `--`. `doctor` and `discover` accept `--json`/`-j`. `doctor` also takes `--timeout`/`-t` (seconds per API request, default 5) and `--api-key`/`-k` (vLLM bearer token). `discover` takes `--limit`/`-n` (default 20), `--timeout`/`-t` (default 20 seconds) and, for Ollama only, `--capability`/`-c` `tools|thinking|vision|audio`. `serve --api-key`/`-k` requires that key for requests.
 
 ```bash
 agents local doctor
