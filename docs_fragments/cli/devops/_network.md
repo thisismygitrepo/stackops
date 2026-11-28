@@ -109,7 +109,7 @@ Key options from current help:
 | `--text`, `-t` | Send text instead of file contents |
 | `--qrcode`, `--qr`, `-q` | Show the receive code as a QR code (croc only) |
 | `--backend`, `-b` | Transfer backend: `croc` (default) or `wormhole` |
-| `--local-relay`, `-l` | Relay through this machine's LAN address on port 443 instead of croc's public relay (croc only) |
+| `--local-relay`, `-l` | Point croc at this machine's LAN IPv4 address on port 443 as its relay instead of croc's public relay (croc only); StackOps does not start a relay there |
 | `--encryption`, `-e` | GPG-encrypt the file or directory before sending: `symmetric`/`s` or `asymmetric`/`a` |
 | `--password`, `-p` | Symmetric GPG password; prompted when omitted |
 | `--recipient`, `-r` | Asymmetric GPG recipient key; defaults to your own key |
@@ -117,7 +117,7 @@ Key options from current help:
 | `--json`, `-j` | Emit JSON Lines with the transfer code and PID, then the completion status |
 | `--timeout`, `-T` | Maximum seconds to wait for the transfer to complete |
 
-croc uses its public relay unless `--local-relay` is given; the receive command printed for a local relay carries the `--relay` address.
+croc uses its public relay unless `--local-relay` is given; the receive command printed for a local relay carries the `--relay` address. `--local-relay` only passes `--relay <LAN IPv4>:443` to croc: StackOps starts no relay process of its own, so a croc relay has to be listening on that address for croc to use it.
 
 `--code` only secures the transfer. `--encryption` encrypts the payload itself, so it arrives as a `.gpg` file (a directory as `.zip.gpg`) that stays encrypted until the receiver runs `devops data decrypt`. It applies to files and directories, not `--text`.
 
