@@ -57,8 +57,8 @@ def _systemd_quoted(text: str) -> str:
 # told to start with the computer and stay (lingering), which holds for everything the account starts at sign-in. An account may switch
 # that on for itself where the system lets it; on a server it is often the administrator's to do, once. On macOS and Windows only an
 # administrator can have something start before a sign-in, so it is refused there.
-# A layout's command ends as soon as the sessions are up, and they have to outlive it: the unit is one that stays on after its command
-# has ended, so systemd leaves what it started alone, and launchd is told not to stop what the command leaves behind.
+# A layout's command ends as soon as its sessions are up, and they have to outlive it: launchd is told not to stop what the command
+# leaves behind. On Linux the command sees to that itself (`add_startup_layout`).
 def add_startup_entry(kind: StartupKind, title: str, slug: str, command: tuple[str, ...], search_path: str, when: StartupWhen) -> StartupEntryAdded | StartupEntryFailure:
     system = platform.system()
     entry_file = entry_file_of(kind=kind, slug=slug, system=system)
@@ -106,13 +106,12 @@ def add_startup_entry(kind: StartupKind, title: str, slug: str, command: tuple[s
         case "Linux":
             exec_start = " ".join(_systemd_quoted(argument.replace("$", "$$")) for argument in command)
             environment = _systemd_quoted(f"""PATH={search_path}""")
-            stays_on = "Type=oneshot\nRemainAfterExit=yes\n" if kind == "layout" else ""
             entry_file.write_text(
                 f"""[Unit]
 Description=StackOps startup {kind} {slug}
 
 [Service]
-{stays_on}ExecStart={exec_start}
+ExecStart={exec_start}
 Environment={environment}
 
 [Install]

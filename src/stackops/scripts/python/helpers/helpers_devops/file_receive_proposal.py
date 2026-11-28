@@ -6,7 +6,6 @@ import string
 import subprocess
 import sys
 import time
-from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile, mkdtemp
 
@@ -16,6 +15,18 @@ SECRET_ALPHABET = string.ascii_letters + string.digits
 SECRET_LENGTH = 32
 SENDER_RETRY_GAP_SECONDS = 10.0
 NO_SENDER_YET_MARKER = "local discovery failed"
+
+
+def _draw_qr_from_stdin() -> None:
+    # This body is serialized for a subprocess without the module globals.
+    import sys  # pylint: disable=redefined-outer-name,reimported
+
+    import qrcode
+
+    qr = qrcode.QRCode(error_correction=qrcode.ERROR_CORRECT_L, border=4)
+    qr.add_data(sys.stdin.read())
+    qr.make(fit=True)
+    qr.print_ascii(out=sys.stdout, tty=False, invert=False)
 
 
 def receive_with_proposed_secrets(*, output_json: bool) -> None:
@@ -39,14 +50,26 @@ def receive_with_proposed_secrets(*, output_json: bool) -> None:
     if output_json:
         typer.echo(json.dumps({"status": "waiting", "code": code, "password": password, "send_command": send_command}))
     else:
-        import qrcode
+        from stackops.utils.meta import lambda_to_python_script
 
-        qr = qrcode.QRCode(error_correction=qrcode.ERROR_CORRECT_L, border=4)
-        qr.add_data(send_command)
-        qr.make(fit=True)
-        drawing = StringIO()
-        qr.print_ascii(out=drawing, tty=False, invert=False)
-        for row in drawing.getvalue().splitlines():
+        worker_source = lambda_to_python_script(
+            lambda: _draw_qr_from_stdin(),  # pylint: disable=unnecessary-lambda  # The helper parses the lambda's call expression.
+            in_global=True,
+            import_module=False,
+        )
+        drawing = subprocess.run(
+            ["uv", "run", "--no-project", "--python", sys.executable, "--with", "qrcode", "python", "-c", worker_source],
+            input=send_command,
+            capture_output=True,
+            encoding="utf-8",
+            env={**os.environ, "PYTHONUTF8": "1"},
+            check=False,
+        )
+        if drawing.returncode != 0:
+            typer.echo(f"❌ Error: Could not draw the QR code: {drawing.stderr.strip()}", err=True)
+            typer.echo("Use --json to print the code and password as text instead.", err=True)
+            raise typer.Exit(code=1)
+        for row in drawing.stdout.splitlines():
             typer.echo(f"\x1b[30;107m{row}\x1b[0m")
         typer.echo("📱 Scan it: it holds the send command with the code and password. Run that where the file is, with <path> replaced.", err=True)
     typer.echo("⏳ Waiting for the sender. It can start any time; press Ctrl-C to stop.", err=True)
@@ -112,7 +135,7 @@ def receive_with_proposed_secrets(*, output_json: bool) -> None:
             _decrypt_to_output(source=received, mode="symmetric", pwd=password, archive_suffix=archive_suffix, output_path=output_path, overwrite=False)
         except (OSError, ValueError, RuntimeError) as failure:
             typer.echo(f"❌ Error: {failure}", err=True)
-            typer.echo(f"The encrypted file is kept at {received}. Decrypt it elsewhere with: devops data decrypt {received} --output <new path>", err=True)
+            typer.echo(f"The encrypted file is kept at {received}. Decrypt it elsewhere with: devops data decrypt {received} --password {password} --output <new path>", err=True)
             raise typer.Exit(code=1) from failure
         decrypted_paths.append(str(output_path))
     shutil.rmtree(staging_root)
