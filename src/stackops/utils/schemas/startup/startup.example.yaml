@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=./startup.schema.json
+version: "0.1"
+entries:
+  - kind: script
+    name: example_script.py
+    os:
+      - linux
+      - darwin
+    when: login

@@ -1,3 +1,4 @@
+import getpass
 import os
 import platform
 import plistlib
@@ -8,9 +9,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from stackops.scripts.python.helpers.helpers_utils.autostart_script_constants import ENTRY_PREFIX, LAUNCHCTL, MACOS_LABEL_PREFIX
+from stackops.scripts.python.helpers.helpers_utils.autostart_script_constants import ENTRY_PREFIX, LAUNCHCTL, LINGERING_ACCOUNTS_FOLDER, SYSTEM_NAMES
+from stackops.scripts.python.helpers.helpers_utils.autostart_script_entries import entry_file_of, script_of_entry
+from stackops.utils.schemas.startup.startup_types import StartupWhen
 
-type StartupScriptFailureReason = Literal["unsupported_system", "unsupported_kind", "missing_program", "already_added", "not_added", "system_refused"]
+type StartupScriptFailureReason = Literal[
+    "unsupported_system", "unsupported_kind", "missing_program", "missing_script", "already_added", "not_added", "system_refused",
+    "boot_needs_administrator", "cannot_remember",
+]
 
 NAME_GAPS = re.compile(r"[^A-Za-z0-9_]+")
 
@@ -24,26 +30,13 @@ class StartupScriptAdded:
 @dataclass(frozen=True)
 class StartupScriptRemoved:
     entry_file: Path
+    script_path: Path
 
 
 @dataclass(frozen=True)
 class StartupScriptFailure:
     reason: StartupScriptFailureReason
     message: str
-
-
-# Where the entry of the script called `slug` is kept: a launch agent of the account on macOS, a systemd unit of the account on Linux, and a
-# file in the account's Startup folder on Windows. All three start when the person signs in, and `utils machine autostart` lists all three.
-def _entry_file(slug: str, system: str) -> Path | None:
-    match system:
-        case "Darwin":
-            return Path.home() / "Library" / "LaunchAgents" / f"""{MACOS_LABEL_PREFIX}{slug}.plist"""
-        case "Linux":
-            return Path.home() / ".config" / "systemd" / "user" / f"""{ENTRY_PREFIX}{slug}.service"""
-        case "Windows":
-            return Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup" / f"""{ENTRY_PREFIX}{slug}.cmd"""
-        case _:
-            return None
 
 
 def _refusal(arguments: list[str]) -> str | None:
@@ -80,10 +73,14 @@ def _command_of(script_path: Path, system: str, search_path: str) -> tuple[str, 
 
 # The entry is written and switched on, and nothing is started: the script first runs at the next sign-in. `search_path` is the PATH of
 # whoever adds it. The script is given it, since what the system starts by itself otherwise finds little more than the system's own programs.
-def add_startup_script(script_path: Path, search_path: str) -> StartupScriptAdded | StartupScriptFailure:
+# `boot` is for a computer nobody signs in to. The entry is the same one, of the person's own account: on Linux the account's services are
+# told to start with the computer and stay (lingering), which holds for everything the account starts at sign-in. An account may switch
+# that on for itself where the system lets it; on a server it is often the administrator's to do, once. On macOS and Windows only an
+# administrator can have something start before a sign-in, so it is refused there.
+def add_startup_script(script_path: Path, search_path: str, when: StartupWhen) -> StartupScriptAdded | StartupScriptFailure:
     system = platform.system()
     slug = NAME_GAPS.sub("-", script_path.stem).strip("-")
-    entry_file = _entry_file(slug=slug, system=system)
+    entry_file = entry_file_of(slug=slug, system=system)
     if entry_file is None:
         return StartupScriptFailure(reason="unsupported_system", message=f"""StackOps does not know how to start a script at sign-in on {system or "this system"}.""")
     if not slug:
@@ -93,6 +90,22 @@ def add_startup_script(script_path: Path, search_path: str) -> StartupScriptAdde
         return command
     if entry_file.exists():
         return StartupScriptFailure(reason="already_added", message=f"""A script called {slug} already starts at sign-in.""")
+    match (when, system):
+        case ("login", _):
+            pass
+        case ("boot", "Linux"):
+            account = getpass.getuser()
+            lingering_refused = None if LINGERING_ACCOUNTS_FOLDER.joinpath(account).exists() else _refusal(["loginctl", "enable-linger", account])
+            if lingering_refused is not None:
+                return StartupScriptFailure(
+                    reason="system_refused",
+                    message=f"""{script_path.name} can only start before you sign in once your account's services start with the computer, and the system did not agree to that: {lingering_refused}. An administrator allows it with `sudo loginctl enable-linger {account}`. Add the script again after that.""",
+                )
+        case _:
+            return StartupScriptFailure(
+                reason="boot_needs_administrator",
+                message=f"""{script_path.name} cannot start when the computer starts on {SYSTEM_NAMES[system]}: that takes an administrator, and StackOps only sets up what starts for your own account. It can start when you sign in.""",
+            )
     entry_file.parent.mkdir(parents=True, exist_ok=True)
     match system:
         case "Darwin":
@@ -142,11 +155,12 @@ WantedBy=default.target
 def remove_startup_script(script_name: str) -> StartupScriptRemoved | StartupScriptFailure:
     system = platform.system()
     slug = NAME_GAPS.sub("-", Path(script_name).stem).strip("-")
-    entry_file = _entry_file(slug=slug, system=system)
+    entry_file = entry_file_of(slug=slug, system=system)
     if entry_file is None:
         return StartupScriptFailure(reason="unsupported_system", message=f"""StackOps does not know how to start a script at sign-in on {system or "this system"}.""")
     if not entry_file.is_file():
         return StartupScriptFailure(reason="not_added", message=f"""No script called {slug} starts at sign-in.""")
+    script_path = script_of_entry(entry_file=entry_file, system=system)
     match system:
         case "Darwin":
             targets = [f"""{domain}/{os.getuid()}/{entry_file.stem}""" for domain in ("gui", "user")]
@@ -161,4 +175,4 @@ def remove_startup_script(script_name: str) -> StartupScriptRemoved | StartupScr
     entry_file.unlink()
     if system == "Linux":
         subprocess.run(["systemctl", "--user", "daemon-reload"], capture_output=True, check=False)
-    return StartupScriptRemoved(entry_file=entry_file)
+    return StartupScriptRemoved(entry_file=entry_file, script_path=script_path)

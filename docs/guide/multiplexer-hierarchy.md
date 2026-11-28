@@ -1,6 +1,6 @@
 # Multiplexer Hierarchies: tmux, herdr, zellij, tuios
 
-Each tool on its own. Versions checked: tmux 3.7b, herdr 0.9.5, zellij 0.44.0, tuios 0.10.1.
+Each tool on its own. Versions checked: tmux 3.7b, herdr 0.9.5, zellij 0.46.1, tuios 0.13.3.
 
 ## tmux
 
@@ -39,7 +39,7 @@ session                     a named persistent server (herdr --session name)
 | pane | One terminal. Exists whether or not an agent runs in it. | `herdr pane list` |
 | agent | A coding agent detected in a pane, tracked as `idle`, `working`, `blocked`, `done` or `unknown`. | `herdr agent list` |
 
-IDs: `w1` (workspace), `w1:t1` (tab), `w1:p1` (pane). Opaque, never reused after a close.
+IDs: `w1` (workspace), `w1:t1` (tab), `w1:p1` (pane). Opaque; closed tab and pane IDs are not reused.
 Attach / detach: `herdr --session name` / `prefix q`. Default prefix `ctrl+b`.
 Extras: a socket API (`herdr workspace|tab|pane|agent ...` returns JSON), git worktree workspaces (`herdr worktree create`).
 
@@ -85,5 +85,5 @@ daemon                      one per socket (tuios --server name)
 | window | One terminal. Can be tiled, floating or a popup, and can host an agent whose state it reports. | `tuios list-windows` |
 
 IDs: a window takes `-w` as a uuid, an index, an exact name or a unique id prefix.
-Attach / detach: `tuios new name` / `tuios attach name`.
+Create / attach / detach: `tuios new name` / `tuios attach name` / `tuios detach-client`.
 Extras: window-manager features (tiling, floating windows, dock), agent states with an Inbox, a control protocol (`send-keys`, `capture-pane`, `wait-for`, `run`).

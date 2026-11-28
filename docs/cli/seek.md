@@ -15,7 +15,7 @@ seek [OPTIONS] [PATH_OR_SEARCH_TERM] [SEARCH_TERM]
 | Argument | Description |
 | --- | --- |
 | `PATH_OR_SEARCH_TERM` | Directory or file to search, or the search term when no matching path exists. Defaults to the current directory. |
-| `SEARCH_TERM` | Initial query to seed the search UI. |
+| `SEARCH_TERM` | Search query; seeds the search UI unless `--json` is used. |
 
 ---
 
@@ -31,6 +31,8 @@ The current implementation resolves modes in this order:
 
 That means `seek path query --file --ast` will still take the AST path, and `--install-dependencies` exits before running a search.
 
+`--json` keeps the same order but prints the results of the chosen mode as a JSON array instead of opening a picker. Without `--json`, every search mode needs an interactive terminal on both standard input and standard output; the one exception is text piped into the default text search, described under the single-file flow.
+
 ---
 
 ## Options
@@ -39,13 +41,15 @@ That means `seek path query --file --ast` will still take the AST path, and `--i
 | --- | --- | --- |
 | `--ast` | `-a` | Run AST or tree-sitter symbol search |
 | `--semantic` | `-s` | Run semantic search over text chunks with the backend chosen by `--semantic-backend` |
-| `--semantic-backend TEXT` | `-b` | Backend for `--semantic`: `semtools` (default), `ck`, `grepai`, or `qmd` |
+| `--semantic-backend TEXT` | `-b` | Backend for `--semantic`: `ck` (default), `grepai`, `qmd`, or `semtools` |
 | `--extension TEXT` | `-E` | Filter file discovery by extension such as `.py`; with `--semantic`, `grepai` rejects it and `qmd` searches `.md` unless it is given |
 | `--file` | `-f` | File search mode |
 | `--dotfiles` | `-d` | Toggle the dotfile-inclusive file-search path |
 | `--rga` | `-A` | Swap `rg` for `rga` in text-search mode |
 | `--edit` | `-e` | Open the selected result in Helix |
+| `--json` | `-j` | Print a JSON array without prompts or a picker. Text and semantic searches require a query; file and AST searches allow an empty one. Missing tools are not installed automatically. Cannot be combined with `--edit` or `--install-dependencies` |
 | `--install-dependencies` | `-i` | Install expected helper tools and exit |
+| `--non-interactive` | `-N` | Disable interactive selection; use `--json` for search results |
 | `--max-files INTEGER` | `-m` | Maximum files for `--semantic` with the `semtools` backend; default is `50`, and `0` disables the limit |
 
 ---
@@ -73,7 +77,7 @@ The default mode loads a platform-specific helper script and runs an `fzf` + `rg
 
 If the first argument resolves to a file, `seek` skips directory search and opens a line-oriented preview for that file instead.
 
-When standard input is piped in and the first argument is a directory, `seek` captures stdin into a temporary file and opens the same single-file flow against that temp file.
+When text is piped in and the first argument is a directory, the default text search captures stdin into a temporary file and opens the same single-file flow against it, for example `git log --oneline | seek`. Standard output must still be a terminal; an empty pipe, `--non-interactive`, `STACKOPS_NON_INTERACTIVE`, and the `--ast`, `--semantic` and `--file` modes are refused without `--json`.
 
 ### AST search
 
@@ -94,19 +98,19 @@ When standard input is piped in and the first argument is a directory, `seek` ca
 - prompts for a query if `SEARCH_TERM` is empty
 - overlapping matches from the same file are merged, so each result is a distinct region
 - selecting a result prints `path:line`; with `--edit` it opens that line in Helix
-- missing backend tools are installed on demand through the installer catalog
+- missing backend tools are installed on demand through the installer catalog (not with `--json`, which reports them instead)
 - failures such as a missing model, a failed index, or unexpected tool output exit with code `1` and name the backend and stage
 
 Choose the engine with `--semantic-backend` / `-b`:
 
 | Backend | Index | Notes |
 | --- | --- | --- |
-| `semtools` (default) | cached per directory in a semtools workspace | Static local embeddings, no network. Passes only text files (via `rg`, respecting ignore files) and honours `--extension` and `--max-files`. Also accepts a single file. |
-| `ck` | `.ck/` in the searched directory, updated incrementally | Local embeddings, downloaded once on first use. Honours `--extension`. |
-| `grepai` | `.grepai/` in the nearest ancestor that has one, otherwise created in the searched directory | Needs an embedding provider; the default is a local Ollama with `nomic-embed-text`. No extension filter. Searching a subdirectory of an indexed project is scoped to it. |
+| `ck` (default) | `.ck/` in the searched directory, updated incrementally | Local embeddings, downloaded once on first use. Honours `--extension`. |
+| `grepai` | `.grepai/` in the nearest ancestor that has one, otherwise created in the searched directory | Needs a local embedding provider; a new index is initialized for Ollama (`nomic-embed-text`). An existing config is used only when it embeds with Ollama or LM Studio on a loopback endpoint into the local `gob` store. No extension filter. Searching a subdirectory of an indexed project is scoped to it. |
 | `qmd` | `.qmd/` in the nearest ancestor that has one, otherwise created in the searched directory | Local GGUF models (about 1.6 GB, downloaded on first use) run query expansion and vector search. Indexes `.md` files unless `--extension` is given. |
+| `semtools` | cached per directory in a semtools workspace | Static local embeddings, no network. Passes only text files (via `rg`, respecting ignore files) and honours `--extension` and `--max-files`. Also accepts a single file. |
 
-`ck`, `grepai`, and `qmd` index directories, so they reject a single-file path. Their index directories are created inside the searched tree, so add them to `.gitignore`.
+`ck`, `grepai`, and `qmd` index directories, so they reject a single-file path. Their index directories are created inside the searched tree. `seek` writes a `.gitignore` into the `.ck/` and `.qmd/` directories it creates so they stay out of Git; `.grepai/` is left to grepai, so check that it is ignored.
 
 ---
 
@@ -120,9 +124,9 @@ Choose the engine with `--semantic-backend` / `-b`:
 - `fd`
 - `rg`
 - `rga`
-- `semtools`
+- `ck`
 
-The default `seek --install-dependencies` installs the tools above. Add `-b ck`, `-b grepai`, or `-b qmd` to install that semantic backend instead of `semtools`; the backend tool is also installed on demand the first time you run `--semantic`. `qmd` is installed with `bun install -g @tobilu/qmd`.
+The default `seek --install-dependencies` installs the tools above. Add `-b grepai`, `-b qmd`, or `-b semtools` to install that semantic backend instead of `ck`; the backend tool is also installed on demand the first time you run `--semantic`. `qmd` is installed with `bun install -g @tobilu/qmd`.
 
 ---
 
@@ -146,14 +150,17 @@ seek src --ast
 
 # Semantic search with the default backend
 seek src parser --semantic --extension .py
-seek src parser --semantic --extension .py --max-files 200
 
 # Semantic search with another backend, opening the pick in Helix
-seek src "retry with backoff" --semantic --semantic-backend ck
+seek src parser --semantic --semantic-backend semtools --extension .py --max-files 200
 seek src "retry with backoff" -s -b qmd -E .py --edit
 
 # ripgrep-all text search
 seek docs invoice --rga
+
+# JSON results without a picker
+seek src "TODO" --json
+seek src --file --json
 ```
 
 ---

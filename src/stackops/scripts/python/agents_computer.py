@@ -77,7 +77,7 @@ def status(
 
 def get_app() -> typer.Typer:
     computer_app = typer.Typer(
-        help="🖥️ <u> Desktop control for agent CLIs through MCP", no_args_is_help=True, add_help_option=True, add_completion=False,
+        help="🖥️ <c> Desktop control for agent CLIs through MCP", no_args_is_help=True, add_help_option=True, add_completion=False,
         context_settings={"help_option_names": ["-h", "--help"]},
     )
     computer_app.command(name="control", no_args_is_help=False, short_help="🎮 <c> Serve agent-desktop as a localhost MCP endpoint")(control)

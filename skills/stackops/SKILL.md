@@ -76,7 +76,7 @@ Run configuration discovery from the user's target project: local paths can depe
 - In the resolved StackOps checkout, run source maintenance and help commands as `UV_CACHE_DIR=/tmp/uv-cache uv run <entrypoint> ...`.
 - For installed usage outside the repo, use direct entrypoints: `devops`, `cloud`, `terminal`, `agents`, `utils`, `fire`, `preview`, and `seek`.
 - Keep the target project's working directory for local configuration discovery. When running from the StackOps checkout, pass an explicit target file to avoid selecting the checkout's configuration.
-- Use `stackops <entrypoint> ...` only when the user specifically wants the umbrella dispatcher or when testing the dispatcher itself.
+- Use `stackops <entrypoint> ...` only when the user specifically wants the umbrella dispatcher or when testing the dispatcher itself. The exception is `stackops webui`, which has no direct entrypoint.
 
 2. Resolve command path progressively.
 - Start with a top-level entrypoint from the list below.
@@ -111,13 +111,14 @@ Run configuration discovery from the user's target project: local paths can depe
 
 - `stackops`: umbrella dispatcher and root command index.
 - `devops`: developer workstation, project management, machine setup, credentials, connectivity, and StackOps maintenance.
-- `cloud`: cloud sync, copy, mount, and transfer workflows.
+- `cloud`: cloud sync, copy, mount, and transfer workflows, plus OneDrive access.
 - `terminal`: terminal session orchestration and summaries.
-- `agents`: agent setup, prompt execution, browser support, and parallel-agent workflows.
+- `agents`: agent setup, prompt execution, status and health checks, browser and desktop control, and local models.
 - `utils`: machine, project, and file utilities.
 - `seek`: interactive search across files, text, and symbols.
-- `fire`: run Python files and functions as jobs.
+- `fire`: run scripts and Python functions, and launch Streamlit, JupyterLab, and Marimo.
 - `preview`: preview local files or generated artifacts.
+- `stackops webui`: web UI for commands, dashboards, and terminals. It starts a local server and keeps running; it has no direct entrypoint, so it runs only through the umbrella.
 
 ## Reference Files
 

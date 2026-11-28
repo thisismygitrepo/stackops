@@ -12,7 +12,7 @@ Current `devops data --help` exposes:
 
 | Command | Description |
 |---------|-------------|
-| `sync` | Generate backup or retrieve commands through `cloud copy` |
+| `sync` | Back up or retrieve registered entries using rclone or share links |
 | `register` | Add or update a backup entry in the user data-mapping file |
 | `list` | List backup entries from library, user, or all configuration sources |
 | `subset` | Select entries interactively or with `--which` and write a standalone data-mapping file |
@@ -20,18 +20,19 @@ Current `devops data --help` exposes:
 | `path` | Print the backup mapping and schema paths |
 | `init` | Create a missing backup mapping and schema |
 | `validate` | Validate the backup mapping |
+| `edit` | Create if missing, edit, and validate the backup mapping |
 
-`path`, `init`, and `validate` accept `--path`, `-p` to select another user mapping file.
+`path`, `init`, `validate`, and `edit` accept `--custom-path`, `-p` to select another user mapping file.
 
 ### sync
 
-Generate backup or restore commands for registered items.
+Back up or restore registered items.
 
 ```bash
 devops data sync <up|down> [OPTIONS]
 ```
 
-`up` means backup to the cloud. `down` means retrieve from the cloud.
+`up` (or `u`) means backup to the cloud. `down` (or `d`) means retrieve from the cloud.
 
 Key options from current help:
 
@@ -39,7 +40,10 @@ Key options from current help:
 |--------|-------------|
 | `--cloud`, `-c` | Select the rclone config name to use |
 | `--which`, `-w` | Choose specific items, a whole group, or `all` |
-| `--source`, `-s` | Load backup entries from `library`, `user`, or `all` |
+| `--source`, `-s` | Load backup entries from `library`, `user`, or `all` (the default) |
+| `--password`, `-p` | Symmetric GPG password for entries with `encryption: symmetric` |
+| `--password-file`, `-F` | Read the password from a file, or `-` for stdin |
+| `--password-env`, `-E` | Read the password from the named environment variable |
 | `--use-link`, `-l` | On `down`, download from each entry's `share_url` with requests instead of rclone |
 
 If `--which` is omitted, the command falls back to interactive selection. The selector accepts:
@@ -51,41 +55,47 @@ If `--which` is omitted, the command falls back to interactive selection. The se
 Examples:
 
 ```bash
-# Generate commands to back up every registered item
+# Back up every registered item
 devops data sync up --which all
 
-# Generate commands to restore one group from the user backup config
+# Restore one group from the user backup config
 devops data sync down -s user --which dotfiles
 
-# Generate commands for selected entries with a specific cloud config
+# Back up selected entries with a specific cloud config
 devops data sync up --cloud myremote --which dotfiles.bashrc,history.shell
 
 # Restore selected entries from their recorded share_url values
 devops data sync down --use-link --which dotfiles.bashrc
 ```
 
-`devops data sync` filters entries by the current OS and then prints the generated `cloud copy` script based on each item's `path_cloud`, `os`, `zip`, `encryption`, and `rel2home` fields. With `--use-link`, only `down` is allowed, every selected entry must define a non-null `share_url`, and the retrieve path uses direct HTTP downloads instead of rclone.
+`devops data sync` filters entries by the current OS and then runs `cloud copy` for each selected entry based on its `path_cloud`, `os`, `zip`, `encryption`, and `rel2home` fields. Without `--cloud`, entries that do not name a cloud in `path_cloud` use `default_rclone_config` from the StackOps config. With `--use-link`, only `down` is allowed, every selected entry must define a non-null `share_url`, and the retrieve path uses direct HTTP downloads instead of rclone.
 
 ### register
 
 Add or update one entry inside the user backup configuration file at `~/dotfiles/stackops/mapper/data.yaml`.
 
 ```bash
-devops data register [OPTIONS] PATH_LOCAL
+devops data register [OPTIONS] [PATH_LOCAL]
 ```
+
+`PATH_LOCAL` is required unless `--interactive` is used.
 
 Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--group`, `-g` | Target group/table name inside the config file |
+| `--group`, `-g` | Target group/table name inside the config file; defaults to `default` |
 | `--name`, `-n` | Override the generated entry name |
 | `--path-cloud`, `-C` | Override the remote path; omit it to let stackops deduce one |
+| `--share-url`, `-u` | Optional http(s) share URL used by `sync down --use-link` |
 | `--no-zip`, `-z` | Skip zipping before upload |
 | `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; omit for plaintext |
 | `--password`, `-p` | Symmetric GPG password; requires `--encryption symmetric` and is not stored |
 | `--absolute-path`, `-r` | Store an absolute local path instead of a home-relative path |
-| `--os`, `-o` | Restrict the entry to `linux`, `darwin`, `windows`, or a comma-separated list |
+| `--os`, `-o` | Restrict the entry to `linux`, `darwin`, `windows`, or a comma-separated list; defaults to all three |
+| `--note`, `-N` | Free-text note stored on the entry; omit to keep an existing note, pass an empty string to clear it |
+| `--interactive`, `-i` | Prompt for the register fields one step at a time |
+| `--json`, `-j` | Print the registration receipt as JSON |
 
 Examples:
 
@@ -101,10 +111,11 @@ If `--name` is omitted, the command generates one from the local path and OS fil
 
 ### list
 
-Render backup entries as a table, including local and cloud paths, OS filters, archive and encryption options, and share URLs. Like `sync`, `list` defaults to `--source all`; use `--source user` or `--source library` to narrow the inventory.
+Render backup entries as a table, including local and cloud paths, OS filters, archive and encryption options, and share URLs. Like `sync`, `list` defaults to `--source all`; use `--source user` or `--source library` to narrow the inventory. `--json`, `-j` prints the selectors and complete entry definitions as JSON.
 
 ```bash
 devops data list
+devops data list --source user --json
 ```
 
 ### subset
@@ -143,7 +154,7 @@ devops data subset ./laptop-data.yaml --on-conflict append
 
 ### Editing the backup file
 
-Open the user backup file with `devops config edit data`. It is created with its YAML header and schema if it does not exist yet. To edit the packaged library file, pass its path with `--path`.
+Open the user backup file with `devops data edit` or `devops config edit data`. It is created from the packaged example, together with its schema, if it does not exist yet. To edit another file, pass its path with `--custom-path`.
 
 ### Backup File Layout
 
@@ -163,7 +174,7 @@ dotfiles:
       - darwin
 ```
 
-Every persisted entry requires `encryption: symmetric`, `encryption: asymmetric`, or `encryption: null`; `null` means plaintext. `--encryption`, `-e` is the sole encryption switch. Passwords provide symmetric credentials but do not select the mode.
+`path_cloud`, `share_url`, and a free-text `note` are optional. Every persisted entry requires `encryption: symmetric`, `encryption: asymmetric`, or `encryption: null`; `null` means plaintext. `--encryption`, `-e` is the sole encryption switch. Passwords provide symmetric credentials but do not select the mode.
 
 Selection behavior for `devops data sync --which ...`:
 

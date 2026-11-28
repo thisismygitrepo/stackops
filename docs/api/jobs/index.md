@@ -1,10 +1,9 @@
 # Jobs and Installer APIs
 
-`stackops.jobs` is mostly the script and package-group asset layer for the installer system. The catalog JSON lives with the installer schemas under `stackops.utils.schemas.installer`.
+`stackops.jobs` is mostly the script asset layer for the installer system. The catalog YAML and the package-group definitions live with the installer schemas under `stackops.utils.schemas.installer`.
 
 It ships:
 
-- package-group definitions
 - platform-specific install scripts
 - security-check helpers
 
@@ -70,9 +69,9 @@ print(PACKAGE_GROUP2NAMES["termabc"])
 
 The runtime path looks like this:
 
-1. `utils/schemas/installer/installer_data.yaml` defines the catalog.
+1. `utils/schemas/installer/installer_data.yaml` defines the library catalog. `stackops.utils.installer_utils.installer_catalog.read_installer_data()` loads it for the `library` and `all` sources and a user catalog for the `user` and `all` sources; with `all`, a user entry replaces the library entry of the same name.
 2. `utils/schemas/installer/package_groups.py` defines named bundles.
-3. `stackops.utils.installer_utils.installer_runner.get_installers()` filters that catalog for the current OS, architecture, and optional groups.
+3. `stackops.utils.installer_utils.installer_runner.get_installers()` filters the library catalog for a given OS, architecture, and optional groups; `get_installers_from_source()` does the same for a chosen source.
 4. `stackops.utils.installer_utils.installer_class.Installer` resolves and executes one install target.
 5. `stackops.utils.installer_utils.installer_cli` exposes the higher-level CLI-style entrypoints.
 
@@ -85,14 +84,16 @@ So this section documents both the packaged job assets and the installer APIs th
 ```text
 utils/schemas/installer/
 ├── installer_data.yaml           # Catalog of installer definitions
+├── installer_data.example.yaml   # Starter user catalog
 ├── installer_data.schema.json    # JSON Schema for the catalog
+├── installer_categories.py       # Titles and descriptions of the category labels
 ├── installer_types.py            # TypedDicts and platform helpers
 └── package_groups.py             # Named package bundles
 
 jobs/installer/
 ├── checks/                 # Security and reporting helpers
 ├── linux_scripts/          # Linux and macOS shell installers
-├── macos_scripts/          # macOS-specific installers
+├── macos_scripts/          # macOS-specific installers (no scripts at present)
 ├── powershell_scripts/     # Windows PowerShell installers
 └── python_scripts/         # Custom Python installers
 ```

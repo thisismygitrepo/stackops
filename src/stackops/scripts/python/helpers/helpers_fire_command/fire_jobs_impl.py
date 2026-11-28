@@ -329,9 +329,18 @@ def _apply_command_modifiers(args: FireJobArgs, command: str, choice_file: Path,
     if args.loop:
         platform_system = _get_supported_platform_system()
         if platform_system in ["Linux", "Darwin"]:
-            command = command + "\nsleep 0.5"
+            command = f"""trap ':' INT
+while true; do
+{command}
+sleep 0.5 || break
+done
+trap - INT"""
         elif platform_system == "Windows":
-            command = "$ErrorActionPreference = 'SilentlyContinue';\n" + command + "\nStart-Sleep -Seconds 0.5"
+            command = f"""$ErrorActionPreference = 'SilentlyContinue';
+while ($true) {{
+{command}
+Start-Sleep -Seconds 0.5
+}}"""
         else:
             raise NotImplementedError(f"Platform {platform_system} not supported.")
 

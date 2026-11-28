@@ -2,6 +2,7 @@
 import typer
 from typing import Annotated, Literal
 
+from stackops.utils.cloud.encryption import EncryptionModeChoice
 from stackops.utils.constants import IS_REPO_DEVELOPER
 
 
@@ -132,6 +133,10 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
                     text: Annotated[str | None, typer.Option("--text", "-t", help="Send some text")] = None,
                     qrcode: Annotated[bool, typer.Option("--qrcode", "--qr", "-q", help="Show receive code as a qrcode")] = False,
                     backend: Annotated[Literal["wormhole", "w", "croc", "c"], typer.Option("--backend", "-b", help="Backend to use")] = "croc",
+                    local_relay: Annotated[bool, typer.Option("--local-relay", "-l", help="Relay through this machine's LAN address (port 443) instead of croc's public relay")] = False,
+                    encryption: Annotated[EncryptionModeChoice | None, typer.Option("--encryption", "-e", help="GPG-encrypt the file or directory before sending: symmetric/s (password) or asymmetric/a (keys). Unlike --code, it stays encrypted after the transfer.")] = None,
+                    pwd: Annotated[str | None, typer.Option("--password", "-p", help="Symmetric GPG password. Prompts with a hidden prompt when omitted.")] = None,
+                    recipient: Annotated[str | None, typer.Option("--recipient", "-r", help="Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key.")] = None,
                     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
                     output_json: Annotated[bool, typer.Option("--json", "-j", help="Emit JSON Lines with transfer code/PID, then completion status.")] = False,
                     timeout: Annotated[float | None, typer.Option("--timeout", "-T", min=1, help="Maximum seconds to wait for transfer completion.")] = None,
@@ -139,6 +144,8 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
     """Send a file, directory, or text."""
     import platform
     import shlex
+    import shutil
+    from pathlib import Path
 
     if text is None and path is None:
         typer.echo("❌ Error: Provide a path or --text.", err=True)
@@ -156,18 +163,59 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
         typer.echo("❌ Error: --zip is only supported with the croc backend.", err=True)
         raise typer.Exit(code=1)
 
-    if output_json or timeout is not None:
+    if local_relay and backend in ("wormhole", "w"):
+        typer.echo("❌ Error: --local-relay is only supported with the croc backend.", err=True)
+        raise typer.Exit(code=1)
+    from stackops.utils.cloud.encryption import parse_encryption_mode
+
+    encryption_mode = None if encryption is None else parse_encryption_mode(encryption, label="encryption")
+    if encryption_mode is not None and text is not None:
+        typer.echo("❌ Error: --encryption can only be used when sending a file or directory.", err=True)
+        raise typer.Exit(code=1)
+    if pwd is not None and encryption_mode != "symmetric":
+        typer.echo("❌ Error: --password requires --encryption symmetric.", err=True)
+        raise typer.Exit(code=1)
+    if recipient is not None and encryption_mode != "asymmetric":
+        typer.echo("❌ Error: --recipient requires --encryption asymmetric.", err=True)
+        raise typer.Exit(code=1)
+
+    relay_endpoint: str | None = None
+    if local_relay:
+        import stackops.utils.network.address as helper
+
+        local_ip_v4 = helper.select_lan_ipv4(prefer_vpn=False)
+        if local_ip_v4 is None:
+            typer.echo("❌ Error: Could not determine local LAN IPv4 address for relay.", err=True)
+            raise typer.Exit(code=1)
+        relay_endpoint = f"{local_ip_v4}:443"
+
+    with_receipts = output_json or timeout is not None
+    if with_receipts and install_missing_dependencies and backend in {"croc", "c"}:
+        from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency
+
+        install_service_dependency("croc")
+
+    send_target = "text" if text is not None else path
+    staging_root: Path | None = None
+    if encryption_mode is not None and path is not None:
+        from stackops.scripts.python.helpers.helpers_devops.file_send_encryption import stage_encrypted_payload
+
+        encrypted_path = stage_encrypted_payload(path=path, mode=encryption_mode, pwd=pwd, recipient=recipient)
+        staging_root = encrypted_path.parent
+        path = str(encrypted_path)
+        typer.echo(f"🔐 Encrypted with GPG ({encryption_mode}). Receiver decrypts with: devops data decrypt {shlex.quote(encrypted_path.name)} --encryption {encryption_mode}", err=True)
+
+    if with_receipts:
         from stackops.scripts.python.helpers.helpers_devops.file_send_runtime import send_with_receipts
 
-        if install_missing_dependencies and backend in {"croc", "c"}:
-            from stackops.scripts.python.helpers.helpers_devops.network_service import install_service_dependency
-
-            install_service_dependency("croc")
-        send_with_receipts(path=path, text=text, code=code, backend=backend, zip_folder=zip_folder, qrcode=qrcode, timeout=timeout, output_json=output_json)
+        try:
+            send_with_receipts(path=path, text=text, code=code, backend=backend, zip_folder=zip_folder, qrcode=qrcode, relay=relay_endpoint, timeout=timeout, output_json=output_json)
+        finally:
+            if staging_root is not None:
+                shutil.rmtree(staging_root)
         return
 
     is_windows = platform.system() == "Windows"
-    send_target = "text" if text is not None else path
     receive_hint: str
     print_desc: str
 
@@ -193,16 +241,7 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
                 from stackops.utils.installer_utils.installer_cli import install_if_missing
                 install_if_missing(which="croc", binary_name=None, verbose=True)
 
-            # Get relay server IP from environment or use default
-            import stackops.utils.network.address as helper
-            res = helper.select_lan_ipv4(prefer_vpn=False)
-            if res is None:
-                typer.echo("❌ Error: Could not determine local LAN IPv4 address for relay.", err=True)
-                raise typer.Exit(code=1)
-            local_ip_v4 = res
-            relay_port = "443"
-            relay_endpoint = f"{local_ip_v4}:{relay_port}"
-            command_parts = ["croc", "--relay", relay_endpoint, "send"]
+            command_parts = ["croc", "send"] if relay_endpoint is None else ["croc", "--relay", relay_endpoint, "send"]
             if is_windows and code is not None:
                 command_parts.extend(["--code", quote_shell_arg(code)])
             if zip_folder:
@@ -225,9 +264,14 @@ def share_file_send(path: Annotated[str | None, typer.Argument(help="Path to the
 {croc_command}"""
                 else:
                     script = croc_command
-            receive_hint = f"""devops network receive -- --relay {relay_endpoint} {code if code is not None else "<code>"}"""
+            relay_hint = "" if relay_endpoint is None else f" -- --relay {relay_endpoint}"
+            receive_hint = f"""devops network receive{relay_hint} {code if code is not None else "<code>"}"""
             print_desc = "🚀 sending file with croc"
 
+    if staging_root is not None:
+        cleanup_command = "Remove-Item -Recurse -Force -LiteralPath" if is_windows else "rm -rf"
+        script = f"""{script}
+{cleanup_command} {quote_shell_arg(str(staging_root))}"""
     typer.echo(f"🚀 Sending {send_target}. Use: {receive_hint}")
     from stackops.utils.code import exit_then_run_shell_script
     from stackops.utils.meta import print_code

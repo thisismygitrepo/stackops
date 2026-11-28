@@ -19,11 +19,14 @@ Current subcommands:
 
 - `sync`
 - `register`
-- `display`
+- `list`
 - `subset`
-- `edit`
 - `encrypt`
 - `decrypt`
+- `path`
+- `init`
+- `validate`
+- `edit`
 
 ### Register a backup item
 
@@ -44,6 +47,7 @@ devops data register ~/Documents/work --group documents --path-cloud backups/wor
 - `zip`
 - `rel2home`
 - `os`
+- `note` (optional)
 
 Representative entry:
 
@@ -100,12 +104,12 @@ These commands perform the transfers; they do not only print a plan.
 ### Inspect, subset, or edit the backup config
 
 ```bash
-devops data display
+devops data list
 devops data subset ./laptop-data.yaml --which dotfiles.wezterm
-devops config edit data
+devops data edit
 ```
 
-`display` renders the registered user entries. `subset` writes selected entries to a standalone YAML file and has its own output-file `--on-conflict` policy. `devops config edit data` opens the user backup file, creating it with its schema when missing. Use `--source`, `-s` on data sync and subset to choose the configuration source where supported.
+`list` renders the entries from the selected configuration sources (`--json` prints them as JSON). `subset` writes selected entries to a standalone YAML file and has its own output-file `--on-conflict` policy. `devops data edit` (or `devops config edit data`) opens the user backup file, creating it with its schema when missing; `path`, `init`, and `validate` print its location, create it, or check it without opening an editor. Use `--source`, `-s` on data sync, list, and subset to choose the configuration source; sync and list default to `all`, subset to `user`.
 
 ---
 
@@ -120,7 +124,7 @@ devops data encrypt ./project --encryption asymmetric --compression tar.gz
 devops data decrypt ./project.tar.gz.gpg --encryption asymmetric --output ./restored-project
 ```
 
-Both commands preserve the source and refuse an existing output. Symmetric encryption is the default and prompts for a password when `--password`, `-p` is omitted. Pass `--encryption asymmetric` for GPG keys; encryption accepts `--recipient`, `-r`, defaulting to the user's own key. Folders are archived before encryption using `--compression`, `-c`: `zip` (default), `tar.gz`, `tar.bz2`, or `tar.xz`.
+Both commands preserve the source and refuse an existing output unless `--overwrite`, `-f` is passed. Symmetric encryption is the default and prompts for a password when `--password`, `-p` (or `--password-file`, `--password-env`) is omitted. Pass `--encryption asymmetric` for GPG keys; encryption accepts `--recipient`, `-r`, defaulting to the user's own key. Folders are archived before encryption using `--compression`, `-c`: `zip` (default), `tar.gz`, `tar.bz2`, or `tar.xz`.
 
 Without `--output`, `-o`, encryption writes beside the source with a `.gpg` suffix, plus the archive suffix for a folder. Decryption writes beside the encrypted file with those suffixes removed and extracts recognized folder archives.
 
@@ -153,7 +157,7 @@ cloud copy ./report.pdf remote:reports/report.pdf --record-name report --record-
 cloud copy ./report.pdf remote:reports/report.pdf --share-type v --record-name report --record-group shared
 ```
 
-`--record-name` writes the upload into the user `mapper/data.yaml` entry. Add `--share-scope` or `--share-type` when you also want the generated URL saved there instead of writing a `.share_url_*` sidecar file.
+`--record-name` writes the upload into the user `mapper/data.yaml` entry. Add `--share-scope` or `--share-type` to also create a share link; the URL is printed and, with `--record-name`, saved in that entry's `share_url`.
 
 ### Sync
 

@@ -32,6 +32,7 @@ nav = [
     { seek = "cli/seek.md" },
     { fire = "cli/fire.md" },
     { cloud = "cli/cloud.md" },
+    { webui = "cli/webui.md" },
   ] },
   { "API Reference" = [
     "api/index.md",

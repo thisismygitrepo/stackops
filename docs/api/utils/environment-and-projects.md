@@ -1,6 +1,6 @@
 # Environment and Project Wiring
 
-The environment helpers in `stackops` now live across `stackops.utils.cloud.defaults`. They answer two practical questions:
+The environment helpers in `stackops` now live across `stackops.scripts.python.helpers.helpers_utils.python_env` (virtualenv discovery and activation) and `stackops.utils.cloud.defaults` (cloud defaults). They answer two practical questions:
 
 - which virtualenv should this project use?
 - what cloud-transfer defaults should commands start from?
@@ -24,7 +24,7 @@ The environment helpers in `stackops` now live across `stackops.utils.cloud.defa
 
 At each directory it:
 
-1. Checks for a sibling `.venv` directory.
+1. Checks for a `.venv` directory inside it.
 2. Returns the first match immediately.
 3. Continues through parent directories if no `.venv` is present.
 
@@ -52,6 +52,7 @@ The function returns a `Path` when it finds a project-local virtualenv and `None
 
 The Windows branch rewrites the expanded virtualenv path to a `$HOME/.../Scripts/activate.ps1` PowerShell source line.
 The Windows path must be under the user's home directory because the implementation rewrites it relative to `$HOME`.
+Any other platform raises `NotImplementedError`.
 
 ---
 
@@ -60,17 +61,22 @@ The Windows path must be under the user's home directory because the implementat
 ```python
 from pathlib import Path
 
+from stackops.scripts.python.helpers.helpers_utils.python_env import build_virtualenv_activation_line, find_virtualenv_root
 from stackops.utils.cloud.defaults import read_default_cloud_config
 
+virtualenv_root = find_virtualenv_root(Path.cwd())
 cloud_defaults = read_default_cloud_config()
 
 print(cloud_defaults["root"])
+
+if virtualenv_root is not None:
+    print(build_virtualenv_activation_line(virtualenv_root))
 ```
 
 ## Profile helpers
 
-Use `stackops.profile.create_helper.copy_assets_to_machine(...)` when a script needs to install the
-packaged shell/script assets into the StackOps config root. Use `stackops.profile.dotfiles_mapper`
+Use `stackops.profile.create_helper.copy_assets_to_machine(which)` when a script needs to install the
+packaged `"scripts"` or `"settings"` assets into the StackOps config root. Use `stackops.profile.dotfiles_mapper`
 for typed dotfile mapper reads and writes. The profile modules that parse CLI options or apply
 machine-local symlink changes are command implementation modules, not general-purpose public APIs.
 
@@ -110,7 +116,33 @@ machine-local symlink changes are command implementation modules, not general-pu
 
 ## Secrets API
 
-::: stackops.secrets
+`stackops.secrets` is a package with an empty `__init__`, so the API is imported from its submodules. The ones documented here are `search`, `loader`, `models`, and `writer`.
+
+::: stackops.secrets.search
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Secrets file loader
+
+::: stackops.secrets.loader
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Secrets schema types
+
+::: stackops.secrets.models
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Secrets file writer
+
+::: stackops.secrets.writer
     options:
       show_root_heading: true
       show_source: false
@@ -143,6 +175,14 @@ machine-local symlink changes are command implementation modules, not general-pu
 ## Rclone wrapper
 
 ::: stackops.utils.cloud.rclone_wrapper
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Project root resolution
+
+::: stackops.utils.repos.project
     options:
       show_root_heading: true
       show_source: false

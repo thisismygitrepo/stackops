@@ -4,7 +4,7 @@ Run, list, locate, and edit Python or shell scripts from configured sources.
 
 ```bash
 devops scripts run [OPTIONS] [NAME] [SCRIPT_ARGS]...
-devops scripts list [--source SOURCE]
+devops scripts list [--source SOURCE] [--json]
 devops scripts path [NAME] [--source SOURCE]
 devops scripts edit [NAME] [--source SOURCE] [--editor hx|nano|code]
 ```
@@ -19,7 +19,8 @@ The group alias is `x`; command aliases are `run/r`, `list/l`, `path/p`, and `ed
 | `--interactive` | `-i` | Choose matching scripts interactively for run, path, or edit |
 | `--command` | `-c` | Run NAME as a shell command |
 | `--subprocess` | `-S` | Run shell scripts in a child shell instead of sourcing them |
-| `--editor` | `-e` | Editor for `edit`: `hx`, `nano`, or `code` |
+| `--editor` | `-e` | Editor for `edit`: `hx` (default), `nano`, or `code` |
+| `--json` | `-j` | For `list`: print script names, paths, and sources as JSON |
 
 Put `run` options before NAME. Arguments after NAME belong to the script.
 

@@ -16,7 +16,7 @@ terminal run --help
 For example, check whether Television's `tv` binary is available:
 
 ```bash
-devops software install tv --check
+devops software check tv
 ```
 
 This checks binary status; it does not preview or validate the installer. To install Television using the packaged catalog:
@@ -52,7 +52,7 @@ devops config dotfiles sync --help
 devops data sync --help
 ```
 
-`devops config interactive` offers package, asset, configuration, and shell setup choices. Its copy and symlink choices select library or user mappings and use `overwrite-default-path`, which can replace existing target files. The explicit scripted example below uses `throw-error` to stop on conflicts.
+`devops config interactive` offers StackOps install, package-group, shell-profile, configuration-link, repository, and data-retrieval choices. Its shell-profile choice copies the library mappings and its link choices symlink library or user mappings; all of them use `overwrite-default-path`, which can replace existing target files. The explicit scripted example below uses `throw-error` to stop on conflicts.
 
 ## Optional workstation setup
 
@@ -84,6 +84,7 @@ fire --help
 preview --help
 seek --help
 stackops --help
+stackops webui --help
 ```
 
 

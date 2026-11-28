@@ -1,3 +1,4 @@
+import getpass
 import json
 import re
 import shlex
@@ -5,10 +6,11 @@ import subprocess
 from pathlib import Path
 from typing import cast
 
-from stackops.scripts.python.helpers.helpers_utils.autostart_common import categorize, is_stock
+from stackops.scripts.python.helpers.helpers_utils.autostart_common import AutostartScope, categorize, is_stock
 
 # The command's own reader of what is turned on. Used as it is, so the page lists exactly the units the command lists.
 from stackops.scripts.python.helpers.helpers_utils.autostart_linux import _list_enabled_services  # pyright: ignore[reportPrivateUsage]
+from stackops.scripts.python.helpers.helpers_utils.autostart_script_constants import LINGERING_ACCOUNTS_FOLDER
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants import (
     DESKTOP_FILE_SOURCE,
     DESKTOP_FILES_FOLDER,
@@ -53,8 +55,10 @@ def _wanted_in(folder: Path, unit: str) -> bool:
 
 # The units of the person's own service manager: the ones that are turned on, as the command lists them, and the ones the page turned off.
 # A unit has a switch when it is the person's own settings that turn it on. One that is turned on for every account stays on whatever the
-# person's settings say, and a template names no unit to switch, so neither has one.
+# person's settings say, and a template names no unit to switch, so neither has one. They start at sign-in, or with the computer when the
+# account's services are kept running without one, which is what a startup script added for `boot` asks for.
 def _unit_entries() -> list[StartupEntry]:
+    scope: AutostartScope = "boot" if LINGERING_ACCOUNTS_FOLDER.joinpath(getpass.getuser()).exists() else "login"
     turned_on = _list_enabled_services(user=True)
     remembered = [unit for unit in read_turned_off_units() if unit not in turned_on]
     facts = _unit_facts([unit for unit in [*turned_on, *remembered] if "@." not in unit])
@@ -82,7 +86,7 @@ def _unit_entries() -> list[StartupEntry]:
                 title=unit.removesuffix(".service"),
                 description=said.get("Description", ""),
                 category=categorize(unit, fallback="system-os"),
-                scope="login",
+                scope=scope,
                 source=SYSTEMD_SOURCE,
                 stock=stock,
                 whose="system" if stock else "apps" if every_account else "yours",

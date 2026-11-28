@@ -178,8 +178,8 @@ def attach_to_session(
         window: Annotated[bool, typer.Option("--window", "-w", help="Choose a window/tab or pane target instead of only choosing from sessions.", show_default=True)] = False,
         backend: Annotated[SessionMultiplexerOption | None, typer.Option("--backend", "-b", help=f"Session multiplexer: tmux/t, herdr/h, tuios/u, aoe/e, or zellij/z (Zellij 0.45+). {DEFAULT_SESSION_MULTIPLEXER_HELP}")] = None,
         ) -> None:
-    require_interactive("Terminal attachment; use terminal summary --json for inspection")
     """Choose a session or deeper target to attach to."""
+    require_interactive("Terminal attachment; use terminal summary --json for inspection")
     if name is not None and new_session:
         typer.echo("Error: NAME cannot be used together with --new-session.", err=True, color=True)
         raise typer.Exit(code=1)

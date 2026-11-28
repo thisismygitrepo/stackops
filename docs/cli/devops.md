@@ -1,6 +1,6 @@
 # devops
 
-`devops` is the main operational CLI for package installation, repo automation, config sync, data sync, self-management, networking, script execution, and vault access.
+`devops` is the main operational CLI for package installation, repo automation, config sync, data sync, self-management, networking, script execution, vault access, and security scans.
 
 ---
 
@@ -9,6 +9,8 @@
 ```bash
 devops [OPTIONS] COMMAND [ARGS]...
 ```
+
+`--non-interactive`, `-N` (or `STACKOPS_NON_INTERACTIVE`) never prompts or opens a picker or editor; it is also enabled automatically without a terminal.
 
 ## Current top-level commands
 
@@ -22,7 +24,7 @@ devops [OPTIONS] COMMAND [ARGS]...
 | `network` | Sharing, transfer, address, SSH, and device helpers |
 | `scripts` | Run, list, locate, and edit scripts |
 | `vault` | Search and load secrets, manage entries, and access Bitwarden |
-| `security` | Run security and installer-audit helpers |
+| `security` | Scan installed apps or files with VirusTotal and keep per-run history |
 
 ---
 
@@ -34,7 +36,7 @@ devops software install [OPTIONS] [WHICH]
 
 Current options:
 
-- `--group` to treat `WHICH` as a bundle name
+- `--group` to treat `WHICH` as one or more comma-separated bundle names
 - `--source` to select `library`, `user`, or `all` installer catalogs; defaults to `all`
 - `--custom-path` to replace the user catalog with another file; `--source all` still merges it with the library catalog
 - `--interactive` to choose packages interactively
@@ -50,9 +52,9 @@ devops software explore ai-agents-assistants
 devops software install lazygit,fd --update
 ```
 
-Use `software explore` to browse installer `categoryLabels` before choosing packages, `check` to report binary availability without installing, `list` to browse definitions, `path` to locate catalogs, `init` to create an empty user catalog, `edit` to modify it, and `validate` to check it.
+Use `software explore` to browse installer `categoryLabels` before choosing packages, `check` to report binary availability without installing, `uninstall` to remove an installed app, `list` to browse definitions, `report` to rank entries by their saved GitHub commit dates, `update-attrs` to refresh those dates, `path` to locate catalogs, `init` to create a starter user catalog, `edit` to modify it, and `validate` to check it.
 
-These software commands all accept `--custom-path` for the user catalog. `list`, `install`, and `path` support `--source library`, `user`, or `all`; a custom path works with `user` or `all`, but not `library`. `init`, `edit`, and `validate` accept only `--source user`, which is also their default.
+`install`, `explore`, `list`, `report`, and `path` support `--source library`, `user`, or `all` and accept `--custom-path` for the user catalog; a custom path works with `user` or `all`, but not `library`. `update-attrs` updates one catalog at a time: `--source library` (its default) or `user`, with `--custom-path` for `user`. `init`, `edit`, and `validate` accept `--custom-path` and only `--source user`, which is also their default. `check` and `uninstall` take neither option.
 
 User catalog entries may reference `.sh`, `.ps1`, or `.py` installer scripts by file name; place them in an `installer_scripts/` directory next to the catalog (`~/dotfiles/stackops/config/installer_scripts/` by default). `software path` prints both script directories, and `software validate` fails if a referenced script is missing or its name is not unique across the user and library script directories.
 
@@ -93,7 +95,7 @@ These are the child commands exposed by the current live help.
 
 `config dotfiles register` and `data register` accept only `--source user`, which is also the default. `--source` uses `-s`. Dotfile registration stores files under the user `mapper/files` directory by default; `--destination` selects an explicit storage directory.
 
-`config dotfiles sync --source` / `-s` selects `user`, `library`, or `all` mappings. `library` contains only bundled settings mappings backed by `~/.config/stackops/settings`; `user` uses your mapper, and `all` combines both. An entry in your mapper replaces the library entry with the same group and name: `library` skips it and `all` uses yours. `devops config dotfiles collect` builds your mapper from what is on this machine: personal files (ssh, gpg, rclone, and similar) and your own versions of library settings (yazi, helix, and so on). It stores them in `~/dotfiles`, links them back, and skips anything identical to the packaged settings or already managed another way. Sync processes all entries selected by that source and `--which`.
+`config dotfiles sync --source` / `-s` selects `user`, `library`, or `all` mappings. `library` contains only bundled settings mappings backed by `~/.config/stackops/settings`; `user` uses your mapper, and `all` combines both. An entry in your mapper replaces the library entry with the same group and name: `library` skips it and `all` uses yours. `devops config dotfiles collect` builds your mapper from what is on this machine: personal files (ssh, gpg, rclone, and similar) and your own versions of library settings (yazi, helix, and so on). It stores them in `~/dotfiles`, links them back, and skips anything identical to the packaged settings or already managed another way. Without options it only prints the plan; `--which` or `--interactive` selects the groups to collect. Sync processes all entries selected by that source and `--which`.
 
 Generic `config` management commands and the dotfile/data `path`, `init`, and `validate` commands use `--custom-path` to select an explicit file. Standalone `repos` management commands retain `--path`.
 
@@ -108,8 +110,9 @@ Generic `config` management commands and the dotfile/data `path`, `init`, and `v
 - `path`
 - `init`
 - `validate`
+- `edit`
 
-Use `config edit data` to edit the backup mapping.
+`data edit` and `config edit data` both edit the backup mapping.
 
 `self`:
 
@@ -148,6 +151,8 @@ Use `config edit data` to edit the backup mapping.
 - `stats`
 - `subset`
 - `add`
+- `rotate`
+- `delete`
 - `path`
 - `init`
 - `validate`
@@ -156,12 +161,25 @@ Use `config edit data` to edit the backup mapping.
 `vault bitwarden`:
 
 - `search`
+- `load`
 - `login-and-unlock`
 - `export-session`
 - `sync`
 - `clean-cache`
 
-`security` lives directly under `devops`. `self` contains StackOps management commands and `status` for inspecting machine, repository, application, and configuration state; its developer commands require a local source checkout. `self build-assets` provides `cli-graph`, `charts`, and `skill-refs`.
+`security`:
+
+- `scan`
+- `status`
+- `list`
+- `upload`
+- `download`
+- `install`
+- `report`
+- `history`
+- `export`
+
+`security` lives directly under `devops`. `self` contains StackOps management commands and `status` for inspecting machine, repository, application, and configuration state; its developer commands (`docs`, `release`, `build-docker`, `build-graph`, and `build-assets`) are only available with a local source checkout at `~/code/stackops`. `self build-assets` provides `cli-graph`, `charts`, and `skill-refs`.
 
 ---
 
@@ -192,7 +210,7 @@ flowchart TB
 
         downloaded -->|"2. GPG decrypt + unzip"| copy
         local -->|"3. Commit changes; create worktree"| integration
-        copy -->|"4. Git fetch master + merge"| integration
+        copy -->|"4. Git fetch HEAD + merge"| integration
         integration -->|"5. Fast-forward after successful merge"| updated
         updated -->|"6. Zip repository"| archive
         archive -->|"7. GPG encrypt"| encrypted
@@ -203,9 +221,11 @@ flowchart TB
 ```
 
 - **Encryption:** by default, GPG encrypts to your own key; restoring requires its private key. Supplying `--password` selects symmetric encryption with that password.
-- **Archive contents:** repository files and `.git` history are encrypted together. Git-ignored files are excluded by default; `--ignore-gitignore` includes them.
-- **First sync:** if the cloud archive is missing, guard commits local changes and publishes the first encrypted archive. If the local repository is missing, it downloads, decrypts, and restores the cloud copy.
-- **Conflicts:** guard handles them in the isolated worktree using `--on-conflict` (default: `ask`). Stopping preserves that worktree and the downloaded copy for inspection; the live repository keeps its local commit without receiving merge conflict markers.
+- **Archive contents:** repository files and `.git` history are encrypted together. `--gitignore`, `-I` takes `include` or `respect` for Git-ignored files; when omitted, a registered repository keeps its saved setting and an unregistered one excludes them.
+- **Settings:** without `--cloud`, guard uses the storage profile saved for the repository in the repository specification (`--specs-path`, `-s`), otherwise the default rclone remote from the StackOps config.
+- **Mode:** `--mode`, `-M` selects `merge` (the default), `overwrite-local` to replace the local repository with the cloud copy, or `overwrite-remote` to replace the cloud archive with the local repository. Overwrite modes never merge.
+- **First sync:** if the cloud archive is missing, guard stops without uploading unless `--create-remote`, `-R` is passed; with it, guard commits local changes and publishes the first encrypted archive. If the local repository is missing, it downloads, decrypts, and restores the cloud copy.
+- **Conflicts:** guard handles merge conflicts in the isolated worktree using `--on-conflict`: `ask` (the default), `stop-on-conflict`, `merge-accept-remote`, or `merge-accept-local`. Stopping preserves that worktree and the downloaded copy for inspection; the live repository keeps its local commit without receiving merge conflict markers.
 
 ---
 
@@ -220,7 +240,7 @@ Capture and restore named repository states in the workspace's `versions.json`:
 | `status VERSION` | Compare a declared version with the current repositories |
 | `checkout VERSION` | Restore an existing repository collection to the declared commits and branches; `--dry-run` previews without fetching or changing repositories |
 
-All four accept `--directory`, `-d` to select the workspace; the default is the current directory. `declare --recursive`, `-r` includes nested repositories. Checkout refuses dirty current repositories and versions captured with dirty repositories; it does not clone missing repositories.
+All four accept `--directory`, `-d` to select the workspace; the default is the current directory. `declare --recursive`, `-r` includes nested repositories. `declare`, `status`, and `checkout` accept `--specs-path`, `-s` for the repository registry that holds sync settings; `list`, `status`, and `checkout` accept `--json`, `-j`. Checkout refuses dirty current repositories and versions captured with dirty repositories; it fetches a missing commit from the recorded remotes or guard archive (`--password`, `-p` for password-encrypted archives) but does not clone missing repositories.
 
 ```bash
 devops repos version declare baseline --message "Before dependency updates" --directory ./workspace
@@ -233,9 +253,9 @@ devops repos version checkout baseline --directory ./workspace --dry-run
 
 ## `data encrypt` and `data decrypt`
 
-These local operations use GPG without uploading data or registering a backup entry. `encrypt PATH` accepts a file or folder; folders are archived first. `decrypt PATH` accepts a `.gpg` file and extracts a recognized folder archive after decryption. Both preserve the input and refuse an existing output path.
+These local operations use GPG without uploading data or registering a backup entry. `encrypt PATH` accepts a file or folder; folders are archived first. `decrypt PATH` accepts a `.gpg` file and extracts a recognized folder archive after decryption. Both preserve the input and refuse an existing output path unless `--overwrite`, `-f` is passed.
 
-Both commands accept `--encryption`, `-e` (`symmetric`/`s` or `asymmetric`/`a`), `--password`, `-p`, and `--output`, `-o`. Symmetric encryption is the default and prompts for a password when omitted. For asymmetric encryption, `encrypt --recipient`, `-r` selects a GPG key; otherwise it uses the user's own key. Folder encryption supports `--compression`, `-c` with `zip` (default), `tar.gz`, `tar.bz2`, or `tar.xz`.
+Both commands accept `--encryption`, `-e` (`symmetric`/`s` or `asymmetric`/`a`), `--password`, `-p`, and `--output`, `-o`. Symmetric encryption is the default and prompts for a password when omitted; `--password-file`, `-F` (a file, or `-` for stdin) and `--password-env`, `-E` (an environment variable name) supply it without a prompt. For asymmetric encryption, `encrypt --recipient`, `-r` selects a GPG key; otherwise it uses the user's own key. Folder encryption supports `--compression`, `-c` with `zip` (default), `tar.gz`, `tar.bz2`, or `tar.xz`.
 
 ```bash
 devops data encrypt ./notes.txt
@@ -249,7 +269,7 @@ devops data decrypt ./project.tar.gz.gpg --encryption asymmetric --output ./rest
 ## `scripts`
 
 ```bash
-devops scripts run [OPTIONS] NAME [SCRIPT_ARGS]...
+devops scripts run [OPTIONS] [NAME] [SCRIPT_ARGS]...
 ```
 
 Current behavior:
@@ -258,9 +278,9 @@ Current behavior:
 - when `NAME` is a direct script file path, `run` executes it without searching the configured script roots. An explicit file overrides `--source`, including `--source dynamic`
 - `--source`, `-s` selects search locations: `all/a`, `workspace/w`, `user/u`, `library/l`, or `dynamic/d`
 - `--source workspace` or `-s w` searches `<workspace-root>/.stackops/scripts` and `.stackops/scripts` in each immediate child directory of the root that has one, labelled `workspace:<child>`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Outside these locations, explicit `workspace` fails and `all` searches the remaining sources
-- `--interactive` enables interactive selection
-- `--command` runs the input as a command
-- `scripts list` prints available scripts; `scripts path [NAME]` prints a resolved path or the search locations; `scripts edit NAME` opens a script from `workspace/w`, `user/u`, or `library/l`, or searches those locations with `all/a`
+- `--interactive`, `-i` enables interactive selection, so `NAME` can be omitted
+- `--command`, `-c` runs the input as a command
+- `scripts list` prints available scripts (`--json`, `-j` for names, paths, and sources); `scripts path [NAME]` prints a resolved path or the search locations; `scripts edit NAME` opens a script from `workspace/w`, `user/u`, or `library/l`, or searches those locations with `all/a`, in the `--editor`, `-e` of choice (`hx` by default, `nano`, or `code`)
 - `--subprocess`, `-S` runs shell scripts in a child Bash or PowerShell process instead of sourcing them in the caller
 - put StackOps run options before `NAME`; arguments after it are forwarded to the script
 
@@ -286,17 +306,19 @@ devops vault COMMAND [ARGS]...
 
 Current behavior:
 
-- `search` selects StackOps secret bundles without loading environment variables; `--json` includes secret values
-- `load` selects bundles and loads their environment variables; it uses the same terms and selectors as `search`
-- `add` creates a new login entry; `stats` and `subset` inspect or export selected entries
+- `search` lists matching StackOps secret bundles without loading environment variables; `--load/-L` also defines them in the calling shell, `--copy/-C KEY` copies one environment key's value to the clipboard, and `--json` prints the matching entries including secret values
+- `load` selects bundles and loads their environment variables; it uses the same terms and selectors as `search`, and `--command/-c` runs one command with them instead
+- `add` appends a new login entry, or replaces an existing one with `--replace`; `stats` and `subset` inspect or export selected entries
+- `rotate` replaces values in one secret bundle and records its rotation date; `delete` removes secret bundles, whole logins, or single keys
 - `path`, `init`, and `validate` manage the secrets file and schema
-- `--source/-s` selects `workspace/w` or `user/u`; `search`, `load`, and `stats` also accept `all/a`
-- The workspace secrets file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Reads also include `.stackops/secrets/secrets.json` from each immediate child directory of the root that has one, labelled `workspace:<child>`; commands that write one file use the root file. Outside these locations, explicit `workspace` fails and `all` includes only `user`; select `user` or pass a custom file
+- `--source/-s` selects `workspace/w` or `user/u`; `search`, `load`, `stats`, `rotate`, and `delete` also accept `all/a`
+- The workspace secrets file is `<workspace-root>/.stackops/secrets/secrets.json`. The root is the enclosing Git repository root, including from a subdirectory, or the current directory when it contains at least two immediate child Git repositories. Reads also include `.stackops/secrets/secrets.json` from each immediate child directory of the root that has one, labelled `workspace:<child>`; `add`, `subset`, `init`, and `validate` use the root file, while `rotate` and `delete` update the file that holds the matched selection. Outside these locations, explicit `workspace` fails and `all` includes only `user`; select `user` or pass a custom file
 - `--custom-path/-p` selects exactly one secrets file and overrides `--source`, including `--source all`
 - With no source or custom file, `search` and `load` prefer an existing workspace file and otherwise use the user file; `stats` reads all available sources
-- `bitwarden search` retrieves Bitwarden credentials and can copy password, username, TOTP, or raw JSON to clipboard slots
+- `bitwarden search` lists matching Bitwarden items without secret values; `--copy/-C` copies `password`, `username`, or `totp` to the system clipboard, `--load/-L` defines the item's custom fields as environment variables, and `--json` or `--raw` print the items including secret values
+- `bitwarden load` loads a Bitwarden item's custom fields into environment variables, or runs one command with them via `--command/-c`
 - `bitwarden login-and-unlock` loads Bitwarden API credentials from StackOps secrets, unlocks the vault, and saves `BW_SESSION` locally
-- `bitwarden export-session` prints an eval-able shell script that exports the saved `BW_SESSION`
+- `bitwarden export-session` defines the saved `BW_SESSION` in the calling shell, the way `load` defines variables; it requires the StackOps shell wrapper
 - `bitwarden sync` synchronizes Bitwarden with the server and refreshes cached searches
 - `bitwarden clean-cache` removes cached search results and any saved session token
 
@@ -309,11 +331,14 @@ devops vault load github --source user
 devops vault search github --source all
 devops vault search github --custom-path ./secrets.json
 devops vault add --source workspace
+devops vault rotate --source user --name github-personal
+devops vault delete --name github-personal --dry-run
 devops vault validate --custom-path ./secrets.json
 devops vault bitwarden login-and-unlock --account-name dev
 devops vault bitwarden search github --copy password
+devops vault bitwarden load github-token
 devops v s github --json
-eval "$(devops vault bitwarden export-session)"
+devops vault bitwarden export-session
 devops vault bitwarden sync
 devops vault bitwarden clean-cache
 ```

@@ -6,10 +6,11 @@ import { rise } from "../../../motion.js";
 import { backLink } from "../../../space_kit.js";
 import { button, callout, notice, skeleton } from "../../../widgets.js";
 import { createActions, createOutcome } from "./actions.js";
-import { ADD_COMMAND, REMOVE_COMMAND, openAddScript } from "./add_script.js";
+import { ADD_COMMAND, APPLY_COMMAND, REMOVE_COMMAND, openAddScript } from "./add_script.js";
 import { readStartup } from "./api.js";
 import { openDetail } from "./detail.js";
 import { buildModel, emptyPicks, groupsOf, inUniverse, matching } from "./model.js";
+import { createStartupList } from "./remembered.js";
 import { createList } from "./rows.js";
 import { createSummary } from "./summary.js";
 import { createToolbar } from "./toolbar.js";
@@ -88,8 +89,8 @@ export function createStartupPage({ activity, tools }, takeArrival) {
   const addScript = () =>
     openAddScript({
       activity,
-      onAdded: (file) => {
-        outcome.show({ said: `${file} starts when you sign in, from your next sign-in on.` });
+      onAdded: (file, when) => {
+        outcome.show({ said: when === "boot" ? `${file} starts when this computer starts, from the next start on.` : `${file} starts when you sign in, from your next sign-in on.` });
         keeper.load(true);
       },
     }).catch((error) => toast(error.message));
@@ -112,6 +113,7 @@ export function createStartupPage({ activity, tools }, takeArrival) {
   const waiting = h("div", { class: "autostart-waiting" }, h("div", { class: "autostart-cards" }, skeleton(4, "card")), skeleton(6, "row"));
   const problemHolder = h("div");
   const notes = h("div", { class: "autostart-notes" });
+  const startupList = createStartupList({ activity, outcome, reload: () => keeper.load(true) });
   const empty = h("div");
 
   function problemNotice() {
@@ -146,7 +148,7 @@ export function createStartupPage({ activity, tools }, takeArrival) {
     stamp.textContent = ready ? `Read at ${formatClock(model.readAt / 1000)}` : "";
     problemHolder.replaceChildren(...(problem ? [problemNotice()] : []));
     waiting.hidden = ready || problem !== null;
-    for (const part of [summary.element, toolbar.element, notes, list.element, empty]) part.hidden = !ready;
+    for (const part of [summary.element, toolbar.element, notes, startupList.element, list.element, empty]) part.hidden = !ready;
     if (!ready) return;
     const universe = inUniverse(model, view);
     const found = matching(model, view);
@@ -165,8 +167,9 @@ export function createStartupPage({ activity, tools }, takeArrival) {
     const mine = (ticket += 1);
     refresh.disabled = true;
     try {
-      const answer = await readStartup();
+      const [answer, kept] = await Promise.all([readStartup(), startupList.read()]);
       if (mine !== ticket) return;
+      startupList.show(kept);
       model = answer.unavailable ? null : buildModel(answer);
       problem = answer.unavailable ? { kind: "unavailable", ...answer.unavailable } : null;
     } catch (error) {
@@ -189,12 +192,13 @@ export function createStartupPage({ activity, tools }, takeArrival) {
       "header",
       { class: "view-head" },
       h("div", { class: "view-title" }, backLink("#/machine", "Machine"), h("h1", { text: "Startup programs" }), h("p", { text: "The services and programs that start on their own, when this computer starts or when you sign in." })),
-      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [COMMAND, ADD_COMMAND, REMOVE_COMMAND] }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh, button({ label: "Add a script", glyph: "plus", tone: "primary", title: "Start one of your scripts every time you sign in", onclick: addScript })),
+      h("div", { class: "view-actions" }, stamp, agentButton(activity, { commands: [COMMAND, ADD_COMMAND, REMOVE_COMMAND, APPLY_COMMAND] }), button({ label: "All options", glyph: "sliders", title: "The command's own form, with every option it has", onclick: () => tools.open(COMMAND, { plain: true }) }), refresh, button({ label: "Add a script", glyph: "plus", tone: "primary", title: "Start one of your scripts on its own, here and on your other machines", onclick: addScript })),
     ),
     problemHolder,
     waiting,
     summary.element,
     outcome.element,
+    startupList.element,
     toolbar.element,
     notes,
     list.element,

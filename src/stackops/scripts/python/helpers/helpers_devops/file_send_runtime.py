@@ -15,19 +15,12 @@ import typer
 def send_with_receipts(
     *, path: str | None, text: str | None, code: str | None,
     backend: Literal["wormhole", "w", "croc", "c"], zip_folder: bool,
-    qrcode: bool, timeout: float | None, output_json: bool,
+    qrcode: bool, relay: str | None, timeout: float | None, output_json: bool,
 ) -> None:
     environment = dict(os.environ)
-    relay: str | None = None
     if backend in {"croc", "c"}:
-        from stackops.utils.network.address import select_lan_ipv4
-
-        address = select_lan_ipv4(prefer_vpn=False)
-        if address is None:
-            raise typer.BadParameter("Could not determine the LAN IPv4 address for the relay.")
-        relay = f"{address}:443"
         code = code or secrets.token_hex(16)
-        arguments = ["croc", "--relay", relay, "--yes", "send"]
+        arguments = ["croc", "--yes", "send"] if relay is None else ["croc", "--relay", relay, "--yes", "send"]
         if os.name == "nt":
             arguments.extend(["--code", code])
         else:

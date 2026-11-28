@@ -14,7 +14,7 @@ preview [OPTIONS] [PATH]
 
 | Argument | Description |
 | --- | --- |
-| `PATH` | Optional file or directory to inspect before launching the backend |
+| `PATH` | Optional file or directory to inspect before launching the backend. Defaults to the current directory. |
 
 ---
 
@@ -28,7 +28,8 @@ preview [OPTIONS] [PATH]
 | `--interactive` | `-i` | Select any available backend interactively |
 | `--profile` | `-r` | IPython profile name |
 | `--self` | `-s` | Point the project at `~/code/stackops` when that checkout exists |
-| `--frozen` | `-f` | Add `--frozen` to the `uv run` invocation |
+| `--frozen` | `-f` | Add `--frozen` to the `uv run` invocation; cannot be combined with `--uv-with` |
+| `--non-interactive` | `-N` | Disable interactive backends; only `--backend preview` runs without a terminal |
 
 The backend option also accepts short aliases from the current enum mapping:
 
@@ -71,13 +72,15 @@ With `--interactive`, paths expose file-viewer choices by their actual tool name
 
 - if `PATH` is a Python file, it stages that file inside a generated temporary script
 - if `PATH` is a non-Python file, it generates a reader script using StackOps file readers and prints the parsed content in the chosen backend
-- if `PATH` is omitted, it still creates a temporary script and launches the selected backend in the current context
+- if `PATH` is omitted or is a directory, it still creates a temporary script and launches the selected backend in the current context
+- if `PATH` does not exist, it is treated as a partial file name and searched for under the current directory
 
 Project resolution is currently:
 
 1. explicit `--project`, if provided
-2. nearest `.venv` discovered from the selected file
+2. `--no-project` for the `visidata` backend
 3. `~/code/stackops`, if that checkout exists and nothing else was selected
+4. otherwise no project; the published `stackops[plot]` package is added with `--with`
 
 ---
 
@@ -90,13 +93,13 @@ Project resolution is currently:
 - `jupyter` emits a temporary `.ipynb` and opens it in JupyterLab.
 - `jupyter-ai` emits a temporary `.ipynb` and opens it in JupyterLab with `jupyter-ai` installed.
 - `vscode` initializes a temporary `uv` workspace and opens the generated script in VS Code.
-- `visidata` opens the selected file directly with `vd`; JSON files use plain `visidata`, other files add `pyarrow`.
+- `visidata` opens the selected file directly with `vd`; JSON files use plain `visidata`, other files add `pyarrow` and `openpyxl`.
 - `preview` uses the fullscreen preview flow.
 - `auto` uses the file-aware viewer flow.
 - `browser` serves browser-viewable files and directories.
 - `glow` opens Markdown files in Glow.
 - SQL client choices open local DuckDB/SQLite files through the selected database TUI.
-- `preview`, `auto`, `browser`, `glow`, and the SQL client backends require `PATH`; calling one of those backends without a path raises an error before launch.
+- `preview`, `auto`, `browser`, `glow`, and the SQL client backends open `PATH` itself instead of generating a script; with `PATH` omitted they receive the current directory.
 
 ---
 

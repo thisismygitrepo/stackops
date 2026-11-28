@@ -15,30 +15,32 @@ operation is safe or reversible.
 | Data | Default location | Protection and exposure |
 | --- | --- | --- |
 | Global StackOps secrets | `~/dotfiles/stackops/secrets/secrets.json` | Plaintext JSON. On POSIX, the canonical writer creates a `0700` directory and `0600` file, but other edit paths and pre-existing files may retain broader permissions. StackOps does not configure Windows ACLs. |
-| Project-local StackOps secrets | `<project>/.stackops/secrets/secrets.json`, or an explicit `--path` | Plaintext JSON. Do not commit it; a repository is not guaranteed to ignore this path. |
-| Secret shell handoff | `~/tmp_results/tmp_scripts/stackops/*.secrets.env.sh` or `*.secrets.env.ps1` | Temporary plaintext, set to mode `0600` on POSIX and intended to be deleted after it is sourced. StackOps does not configure a private Windows ACL. An interruption can leave it behind. Values then remain in the current shell environment and are inherited by child processes. |
+| Project-local StackOps secrets | `<project>/.stackops/secrets/secrets.json`, or an explicit `--custom-path` | Plaintext JSON. Do not commit it; a repository is not guaranteed to ignore this path. |
+| Secret shell handoff | `~/tmp_results/tmp_scripts/stackops/*.secrets.env.sh` or `*.secrets.env.ps1` | Temporary plaintext, set to mode `0600` on POSIX and intended to be deleted after it is sourced. StackOps does not configure a private Windows ACL. An interruption can leave it behind. Under the Nushell wrapper, every handoff also writes the complete shell environment beside the handoff script as `*.before` and `*.after` snapshots (created under `umask 077` on POSIX) and removes them afterwards; the `.after` snapshot includes the loaded values. Values then remain in the current shell environment and are inherited by child processes. |
 | Bitwarden login material | The global StackOps secrets file | `BW_CLIENTID`, `BW_CLIENTSECRET`, and `BW_PASSWORD` are plaintext at rest in that file and are placed in the `bw` child-process environment during login. |
-| Bitwarden session and search cache | `~/tmp_results/cache/pwdmgr/cache.json.gpg` | GPG-encrypted to the user's default self-recipient. The cache contains `BW_SESSION` and raw cached `bw list items` results. At runtime, sessions may appear in process arguments, shell state, or command output; retrieved credential data can also be copied to the clipboard. |
+| Bitwarden session and search cache | `~/tmp_results/cache/pwdmgr/cache.json.gpg` | GPG-encrypted to the user's default self-recipient. The cache contains `BW_SESSION` and raw cached `bw list items` results. At runtime, the session is passed to `bw` in its environment and may appear in shell state or command output; retrieved credential data can also be copied to the clipboard. |
 | OneDrive CLI authentication | The global StackOps secrets file | Client IDs and refresh tokens are plaintext JSON. Rotated refresh tokens are written back to this file. |
 | Browser profiles | `~/data/browsers-profiles/<browser>/<profile>` | Ordinary browser profile trees, not encrypted by StackOps. They can contain cookies, tokens, history, extensions, and saved site data. MCP browser profiles use the same root. |
-| Browser working profiles | The OS temporary directory under `stackops-browser-profiles`, or `<saved-profile>/.tmp/<name>` with `--tmp` | The OS-temporary path is a fresh port-scoped profile. `--tmp` makes a full saved-profile copy, deliberately preserves it after runtime launch begins, including after interruption, and requires manual cleanup after the browser is closed. |
-| rclone, SSH, cloud, and other tool credentials | Locations owned by those tools | For example, use `rclone config file` to find the active rclone configuration; repository-guard integration also uses `~/dotfiles/creds/rclone/rclone.conf`. SSH normally uses `~/.ssh`. StackOps does not add encryption to these files. |
+| Browser working profiles | The OS temporary directory under `stackops-browser-profiles`, or `<saved-profile>/.tmp/<name>` with `--tmp` | The OS-temporary path is a port-scoped profile directory; a leftover directory for the same port is reused. `--tmp` makes a full saved-profile copy and deliberately preserves it after runtime launch begins, including after interruption. Neither is removed when the browser closes: delete them manually, or with `utils machine clean-drive` once they have been untouched for 3 days. |
+| rclone, SSH, cloud, and other tool credentials | Locations owned by those tools | For example, use `rclone config file` to find the active rclone configuration; when the guarded repository is `~/dotfiles`, repository-guard integration also checks `~/dotfiles/creds/rclone/rclone.conf` for the remote. SSH normally uses `~/.ssh`. StackOps does not add encryption to these files. |
 
 The global secrets file can contain the VirusTotal key, cloud tokens, email
 credentials, Bitwarden credentials, passwords, and other arbitrary environment
 values. Schema validation does not encrypt them. Check permissions after
-creating or editing any secrets file, and keep the whole `~/dotfiles/creds` tree
-out of source control and unencrypted backups.
+creating or editing any secrets file, and keep `~/dotfiles/stackops/secrets`
+and the whole `~/dotfiles/creds` tree out of source control and unencrypted
+backups.
 
-`devops config secrets` can intentionally print JSON, preview secret values, or
-export values into the caller's environment. `devops vault search` can print or
-copy credentials and always handles the selected item's raw JSON. Terminal
+`devops vault search` and `devops vault load` can intentionally print JSON with
+secret values, preview secret values, copy a value to the clipboard, or export
+values into the caller's environment. `devops vault bitwarden search` can print
+or copy credentials and can print the selected items' raw JSON. Terminal
 scrollback, shell exports, process inspection, clipboard managers, and child
 processes are outside the protection provided by file encryption.
 
-`devops vault clean-cache` deletes only the StackOps GPG cache. It does not clear
-the current shell, command output, clipboard history, or Bitwarden CLI's own
-application state.
+`devops vault bitwarden clean-cache` deletes only the StackOps GPG cache. It
+does not clear the current shell, command output, clipboard history, or
+Bitwarden CLI's own application state.
 
 ## Encryption and transfer
 
@@ -46,15 +48,17 @@ StackOps uses GPG for the operations that explicitly request encryption:
 
 - symmetric transfer encryption uses GPG with AES-256;
 - asymmetric transfer encryption uses the user's default self-recipient;
+  `devops data encrypt` and `devops network send` also accept an explicit
+  `--recipient`;
 - repository guard archives are GPG-encrypted before upload;
 - dotfile export produces a symmetrically encrypted `.zip.gpg` archive; and
 - the Bitwarden cache is asymmetrically GPG-encrypted.
 
 Cloud copy and data sync are **not encrypted by StackOps by default**. When an
-entry has `encryption: null`, or `cloud copy` is run without `--encryption`, the
-source is uploaded without application-level encryption. `--zip` is compression,
-not encryption. An rclone `crypt` remote or a provider's server-side encryption
-is a separate boundary controlled by that configuration.
+entry has `encryption: null`, or `cloud copy` is run without `--encryption` or a
+password option, the source is uploaded without application-level encryption.
+`--zip` is compression, not encryption. An rclone `crypt` remote or a provider's
+server-side encryption is a separate boundary controlled by that configuration.
 
 Encrypted uploads are staged locally before transfer, and downloads are staged
 and decrypted before being placed at their target. Temporary plaintext can
@@ -80,13 +84,17 @@ StackOps can obtain and execute code from several places:
 - an optional user catalog at
   `~/dotfiles/stackops/config/installer_data.yaml` can add installers and
   replace same-named bundled entries;
-- catalog entries and direct CLI arguments can select GitHub releases,
-  arbitrary HTTP(S) downloads, native package managers, or shell commands;
-- bundled installer scripts can add vendor repositories, clone repositories,
-  download more scripts, or use pipe-to-shell installers;
-- `devops execute` can run a command, a local script, a script from configured
-  private/public/library directories, or an unpinned dynamic script fetched
-  from the StackOps GitHub `main` branch; and
+- catalog entries can select GitHub releases, arbitrary HTTP(S) downloads,
+  native package managers, shell commands, or installer scripts; a direct CLI
+  argument can be a GitHub repository URL or an HTTP(S) download URL;
+- bundled installer scripts, and scripts in `installer_scripts` beside a user
+  catalog, can add vendor repositories, clone repositories, download more
+  scripts, or use pipe-to-shell installers;
+- `devops scripts run` can run a command, a local script, a script from the
+  workspace (`.stackops/scripts`), user (`~/dotfiles/stackops/scripts`), or
+  bundled library directories, or an unpinned dynamic script fetched from the
+  StackOps GitHub `main` branch; with the default `--source all`, a name that
+  matches no local script is fetched from there; and
 - `agents add-skill` can invoke `bunx` or `npx` with `skills@latest` to fetch
   skills from third-party GitHub repositories.
 
@@ -109,9 +117,9 @@ bootstrap for environments that require reproducible or reviewed code.
 
 The StackOps codebase has no intentional first-party usage analytics, automatic
 telemetry collector, crash-reporting service, or StackOps-owned telemetry
-endpoint. StackOps does persist local operational logs and state, and some
-cluster features synchronize operational logs or metadata to the configured
-cloud remote.
+endpoint. StackOps does persist local operational logs and state, and the
+`stackops.cluster.remote` Python API can synchronize operational logs or
+metadata to the configured cloud remote.
 
 That does not mean StackOps is offline. A requested operation may contact PyPI,
 GitHub, package repositories, vendor installers, Bitwarden, VirusTotal, rclone
@@ -134,20 +142,28 @@ third-party agent tools are not a guarantee about those products.
   starts from that larger boundary.
 - Generic standalone binary installation on Unix currently sets mode `0777`
   before moving or replacing the executable in `~/.local/bin`. Other local
-  users can therefore modify it on a multi-user system. Direct APK installation
-  invokes `apk add --allow-untrusted`.
+  users who can reach that directory can therefore modify it on a multi-user
+  system. Direct APK installation invokes `apk add --allow-untrusted`.
 - Remote commands have the authority of the selected SSH or cloud account. SSH
-  host-key handling is not uniform: newer network SSH paths prompt with a
-  fingerprint, while an older Paramiko path accepts unknown host keys. Verify
-  host fingerprints independently for sensitive systems.
+  host-key handling is not uniform: StackOps' own Paramiko connections prompt
+  with the fingerprint of an unknown host key and refuse it when no prompt is
+  possible, while commands that call the system `ssh` follow its OpenSSH
+  configuration. Verify host fingerprints independently for sensitive systems.
 - SSH server installation enables and starts the service. On Windows it creates
   an inbound TCP/22 allow rule for all firewall profiles and remote addresses.
-  Linux/WSL port changes inspect firewall and SELinux policy but generally
-  require the operator to prepare those policies separately.
-- Browser automation binds to loopback by default. `agents browser ... --lan`
-  exposes the automation relay on `0.0.0.0` with no StackOps authentication
-  layer. Anyone able to reach that port may be able to control the authenticated
-  browser profile. Use it only on an isolated, trusted network.
+  Linux/WSL port changes only inspect host firewall (UFW, firewalld, nftables,
+  iptables, and Windows Firewall from WSL) and SELinux policy; they never
+  modify it. When an active policy is not shown to allow the new port, the
+  change stops before SSH is modified, and the operator must prepare the
+  policy separately.
+- `devops network device open-wsl-port` creates a Windows inbound TCP allow
+  rule for the requested ports without restricting it to a firewall profile
+  or remote address. StackOps has no command that removes the rule.
+- Browser automation binds to loopback by default. `--lan` on
+  `agents browser launch` or `batch-launch` exposes the automation relay on
+  `0.0.0.0` with no StackOps authentication layer. Anyone able to reach that
+  port may be able to control the authenticated browser profile. Use it only on
+  an isolated, trusted network.
 
 Prefer an unprivileged account, elevate only for the specific operation, keep a
 second administrative session open for remote network changes, and do not pass
@@ -167,8 +183,9 @@ Some paths provide limited transactional behavior:
 - an SSH port change snapshots `sshd_config` and any StackOps systemd socket
   override in memory, then attempts to restore and reactivate the old listener
   after a handled failure; and
-- some Cloudflare route changes maintain a temporary rollback copy and trap
-  ordinary script exits.
+- `devops network cloudflare sync-routes` keeps a temporary rollback copy of
+  the target configuration beside it and traps ordinary script exits to
+  restore it and restart the service.
 
 These protections do not cover power loss, `SIGKILL`, every subprocess, or every
 operation. Installer and package-manager changes are generally not rolled back,
@@ -191,8 +208,9 @@ Use this recovery sequence:
 5. For a transfer, restore from the authoritative local, cloud, or offline
    backup and check for partial remote objects or active share links.
 6. For secret exposure, remove only the scoped plaintext handoff file, clear the
-   shell and clipboard, run `devops vault clean-cache` when applicable, revoke
-   sessions, and rotate the credential. Deleting a cache does not revoke it.
+   shell and clipboard, run `devops vault bitwarden clean-cache` when
+   applicable, revoke sessions, and rotate the credential. Deleting a cache
+   does not revoke it.
 7. Close a browser before touching its profile. Then inspect saved-profile
    `.tmp` directories and OS-temporary StackOps profiles for stale copies that
    contain cookies or tokens.
@@ -200,28 +218,27 @@ Use this recovery sequence:
 If the affected host is remote, retain console access until service and network
 health have been verified from a separate connection.
 
-## Limits of `devops self security` and VirusTotal checks
+## Limits of `devops security` and VirusTotal checks
 
-`devops self security` is a file-scanning, reporting, sharing, downloading, and
+`devops security` is a file-scanning, reporting, sharing, downloading, and
 installation helper. It is not a host hardening audit, dependency or CVE scanner,
 signature verifier, process monitor, behavioral sandbox, or guarantee that a
 file is safe.
 
 Important disclosure behavior:
 
-- A VirusTotal scan reads and uploads the complete file to VirusTotal. It is not
-  a local hash-only lookup. Do not submit private binaries, credentials,
+- A VirusTotal scan sends the file's SHA-256 to VirusTotal and reuses an
+  existing report for that hash. When VirusTotal has no report, the complete
+  file is uploaded for analysis. Do not submit private binaries, credentials,
   customer data, or material you are not permitted to disclose.
-- `--record` controls only local CSV recording for an explicit `--path` scan;
-  omitting it does not prevent the VirusTotal upload. Installed-app scans record
-  by default, and the current CLI has no `--no-record` option.
-- An installed-app scan also attempts to upload every discovered directory
-  entry to the configured default rclone remote and requests a share link,
-  even if the VirusTotal scan returned no summary. Discovery does not require
-  an entry to be a regular executable before queuing it; VirusTotal skips
-  directories, but the cloud upload is still attempted. A single explicit
-  `--path` scan does not perform this additional cloud upload.
-- `security upload` and installed-app sharing are provider operations. There is
+- Every scan, including an explicit `--path` scan, is recorded locally as a run
+  by default. `--no-record` turns off only that local record; it does not
+  prevent the VirusTotal lookup or upload.
+- Cloud uploads are off by default. With `--upload`, each file whose VirusTotal
+  check completed is also copied to the configured default rclone remote under
+  `myhome/security/` and a share link is requested, for `--path` scans too. A
+  file whose check failed is not uploaded.
+- `security upload` and `scan --upload` are provider operations. There is
   no `security` command that recalls a VirusTotal submission or deletes the
   remote object/share. Use the providers' controls.
 
@@ -236,22 +253,28 @@ verdict. StackOps counts `malicious` plus `suspicious` as flagged and calculates
 the percentage from malicious, suspicious, harmless, and undetected verdicts.
 Timeouts, unsupported types, engine failures, and unknown categories are
 excluded from that denominator. A displayed `Clean` result means only zero
-reporting verdict engines flagged that submitted sample at that time. False
-positives and false negatives remain possible.
+reporting verdict engines flagged that sample at that time. When VirusTotal
+already had a report, the verdicts carry that report's original analysis date,
+not the time of the scan. False positives and false negatives remain possible.
 
-File-scan failures can be reduced to a missing summary, and polling has no total
-completion deadline. Reports are plaintext CSV files under
-`~/.config/stackops/profile/records/<os>/`. A new or filtered scan replaces the
-saved reports; the two CSV files are written separately and can be incomplete or
-mismatched after interruption.
+A file whose check fails is recorded with the failing stage and error instead
+of a verdict, waiting for one file's result stops after 10 minutes, and a scan
+with failures exits nonzero. Each run is a plaintext `run.json` in its own
+directory under `~/.config/stackops/profile/records/<os>/security/` (or
+`--records-dir`); a later scan adds a run and does not replace earlier ones.
+The file is rewritten as results arrive, so an interrupted run keeps the
+results saved so far and can remain marked `interrupted`, `failed`, or
+`running`. `security export` writes `run.json`, `apps.csv`, `engines.csv`, and
+`accounts.csv` to a new directory.
 
-Reports store an app name, path, timestamp, engine results, and possibly a share
-URL, but no cryptographic digest binds the verdict to the later download.
-`security install` treats a cached row as eligible when it has at least one
-verdict and zero flagged engines, then downloads the recorded Google Drive URL
-without a checksum, signature verification, identity comparison, or rescan.
-Reports and URLs can be stale or mutable, and concurrent installs can partially
-succeed without rollback. Verify the exact downloaded bytes independently
+Runs store the host name, app names, paths, SHA-256 digests, timestamps, engine
+results, VirusTotal account names (not API keys), and possibly a share URL.
+`security install` reads one finished run, the latest by default. It treats a
+target as eligible when it has at least one verdict, zero flagged engines, and
+a recorded share URL, then downloads that Google Drive URL and installs the file
+only when its SHA-256 equals the digest recorded by the scan. There is no
+signature verification or rescan. Runs can be stale, and concurrent installs can
+partially succeed without rollback. Verify the downloaded file independently
 before execution.
 
 ## Reporting a vulnerability

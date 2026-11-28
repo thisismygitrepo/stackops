@@ -148,10 +148,10 @@ export function switchWords(entry, platform) {
   const now = entry.live === "running" ? `${system} stops it now and` : entry.live === "waiting" && entry.kind === "launchd" ? `${system} unloads it now and` : system;
   const yoursOnly = entry.whose === "apps" ? " That holds for your account only, and the app it belongs to may turn it back on." : "";
   return {
-    off: `${now} no longer starts it when you sign in.${yoursOnly} Its file stays where it is, so you can turn it back on from this page.`,
+    off: `${now} no longer starts it ${SCOPES[entry.scope].moment}.${yoursOnly} Its file stays where it is, so you can turn it back on from this page.`,
     on:
       entry.kind === "launchd"
         ? `macOS loads it again now, the way it does when you sign in${entry.manner === "always" ? ", so it starts right away" : ""}. From then on it starts on its own at every sign-in.`
-        : `${system} starts it now, and from then on at every sign-in.`,
+        : `${system} starts it now, and from then on ${entry.scope === "boot" ? "every time the computer starts" : "at every sign-in"}.`,
   };
 }

@@ -18,12 +18,12 @@ them as an import pattern.
 
 | Area | What it covers | Main modules | Reference |
 | --- | --- | --- | --- |
-| Environment and project wiring | `.venv` discovery, activation helpers, and cloud metadata defaults | `stackops.utils.python_env`, `stackops.utils.cloud_defaults` | [Environment and project wiring](utils/environment-and-projects.md) |
-| Paths, files, and config documents | JSON / INI / pickle IO, GPG helpers, path mutation, path-reference lookup | `stackops.utils.io`, `stackops.utils.path_core`, `stackops.utils.path_helper`, `stackops.utils.path_reference` | [Paths, files, and config](utils/paths-files-config.md) |
-| Scheduling and cache | Repeating routines, memory cache, disk-backed cache | `stackops.utils.scheduler` | [Scheduling and cache](utils/scheduling-and-cache.md) |
-| Interactive helpers | IDs, list splitting, fuzzy / TV-backed choices | `stackops.utils.accessories`, `stackops.utils.options` | [Interactive helpers](utils/interactive-helpers.md) |
+| Environment and project wiring | `.venv` discovery, activation helpers, and cloud metadata defaults | `stackops.scripts.python.helpers.helpers_utils.python_env`, `stackops.utils.cloud.defaults` | [Environment and project wiring](utils/environment-and-projects.md) |
+| Paths, files, and config documents | JSON / INI / pickle IO, GPG helpers, path mutation, path-reference lookup | `stackops.utils.io`, `stackops.utils.path_core`, `stackops.utils.path_reference` | [Paths, files, and config](utils/paths-files-config.md) |
+| Scheduling and cache | Repeating routines, memory cache, disk-backed cache | `stackops.cluster.scheduler` | [Scheduling and cache](utils/scheduling-and-cache.md) |
+| Interactive helpers | IDs, list splitting, fuzzy / TV-backed choices | `stackops.utils.accessories`, `stackops.utils.options_utils.options` | [Interactive helpers](utils/interactive-helpers.md) |
 | Code generation and command launching | Lambda-to-script conversion, `uv` command builders, shell execution, shell handoff, missing-tool install guards | `stackops.utils.meta`, `stackops.utils.code`, `stackops.utils.installer_utils.installer_cli` | [Code generation and command launching](utils/code-generation.md) |
-| Remote execution and networking | Remote job config and state, transfer, SSH, public-IP and LAN helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh`, `stackops.scripts.python.helpers.helpers_network.*` | [Remote execution and networking](cluster/remote.md) |
+| Remote execution and networking | Remote job config and state, transfer, SSH, public-IP and LAN helpers | `stackops.cluster.remote.*`, `stackops.utils.ssh_utils.ssh`, `stackops.utils.network.address`, `stackops.scripts.python.helpers.helpers_network.*` | [Remote execution and networking](cluster/remote.md) |
 | Installer catalog and package groups | Installer data, package groups, install request handling, install orchestration, direct URL installers | `stackops.utils.schemas.installer.*`, `stackops.jobs.installer.*`, `stackops.utils.installer_utils.*` | [Jobs and installer APIs](jobs/index.md) |
 
 ---
@@ -34,15 +34,21 @@ them as an import pattern.
 stackops/
 ├── cluster/
 │   ├── remote/                    # Remote job models, transfer, script generation
+│   ├── sessions_managers/         # Conflict planning, tmux session manager, layout builders
+│   └── scheduler.py               # Scheduler, CacheMemory, Cache
 ├── jobs/
-│   └── installer/                 # package groups and install scripts
+│   └── installer/                 # Install scripts and security checks
 ├── scripts/python/helpers/
-│   └── helpers_network/           # IP and connectivity helpers
+│   ├── helpers_network/           # IP switching and connectivity helpers
+│   └── helpers_utils/             # python_env and other command helpers
 ├── utils/
-│   ├── accessories, cloud_defaults, code, io, meta, options, python_env, scheduler, ssh
+│   ├── accessories, code, io, meta, path_core, path_reference, source_of_truth
+│   ├── cloud/                     # Cloud defaults and rclone helpers
 │   ├── installer_utils/           # Runtime installer engine
-│   ├── path_core, path_helper, path_reference
-│   └── schemas/{installer,layouts} # installer_data.yaml and schema types
+│   ├── network/                   # Address helpers
+│   ├── options_utils/             # Interactive choice helpers
+│   ├── ssh_utils/                 # SSH transport and helpers
+│   └── schemas/{installer,layouts} # installer_data.yaml, package groups, and schema types
 └── settings/                      # Configuration assets and templates
 ```
 
@@ -88,7 +94,7 @@ from stackops.cluster.sessions_managers.utils.maker import make_layout_from_func
 from stackops.utils.schemas.installer.package_groups import PACKAGE_GROUP2NAMES
 from stackops.utils.code import run_shell_script
 from stackops.utils.installer_utils.installer_cli import install_if_missing
-from stackops.utils.scheduler import Scheduler, Cache
+from stackops.cluster.scheduler import Scheduler, Cache
 ```
 
 If you need end-user command entrypoints instead of library APIs, see the [CLI Reference](../cli/index.md).

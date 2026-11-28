@@ -1,6 +1,6 @@
 ## software
 
-Install software and manage its catalog. The group provides `install`, `list`, `path`, `init`, `edit`, and `validate`. Installation supports single packages, multiple packages, package groups, and interactive selection.
+Install software and manage its catalog. The group provides `install`, `uninstall`, `explore`, `check`, `list`, `report`, `update-attrs`, `path`, `init`, `edit`, and `validate`. Installation supports single packages, multiple packages, package groups, and interactive selection.
 
 ```bash
 devops software install [OPTIONS] [WHICH]
@@ -10,14 +10,16 @@ devops software install [OPTIONS] [WHICH]
 
 | Argument | Description |
 |----------|-------------|
-| `WHICH` | Comma-separated list of package names, group name, or GitHub/binary URL |
+| `WHICH` | Comma-separated package names, group names with `--group`, or a GitHub/binary URL |
 
 ### Options
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--group` | `-g` | Treat `WHICH` as a package group name |
-| `--interactive` | `-i` | Interactive selection with TV/fzf interface |
+| `--group` | `-g` | Treat `WHICH` as package group names |
+| `--source` | `-s` | Catalog to use: `library`, `user`, or `all` (default); user entries override matching library names |
+| `--custom-path` | `-p` | Use another user catalog file with `--source user` or `all` |
+| `--interactive` | `-i` | Interactive selection with the `tv` picker |
 | `--update` | `-u` | Reinstall or upgrade when supported |
 | `--version` | `-v` | Specific version or tag to install when supported |
 
@@ -47,7 +49,7 @@ devops software install "btop, fd, bat, rg"
 Install predefined bundles of related packages:
 
 ```bash
-# Install terminal essentials (40+ tools)
+# Install terminal essentials (48 tools)
 devops software install termabc --group
 devops software install termabc -g
 
@@ -57,8 +59,8 @@ devops software install agents -g
 # Install full development environment
 devops software install dev -g
 
-# Install system monitors
-devops software install sys-monitor -g
+# Install several groups as one batch
+devops software install sys-monitor,nw -g
 ```
 
 #### Interactive Mode
@@ -107,35 +109,41 @@ devops software install https://example.com/tool-v1.0-linux-amd64.tar.gz
 
 | Group | Description | Contents |
 |-------|-------------|----------|
-| `sysabc` | System essentials | Package managers, build tools, bun |
-| `termabc` | Terminal power tools | 60+ CLI tools (search, monitors, shell) |
-| `gui` | GUI applications | brave, code, git |
-| `dev` | Full dev environment | 80+ tools across all categories |
-| `dev-utils` | Development utilities | devcontainer, rust-analyzer, evcxr, geckodriver |
-| `term-eye-candy` | Terminal visuals | lolcatjs, figlet-cli, boxes, cowsay |
-| `agents` | AI assistants | aider, aichat, copilot, antigravity/agy, opencode-ai, mods, q, ... |
-| `terminal-emulator` | Terminal emulators | Alacritty, Wezterm, warp, vtm, nushell |
-| `browsers` | Web browsers | Brave, browsh, carbonyl |
-| `code-editors` | Code editors | code, Cursor, lvim |
-| `code-analysis` | Code & Git tools | lazygit, gitui, delta, gh, tokei, hyperfine |
-| `db` | Database tools | SqliteBrowser, duckdb, DBeaver, rainfrog |
-| `media` | Media players | ytui-music, termusic |
-| `file-sharing` | File sharing | ngrok, cloudflared, ffsend, syncthing, rclone |
-| `productivity` | Productivity | espanso, bitwarden, glow, gum, pandoc |
-| `sys-monitor` | System monitors | btop, btm, procs, bandwhich, fastfetch |
-| `search` | Search & file tools | fd, fzf, rg, bat, yazi, zoxide, dust |
+| `sysabc` | System essentials | The single `sysabc` installer: base system packages through the existing package manager on Linux, Homebrew on macOS, winget plus PowerShell, Windows Terminal and Git on Windows; bun on all three |
+| `termabc` | Terminal power tools | 48 tools: `search` + `shell` + `code-analysis` + `sys-monitor` |
+| `search` | Search & file tools | 21 tools: yazi, fd, fzf, tv, rg, bat, zoxide, dust, ... |
+| `shell` | Shell enhancements | nerdfont, tuios, mcfly, starship |
+| `code-analysis` | Code & Git tools | 16 tools: lazygit, gitui, delta, gh, tokei, hyperfine, jq, ... |
+| `sys-monitor` | System monitors | btop, btm, ntop, procs, cpufetch, fastfetch, pstop |
+| `dev` | Full dev environment | 92 entries: `terminal` + `browsers` + `editors` + `db-all` + `media` + `file-sharing` + `dev-utils` + `code-analysis` + `productivity` + `eye` |
+| `dev-utils` | Development utilities | devcontainer, rust-analyzer, evcxr, geckodriver, git, m365 |
+| `eye` | Terminal visuals | lolcatjs, figlet-cli, boxes, cowsay |
+| `agents` | AI assistants | 36 entries: aider, aichat, copilot, antigravity, crush, mods, q, pi, ... |
+| `terminal` | Terminal emulators & shells | alacritty, ghostty, wezterm, warp-terminal, vtm, edex-ui, extraterm, nu |
+| `browsers` | Web browsers | brave, bypass-paywalls-chrome, browsh, carbonyl |
+| `editors` | Code editors | code, hx, zed |
+| `db-all` | All database tools | 15 entries: `db-tui` + `db-cli` + `db-desktop` + `db-web` |
+| `db-cli` | Database CLIs | dolt, duckdb, postgresql-client, sqlite3, redis-cli |
+| `db-desktop` | Database desktop apps | dbgate, dbeaver, sqliteBrowser |
+| `db-web` | Database web UIs | pgweb |
+| `db-tui` | Database TUIs | rainfrog, lazysql, dblab, usql, harlequin, sqlit |
+| `media` | Media players & tools | ytui-music, youtube-tui, termusic, rmpc, kronos, OBS Background removal |
+| `gui` | GUI applications | brave, chatgpt, wezterm |
+| `nw` | Network tools | bandwhich, psnet, ipinfo, sniffnet, topgrade, speedtest, rclone |
+| `file-sharing` | File sharing & sync | 18 entries: ngrok, cloudflared, ffsend, syncthing, restic, ... |
+| `productivity` | Productivity | 12 entries: espanso, glow, gum, pandoc, marp, ... |
+
+Counts are the names each group lists. A listed name is skipped when the selected catalog has no installer for it on the current OS and architecture.
 
 ### Listing Available Groups
 
 ```bash
-# Show all available groups with their packages
+# --group without a group name reports the missing name, then prints
+# a table of every group (Group, AppsBundled) and exits with an error
 devops software install -g
-
-# Output shows:
-# 📦 sysabc              --   sysabc
-# 📦 termabc             --   nano|lazygit|onefetch|...
-# 📦 agents              --   aider|aichat|copilot|...
 ```
+
+The interactive picker (`devops software install -i`) also lists the groups, prefixed with `📦`.
 
 ### Examples
 
@@ -155,5 +163,17 @@ devops software install -i
 # Install from specific GitHub repo
 devops software install https://github.com/jesseduffield/lazygit
 ```
+
+### Other software commands
+
+| Command | Description |
+|---------|-------------|
+| `uninstall WHICH` | Remove apps: delete the program file StackOps installed, or run the package manager's uninstall command |
+| `check WHICH` | Report whether executables are installed, without installing; `--group` takes one check group (currently only `agents`), not an install group |
+| `list [QUERY]` | List catalog definitions, filtered by name, description, or category; `--json` prints full definitions |
+| `report` | Rank entries by their saved GitHub commit dates; `--reverse` shows newest first |
+| `update-attrs` | Refresh the saved GitHub commit dates of the library or user catalog |
+| `path` | Print catalog, schema, and installer-script paths as JSON |
+| `init` / `edit` / `validate` | Create, edit, or validate the user catalog |
 
 ---

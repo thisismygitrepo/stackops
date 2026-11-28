@@ -39,11 +39,11 @@ def preview(
     """Preview files and launch reader backends."""
     choice_file = _resolve_target_path(path=path)
     backend = _resolve_preview_backend(target_path=choice_file, requested_backend=backend)
-    uv_with_line_user: str = "INVALID_INIT_VALUE_FOR_UV_WITH"
+    uv_with_line_user: str
     if frozen:
-        uv_with_line_user += " --frozen"
         if uv_with is not None:
             raise RuntimeError("Frozen flag contradicts uv_with, you can't have both at the same time.")
+        uv_with_line_user = "--frozen"
     else:
         if uv_with is not None:
             match backend:

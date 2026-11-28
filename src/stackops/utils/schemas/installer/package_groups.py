@@ -3,8 +3,6 @@ from typing import TypeAlias, Literal
 GUI = [
     "brave",
     "chatgpt",
-    "claude-desktop",
-    "code",
     # "zoomit",
     "wezterm",
     # "mouse-without-borders",
@@ -22,7 +20,7 @@ AGENTS = [
     "minimax-code",
     "deepseek-harness",
     "crush",
-    "opencode-ai",
+    "opencode",
     "deer-flow",
     "forge",
     "headroom",
@@ -44,7 +42,9 @@ AGENTS = [
     "kilocode",
     "cline",
     "auggie",
-    "agentofempires", "agent-deck", "agenthand", "beads", "beads_viewer", "gastown", "symphony"
+    "agent-deck", "beads", "beads_viewer", "gastown",
+    # "agenthand",
+    # "symphony",
     # "codex",
     # "gorilla",
     # "ollama",
@@ -56,7 +56,7 @@ PACKAGES_TERMINAL_EMULATORS = [
     "alacritty",
     "ghostty",
     "wezterm",
-    "warp",
+    "warp-terminal",
     "vtm",
     "edex-ui",
     "extraterm",
@@ -105,7 +105,7 @@ DB_DESKTOP = [
     "sqliteBrowser",
 ]
 DB_WEB = [
-    "pgadmin",
+    # "pgadmin",
     "pgweb"
     # https://github.com/chartdb/chartdb
 ]
@@ -136,7 +136,6 @@ PACKAGES_FILE_SHARING = [
     "qr",
     "qrscan",
     "sharewifi",
-    "share-wifi",
     "easy-sharing",
     "ezshare",
     "restic",
@@ -179,7 +178,7 @@ PACKAGES_CODE_ANALYSIS = [
 # Productivity & Utilities - Productivity tools, security, remote access, and terminal enhancements
 PACKAGES_PRODUCTIVITY = [
     "espanso",
-    "bitwarden",
+    "bw",
     "openpomodoro-cli",
     "rustdesk",
     "mermaid-cli",

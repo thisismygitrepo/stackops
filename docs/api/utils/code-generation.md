@@ -52,10 +52,12 @@ Important current constraints:
 
 ### Current behavior
 
-- `get_uv_command(platform)` returns `"$HOME/.local/bin/uv"` on Unix-like systems and `& "$HOME\\.local\\bin\\uv.exe"` on Windows.
-- `get_uv_command_executing_python_script()` writes the generated script to `~/tmp_results/tmp_scripts/python/<random>.py`.
-- If `prepend_print=True`, the helpers inject preview-print code and ensure `rich` is added to the `uv` dependency list. When `uv_with` is a list, `rich` is appended to that list before the command is built.
+- `get_uv_command(platform)` returns `"$HOME/.local/bin/uv"` on Unix-like systems and `& "$HOME\.local\bin\uv.exe"` on Windows.
+- `get_uv_command_executing_python_script()` writes the generated script to `~/tmp_results/tmp_scripts/python/<creator>_<random>.py`. `creator` is a required keyword-only label; it is lowercased and reduced to `[a-z0-9_]` before it becomes the filename prefix.
+- `get_uv_command_executing_python_script()` honours `prepend_print=True` only when `IS_REPO_DEVELOPER` is true (`~/code/stackops` exists). In that case it injects preview-print code ahead of the script; otherwise the script is written as-is and `prepend_print=False` is passed on.
+- In `get_uv_command_executing_python_file()`, `prepend_print=True` ensures `rich` is in the `uv` dependency list. When `uv_with` is a non-empty list, `rich` is appended to that list before the command is built; otherwise `--with rich` is used.
 - `get_uv_command_executing_python_file()` chooses `--project "<dir>"` when `uv_project_dir` is set, otherwise it uses `--no-project`.
+- `get_shell_script_running_lambda_function()` prepends `--python <current interpreter>` to `uv_run_flags` when `uv_project_dir` is `None`, and passes the last component of the lambda's module name as `creator`.
 
 Example:
 
@@ -82,16 +84,16 @@ print(shell_script)
 
 ## Running shell scripts
 
-`run_shell_script()` writes the provided shell text to a temporary file, displays it with Rich when `display_script=True`, executes it with:
+`run_shell_script(script, display_script, clean_env)` writes the provided shell text to a temporary file, displays it with Rich when `display_script=True` and `IS_REPO_DEVELOPER` is true, executes it with:
 
 - `bash <temp-file>` on Linux and macOS
-- `powershell -ExecutionPolicy Bypass -File "<temp-file>"` on Windows
+- `powershell -ExecutionPolicy Bypass -Command "& '<temp-file>'; exit $LASTEXITCODE"` on Windows
 
-and then deletes the temporary file.
+and then deletes the temporary file. It returns the `subprocess.CompletedProcess`.
 
-`run_shell_file()` is the lower-level variant when the script already exists on disk.
+`run_shell_file(script_path, clean_env)` is the lower-level variant when the script already exists on disk. `clean_env=True` runs the script with an empty environment; `clean_env=False` inherits the current one.
 
-`run_python_script_in_marimo()` writes a temporary Python file under `~/tmp_results/tmp_scripts/marimo/<random>/`, converts it with `marimo convert`, then launches `marimo edit`.
+`run_python_script_in_marimo()` writes a temporary Python file under `~/tmp_results/tmp_scripts/marimo/marimo_runner_<random>/`, then hands a shell script to `exit_then_run_shell_script()` that converts it with `marimo convert` and launches `marimo edit`.
 
 ---
 
@@ -119,10 +121,10 @@ The two `exit_then_run_*` helpers are for workflows that want to hand control to
 
 It:
 
-1. checks whether `binary_name` or `which` is already on `PATH`
+1. checks whether `binary_name` is already on `PATH`, using `which` as the binary name when `binary_name` is `None`
 2. returns `True` immediately if it exists
-3. otherwise calls `main_installer_cli()` to install it
-4. returns `True` on success or `False` if installation raises
+3. otherwise looks up the packaged installer whose `appName` matches `which` (after `INSTALLER_NAME_ALIASES`) for the current OS and architecture and runs `Installer.install_robust()`; it returns `False` when no such installer exists
+4. returns `False` if the installation result is `failed`, otherwise whether the binary is now on `PATH`
 
 This is the mechanism used by helpers such as `get_public_ip_address()` and `switch_public_ip_address()` before they shell out to `ipinfo` or `warp-cli`.
 

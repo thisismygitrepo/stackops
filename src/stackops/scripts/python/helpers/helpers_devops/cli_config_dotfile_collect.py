@@ -75,7 +75,7 @@ def collect_dotfiles(
         typer.Option(
             "--which",
             "-w",
-            help="Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine.",
+            help="Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Collectable groups line lists the groups collectable on this machine.",
         ),
     ] = None,
     interactive: Annotated[bool, typer.Option("--interactive", "-i", help="Pick the groups to collect from the plan interactively.")] = False,

@@ -9,7 +9,7 @@ This page mirrors the interactive CLI hierarchy view from `devops self explore-c
   loading="lazy"
 ></iframe>
 
-Use the live explorer commands to inspect or regenerate the hierarchy from an installed checkout:
+Use the live explorer commands to inspect the hierarchy. `devops self build-assets charts` regenerates this page's chart and is only available from a StackOps source checkout:
 
 ```bash
 devops self build-assets charts

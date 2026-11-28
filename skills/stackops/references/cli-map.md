@@ -1,6 +1,6 @@
 # StackOps CLI Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-11-14.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-11-28.
 
 Use this as a root index only. Discover command groups, options, defaults, aliases, and help text from the live CLI with `--help`.
 
@@ -38,6 +38,7 @@ Defined in `pyproject.toml` `[project.scripts]`:
 - `UV_CACHE_DIR=/tmp/uv-cache uv run seek --help`
 - `UV_CACHE_DIR=/tmp/uv-cache uv run fire --help`
 - `UV_CACHE_DIR=/tmp/uv-cache uv run preview --help`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run stackops webui --help`
 
 ## Important Nuances
 

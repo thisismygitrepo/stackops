@@ -35,6 +35,7 @@ graph LR
 | `stackops.cluster.remote.data_transfer` | SFTP and cloud-transfer helpers used by `RemoteMachine.submit()` |
 | `stackops.cluster.remote.execution_script` | Template renderer for the generated Python wrapper |
 | `stackops.cluster.remote.distribute` | Multi-host distribution utilities built around `RemoteMachine` |
+| `stackops.cluster.remote.cloud_manager` | `CloudManager`: an rclone-synced job log and lock through which worker machines claim, fire, and track queued jobs |
 | `stackops.utils.ssh_utils.ssh` | SSH transport, remote Python execution, remote shell execution, and file copy helpers |
 | `stackops.utils.network.address` | Public-IP lookup and local IPv4 selection |
 | `stackops.scripts.python.helpers.helpers_network.address_switch` | Public-IP rotation flow based on `warp-cli` |
@@ -54,12 +55,12 @@ graph LR
 | `description` | Free-form description copied into job metadata |
 | `ssh_host` | SSH config alias or `user@host[:port]` target |
 | `copy_repo`, `update_repo`, `install_repo` | Repo setup policy before the generated Python wrapper runs |
-| `data` | Extra files or directories to transfer alongside the job |
+| `data` | List of paths stored with the config; the files and directories that are actually transferred are the `data` argument of `RemoteMachine` |
 | `transfer_method` | `sftp` or `cloud` |
 | `cloud_name` | Required when `transfer_method="cloud"` |
-| `allowed_remotes` | Optional list stored with the config for callers that restrict eligible remotes |
-| `launch_method` | `remotely` or `cloud_manager` |
-| `kill_on_completion` | Stored on the config for callers that want completion cleanup policy |
+| `allowed_remotes` | Optional list of `user@hostname` names; `CloudManager` leaves the job queued on any machine that is not in it |
+| `launch_method` | `remotely` or `cloud_manager`. Saved and reloaded with the config (another value raises `ValueError` on reload), but no code reads it, so it does not change how a job is launched |
+| `kill_on_completion` | Boolean saved and reloaded with the config. No code reads it, so it has no effect |
 | `interactive` | Runs the generated Python wrapper with `python -i` instead of `python` |
 | `wrap_in_try_except` | Wraps the generated execution line in a try/except block |
 | `parallelize`, `workload_params` | Split a callable into `ProcessPoolExecutor` work units |
@@ -124,7 +125,7 @@ job.run(run=True, show_scripts=False)
 
 | Method | Purpose |
 | --- | --- |
-| `generate_scripts()` | Writes `job_params.json`, the generated Python wrapper, the shell launcher, kwargs JSON, and config JSON |
+| `generate_scripts()` | Writes `job_params.json`, the generated Python wrapper, the shell launcher, the kwargs, file-manager, config, and remote-machine JSON files, and an initial `queued` status |
 | `show_scripts()` | Prints the generated shell and Python sources with Rich |
 | `submit()` | Transfers the job root with SFTP or prepends cloud-download commands to the shell launcher when `ssh_host` is set; local jobs only mark themselves submitted |
 | `fire(run)` | Launches the generated shell script locally or through SSH |
@@ -206,7 +207,7 @@ This is the path to use when the same callable should be partitioned across seve
 
 `stackops.utils.ssh_utils.ssh.SSH` is the lower-level transport used by the remote layer.
 
-`SSH.from_config_file(host)` calls the `SSH` constructor with the host string. The constructor first tries `~/.ssh/config`; if no matching entry exists, it parses `user@host[:port]`, `user@host`, or `host:port` syntax. The class opens:
+`SSH.from_config_file(host)` calls the `SSH` constructor with the host string. The constructor parses it as an OpenSSH destination (`host`, `user@host`, `host:port`, `user@host:port`, or a bracketed `[host]:port`) and then asks OpenSSH itself (`ssh -G`) for the configuration that applies: host name, user, port, identity files, proxy command or jump host, and known-hosts settings. A user or port written in the destination wins over the configured one. A host key that is not in the known-hosts files has to be confirmed interactively before the connection is trusted. The class opens:
 
 - a Paramiko SSH client
 - an SFTP channel when possible
@@ -229,7 +230,8 @@ Representative operations include:
 
 - `get_public_ip_address()` installs `ipinfo` if needed, then shells out to `ipinfo myip --json`
 - `get_all_ipv4_addresses()` returns `(interface, ip)` tuples for every local IPv4 address
-- `select_lan_ipv4(prefer_vpn)` scores active interfaces and prefers physical RFC1918 LAN addresses
+- `select_lan_ipv4(prefer_vpn)` scores active interfaces and prefers physical RFC1918 LAN addresses; it returns `None` when no interface qualifies
+- `get_all_interface_ipv4_addresses()` and `select_lan_interface_ipv4(prefer_vpn)` are the same two lookups returning `InterfaceIPv4Address` records (`interface`, `ipv4_address`, `mac_address`)
 
 ### `helpers_network.address_switch`
 
@@ -311,7 +313,7 @@ Representative operations include:
       show_source: false
       members_order: source
 
-## SSH helper
+## SSH helper reference
 
 ::: stackops.utils.ssh_utils.ssh
     options:
@@ -322,6 +324,38 @@ Representative operations include:
 ## SSH utility protocol
 
 ::: stackops.utils.ssh_utils.abc
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## SSH connection target
+
+::: stackops.utils.ssh_utils.connection_target
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## OpenSSH destination parsing
+
+::: stackops.utils.ssh_utils.open_ssh_command
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## OpenSSH config lookup
+
+::: stackops.utils.ssh_utils.open_ssh_config
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Host key verification
+
+::: stackops.utils.ssh_utils.host_key_verification
     options:
       show_root_heading: true
       show_source: false

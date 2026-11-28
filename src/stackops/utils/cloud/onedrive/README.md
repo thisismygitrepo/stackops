@@ -1,54 +1,90 @@
 # OneDrive API without rclone
 
-This module provides direct OneDrive integration using Microsoft Graph API without requiring rclone.
+This module provides direct OneDrive integration using Microsoft Graph API without requiring rclone. It backs the `cloud onedrive` command group.
 
 ## Features
 
-- ✅ Automatic token refresh when expired
-- ✅ Persistent token storage
-- ✅ Upload/download files with progress tracking
-- ✅ Support for large file uploads (chunked)
-- ✅ Direct OAuth2 authentication setup
+- ✅ Fresh access token for every operation, obtained from the stored refresh token
+- ✅ Persistent refresh-token storage in the StackOps secrets file
+- ✅ Upload/download files, list and search the drive, move items to the recycle bin
+- ✅ Streamed downloads; uploads send the file in a single `PUT` (no chunked upload session)
+- ✅ Direct OAuth2 authentication setup (device-code flow)
+- ✅ Multiple named accounts
 
 ## Quick Start
 
-### Option 1: Direct OAuth Setup (Recommended)
+### Direct OAuth Setup
 
 1. **Set up Azure App Registration:**
    - Go to [Azure Portal](https://portal.azure.com)
    - Navigate to 'Azure Active Directory' > 'App registrations'
    - Click 'New registration'
    - Name: 'OneDrive API Access'
-   - Redirect URI: `http://localhost:8080/callback`
-   - Add permissions: `Files.ReadWrite.All` and `offline_access`
+   - Redirect URI: none needed; sign-in uses the device-code flow as a public client against the `consumers` endpoint
+   - Add permissions: `User.Read`, `Files.ReadWrite` and `offline_access`
 
-2. **Set environment variables:**
+2. **Register the account with its Application (client) ID:**
    ```bash
-   export ONEDRIVE_CLIENT_ID='your_client_id_here'
-   export ONEDRIVE_REDIRECT_URI='http://localhost:8080/callback'
+   cloud onedrive add-account personal --client-id 'your_client_id_here'
    ```
 
 3. **Run initial setup:**
-   ```python
-   from transaction import setup_oauth_authentication
-   setup_oauth_authentication()
+   ```bash
+   cloud onedrive auth personal
    ```
+   Open the printed URL and enter the code; the refresh token is then saved for that account.
 
-### Option 2: Using existing rclone token
-
-If you already have rclone configured, the system will automatically use and refresh your existing tokens.
+Existing rclone tokens are not read by this module.
 
 ## Usage Examples
 
+```bash
+# List a remote folder (defaults to /)
+cloud onedrive list /Documents
+
+# Search the drive
+cloud onedrive search report
+
+# Upload a file (add --overwrite to replace an existing remote item)
+cloud onedrive upload /path/to/local/file.pdf /Documents/file.pdf
+
+# Download a file to a new local path
+cloud onedrive download /Documents/file.pdf /path/to/local/downloaded.pdf
+
+# Move an item to the recycle bin
+cloud onedrive delete /Documents/file.pdf
+```
+
+| Command | Purpose | Options |
+| --- | --- | --- |
+| `add-account [account_name]` | Add an account; prompts for omitted values | `--client-id/-c`, `--json/-j` |
+| `auth [account_name]` | Authenticate with Microsoft | `--json/-j` |
+| `status [account_name]` | Show account and storage status | `--json/-j` |
+| `accounts` | List defined accounts and whether each is authenticated | `--json/-j` |
+| `list [remote_path]` | List a remote folder | `--account/-a`, `--json/-j` |
+| `search <query>` | Search the drive | `--account/-a`, `--json/-j` |
+| `download <remote_path> <local_path>` | Download a remote file | `--account/-a`, `--json/-j` |
+| `upload <local_path> <remote_path>` | Upload a local file | `--overwrite/-o`, `--account/-a` |
+| `delete <remote_path>` | Move an item to the recycle bin | `--yes/-y`, `--account/-a` |
+| `config-path` | Print the global StackOps secrets path | |
+
+`list`, `search`, `download`, `upload` and `delete` select the account with `--account/-a`; `auth`, `status` and `add-account` take it as a positional argument. Omit it to use the only configured account or enter it interactively. `status` and `upload` always print JSON. `download` refuses to overwrite an existing local file. Without `--yes`, `delete` needs an interactive terminal and asks you to type `DELETE`.
+
+The same operations are available from Python and raise `OneDriveError` on failure:
+
 ```python
-from transaction import push_to_onedrive, pull_from_onedrive
+from pathlib import Path
+
+from stackops.utils.cloud.onedrive.file_ops import download_file, upload_file
 
 # Upload a file
-success = push_to_onedrive('/path/to/local/file.pdf', '/Documents/file.pdf')
+upload_file(account_name="personal", local_path=Path("/path/to/local/file.pdf"), remote_path="/Documents/file.pdf", overwrite=False)
 
 # Download a file
-success = pull_from_onedrive('/Documents/file.pdf', '/path/to/local/downloaded.pdf')
+download_file(account_name="personal", remote_path="/Documents/file.pdf", local_path=Path("/path/to/local/downloaded.pdf"), output_json=False)
 ```
+
+Modules: `cli.py` (Typer app), `accounts.py` (account entries in the secrets file), `credentials.py`, `auth.py` (device-code sign-in, token refresh, Graph requests), `items.py` (`show_status`, `list_items`, `search_items`), `file_ops.py` (`download_file`, `upload_file`, `delete_item`), `constants.py`, `errors.py` and `output.py`.
 
 ## Token Management
 
@@ -57,33 +93,34 @@ success = pull_from_onedrive('/Documents/file.pdf', '/path/to/local/downloaded.p
 The system automatically handles token refresh:
 
 ```python
-from transaction import get_access_token
+from stackops.utils.cloud.onedrive.auth import refresh_access_token
 
-# This will automatically refresh if expired
-token = get_access_token()
+# Exchanges the stored refresh token for a new access token
+token = refresh_access_token(account_name="personal")
 ```
 
 ### Manual Token Operations
 
 ```python
-from transaction import refresh_access_token, save_token_to_file, load_token_from_file
+from stackops.utils.cloud.onedrive.auth import authenticate
+from stackops.utils.cloud.onedrive.credentials import load_credentials, save_refresh_token
 
-# Manually refresh token
-new_token = refresh_access_token()
+# Run the device-code sign-in and save the refresh token
+authenticate(account_name="personal", output_json=False)
 
-# Save token to file
-save_token_to_file(token_data)
+# Load the stored client ID and refresh token
+credentials = load_credentials(account_name="personal", require_refresh_token=True)
 
-# Load token from file
-token_data = load_token_from_file()
+# Save a refresh token to the account's secrets entry
+save_refresh_token(account_name="personal", client_id=credentials["client_id"], refresh_token=new_refresh_token)
 ```
 
 ## How Token Renewal Works
 
-1. **Automatic Detection**: The system checks token expiry before each API call
-2. **Refresh Attempt**: If expired, it automatically uses the refresh token to get a new access token
-3. **Persistent Storage**: New tokens are saved to `~/.onedrive_token.json` for future use
-4. **Fallback**: If refresh fails, it provides clear instructions for manual intervention
+1. **Every Operation**: `status`, `list`, `search`, `download`, `upload` and `delete` each request a new access token before calling Graph; access tokens are never stored
+2. **Refresh**: The stored refresh token is exchanged at the Microsoft token endpoint
+3. **Persistent Storage**: The refresh token Microsoft returns (or the current one, when none is returned) is written back to the account's entry in the StackOps secrets file
+4. **Failure**: A missing refresh token names the `cloud onedrive auth <account>` command to run; a rejected refresh reports Microsoft's error message
 
 ## No rclone Required
 
@@ -96,41 +133,41 @@ This implementation eliminates the need for rclone by:
 
 ## Error Handling
 
-The system gracefully handles various scenarios:
+Failures raise `OneDriveError`; the CLI prints `Error: <message>` and exits with code 1:
 
-- Expired tokens → Automatic refresh
-- Network errors → Detailed error messages
-- Missing permissions → Clear setup instructions
-- Invalid tokens → Step-by-step recovery guide
+- Missing refresh token → The `cloud onedrive auth <account>` command to run
+- Network errors → `Network request failed: <details>`
+- Unknown account → The `cloud onedrive add-account` command and the expected secrets entry
+- Graph or token endpoint errors → Microsoft's error message
 
 ## Files Created
 
-- `~/.onedrive_token.json`: Encrypted token storage (chmod 600)
-- Token is automatically loaded on import
+- No token file of its own: each account is one entry in the global StackOps secrets file (`cloud onedrive config-path` prints its path), with login name `onedrive`, tag `onedrive-stackops-cli` and a secret named `oauth` holding `ONEDRIVE_CLIENT_ID` and, after `auth`, `ONEDRIVE_REFRESH_TOKEN`
+- `add-account` creates that file when it is missing
+- Credentials are read when a command runs, not on import
 
 ## Security
 
-- Tokens are stored with restrictive permissions (600)
-- Client secrets are optional (public client mode supported)
-- Refresh tokens are securely managed
-- No sensitive data in logs
+- A secrets file created by `add-account` gets restrictive permissions (600); later updates keep the file's existing mode
+- No client secret is used (public client mode)
+- Access tokens stay in memory; refresh tokens are written through an atomic file replace
+- No command prints access or refresh tokens
 
 ## Troubleshooting
 
 ### Token Refresh Failed
-```python
-# Try manual refresh
-from transaction import refresh_access_token
-token = refresh_access_token()
+```bash
+# Check which accounts are authenticated
+cloud onedrive accounts
 
 # Or re-run OAuth setup
-from transaction import setup_oauth_authentication
-setup_oauth_authentication()
+cloud onedrive auth personal
 ```
 
 ### Permission Errors
 Make sure your Azure app has the correct permissions:
-- `Files.ReadWrite.All` (Delegated)
+- `User.Read` (Delegated)
+- `Files.ReadWrite` (Delegated)
 - `offline_access` (Delegated)
 
 ### Network Issues

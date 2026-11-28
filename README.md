@@ -7,7 +7,7 @@
 <p>
   <a href="https://thisismygitrepo.github.io/stackops/"><img alt="Docs" src="https://img.shields.io/badge/docs-online-2f6f6f"></a>
   <a href="https://pypi.org/project/stackops/"><img alt="PyPI package" src="https://img.shields.io/pypi/v/stackops?color=2f6f6f"></a>
-  <img alt="Python 3.14+" src="https://img.shields.io/badge/python-3.14%2B-3776AB">
+  <img alt="Python 3.14" src="https://img.shields.io/badge/python-3.14-3776AB">
   <img alt="Installed with uv" src="https://img.shields.io/badge/install-uv-f05d23">
 </p>
 
@@ -17,7 +17,7 @@ https://github.com/user-attachments/assets/c3e68bc4-88b7-4354-8fe5-b56bbfb98ad8
 
 </div>
 
-StackOps coordinates packages, configuration, repositories, data, terminal layouts, and coding-agent resources around the tools you already use. Install selected packages, synchronize declared configuration, or launch an authored tmux workspace through focused commands. Available installers and integrations vary by operating system and external tool.
+StackOps coordinates packages, configuration, repositories, data, terminal layouts, and coding-agent resources around the tools you already use. Install selected packages, synchronize declared configuration, or launch an authored terminal-multiplexer workspace (tmux by default) through focused commands. Available installers and integrations vary by operating system and external tool.
 
 | Before | After |
 | --- | --- |
@@ -68,7 +68,7 @@ stackops --help
 Install the StackOps skill for Codex with:
 
 ```bash
-bunx skills add thisismygitrepo/stackops --skill stackops --global --agent codex --yes
+bunx skills@latest add thisismygitrepo/stackops --skill stackops --global --agent codex --yes
 ```
 
 Any agent can read the same guide for the installed version without installing the skill:
@@ -92,7 +92,7 @@ The [quickstart](https://thisismygitrepo.github.io/stackops/quickstart/) shows a
 
 ## Optional workstation setup
 
-This broader setup installs system and terminal package groups, copies bundled assets, applies public configuration mappings, and configures the default shell. Use it when you want those workstation conventions; existing customized systems can use individual commands instead. Package-group behavior depends on the platform and may invoke privileged package managers.
+This broader setup installs system and terminal package groups, copies bundled assets, applies the library configuration mappings, and configures the default shell. Use it when you want those workstation conventions; existing customized systems can use individual commands instead. Package-group behavior depends on the platform and may invoke privileged package managers.
 
 ```bash
 devops software install --group sysabc
@@ -106,7 +106,7 @@ devops config terminal config-shell --shell default
 devops software install --group termabc
 ```
 
-The scripted sync above copies configuration and stops on conflicts. The public copy/symlink choices in `devops config interactive` use `overwrite-default-path` and can replace existing targets; they are a different setup choice.
+The scripted sync above copies configuration and stops on conflicts. The shell-profile and config-link choices in `devops config interactive` use `overwrite-default-path` and can replace existing targets; they are a different setup choice.
 
 
 ## CLI
@@ -115,15 +115,15 @@ StackOps exposes standalone commands and an umbrella wrapper:
 
 | Command | Purpose |
 | --- | --- |
-| `devops` | Package installation, repo automation, config/data sync, self-management, networking, script execution, vault |
+| `devops` | Package installation, repo automation, config/data sync, self-management, networking, script execution, vault, security scans |
 | `cloud` | Cloud sync, copy, mount, SSH transfer, and OneDrive helpers |
 | `terminal` | Terminal session and layout management |
 | `agents` | AI agent scaffolding, MCP catalog installs, prompt runs |
 | `utils` | General-purpose utility commands |
 | `fire` | File, function, notebook, and app runner |
-| `preview` | File preview and `uv run` backend launcher |
+| `preview` | File preview and reader-backend launcher (IPython, notebooks, VisiData, Markdown, browser, database clients) |
 | `seek` | Interactive search across files, text matches, and symbols |
-| `stackops` | Umbrella wrapper that routes into all of the above |
+| `stackops` | Umbrella wrapper that routes into all of the above; `stackops webui` adds a web UI for commands, dashboards, and terminals |
 
 Run `<command> --help` for details, or `stackops --help` to see the command families.
 

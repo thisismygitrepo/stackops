@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/thisismygitrepo/stackops/refs/heads/main/src/stackops/utils/schemas/startup/startup.schema.json",
+  "title": "Startup Entries Schema",
+  "version": "0.1.0",
+  "description": "Schema for the stackops startup YAML file (startup.yaml): what should start on its own on the machines these dotfiles reach. `utils machine autostart-apply` makes a machine match it.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.1",
+      "description": "Startup file format version."
+    },
+    "entries": {
+      "type": "array",
+      "description": "What starts on its own. One name may appear more than once, as long as no system is named twice for it.",
+      "items": {
+        "$ref": "#/definitions/StartupEntry"
+      }
+    }
+  },
+  "required": ["version", "entries"],
+  "definitions": {
+    "StartupEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["script"],
+          "description": "What is started. A script is one of your own scripts, in the scripts folder of your dotfiles."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The script's path inside the scripts folder of your dotfiles, with forward slashes: what `devops scripts run --source user` takes.",
+          "examples": ["backup_photos.py", "linux/mount_drives.sh"]
+        },
+        "os": {
+          "type": "array",
+          "description": "The systems it starts on.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["linux", "darwin", "windows"]
+          }
+        },
+        "when": {
+          "type": "string",
+          "enum": ["login", "boot"],
+          "description": "login: when you sign in. boot: when the computer starts, before anyone signs in. StackOps can set up boot on Linux only, where it keeps your account's services running without a sign-in (lingering)."
+        }
+      },
+      "required": ["kind", "name", "os", "when"]
+    }
+  }
+}

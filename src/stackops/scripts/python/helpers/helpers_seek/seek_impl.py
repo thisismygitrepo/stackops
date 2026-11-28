@@ -75,6 +75,10 @@ def seek(
                 temp_file.write(content)
                 path = temp_file.name
             is_temp_file = True
+    if not is_temp_file:
+        from stackops.utils.cli_utils.interaction import require_interactive
+
+        require_interactive("Search selection without piped text; use --json for noninteractive results")
 
     if Path(path).absolute().resolve().is_file():
         from stackops.utils.code import exit_then_run_shell_script

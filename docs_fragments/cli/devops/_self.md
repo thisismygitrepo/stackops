@@ -14,22 +14,22 @@ Current `devops self --help` exposes:
 |---------|-------------|--------------|
 | `install` | Install stackops locally, optionally from a development checkout | Always |
 | `clone` | Clone the StackOps source checkout into a local directory | Always |
-| `update` | Upgrade stackops, refresh packaged assets, and optionally sync public configs | Always |
+| `update` | Upgrade stackops, refresh packaged assets, and optionally apply packaged settings | Always |
 | `status` | Inspect machine, repository, application, and configuration state | Always |
-| `explore-cli` | Inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
+| `explore-cli` | Search, run, or inspect the CLI graph in terminal, DOT, Plotly, or TUI form | Always |
 | `explore-python-api` | Inspect the documented Python API graph in terminal, DOT, Plotly, or search form | Always |
-| `readme` | Fetch and render the project README in the terminal | Always |
+| `readme` | Render the project README in the terminal | Always |
 | `docs` | Serve the local docs preview, optionally after rebuilding | Only when `~/code/stackops` exists |
 | `build-installer` | Export installation files for an offline installer image | Always |
 | `download-installer` | Download and extract a published offline installer image | Always |
-| `release` | Bump the calendar version and update version references | Only in a StackOps source checkout |
+| `release` | Bump the calendar version and update version references | Only when `~/code/stackops` is a StackOps Git checkout |
 | `build-docker` | Build Docker images from the repo script | Only when `~/code/stackops` exists |
 | `build-graph` | Build the architecture dependency graph | Only when `~/code/stackops` exists |
 | `build-assets` | Regenerate the checked-in CLI graph snapshot and chart artifacts | Only when `~/code/stackops` exists |
 
 ### update
 
-Upgrade the installed tool, refresh packaged assets, and optionally copy public configs to their default paths.
+Upgrade the installed tool, refresh packaged assets, and optionally apply the packaged settings to their default paths.
 
 ```bash
 devops self update [OPTIONS]
@@ -39,23 +39,23 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--sync-public-configs`, `-l` | Copy public configs down after the update, overwriting their default paths |
+| `--sync-configs`, `-l` | Apply the packaged settings after the update, overwriting your configs at their default paths |
 | `--no-copy-assets`, `-a` | Skip copying scripts and settings after the update |
 | `--config-shell`, `-s` | Create or configure the default shell profile after the update |
-| `--dev`, `-d` | Commit and sync the development checkout before updating |
+| `--dev`, `-d` | Before updating, commit local changes in the development checkout and sync it with origin (`pull --rebase`, then push) |
 
 Current behavior:
 
-- If `~/code/stackops` exists, the command runs `uv self update`, `git pull`, and reinstalls the repo checkout as an editable tool.
+- If the `~/code/stackops` checkout exists, the command pulls it with `git pull --ff-only`, runs `uv self update`, and reinstalls the checkout as an editable tool.
 - Otherwise it updates `uv` and upgrades the installed `stackops` tool package.
-- After the update succeeds, it copies packaged scripts and settings onto the current machine.
-- `--sync-public-configs` additionally copies the public config set down on all supported platforms.
+- After the update succeeds, it copies packaged scripts and settings onto the current machine, unless `--no-copy-assets` is passed.
+- `--sync-configs` additionally runs the equivalent of `devops config dotfiles sync down --source library --method copy --on-conflict overwrite-default-path --which all`.
 
 Examples:
 
 ```bash
 devops self update
-devops self update --sync-public-configs
+devops self update --sync-configs
 ```
 
 ### status
@@ -74,10 +74,12 @@ Key options from current help:
 | `--shell`, `-s` | Show the shell profile section |
 | `--repos`, `-r` | Show the configured repositories section |
 | `--ssh`, `-H` | Show the SSH configuration section |
-| `--configs`, `--dotfiles`, `--symlinks`, `-c`, `-d`, `-l` | Show linked config, dotfile, and symlink state |
+| `--configs`, `--dotfiles`, `--symlinks`, `-c`, `-d`, `-l` | Show managed files, schemas, configuration mappings, and symlinks |
 | `--apps`, `--tools`, `-a`, `-t` | Show installed apps and tools |
 | `--backup`, `-b` | Show backup configuration status |
 | `--plain`, `-p` | Print a report instead of opening the interactive dashboard |
+| `--json`, `-j` | Print structured section results |
+| `--as-html`, `-w` | Write a navigable HTML dashboard of the selected sections and open it in the browser; cannot be combined with `--json` or `--plain` |
 
 Without section flags, the command includes all sections. Use `--plain` for a printed report.
 
@@ -98,7 +100,8 @@ Key options from current help:
 Current behavior:
 
 - `--dev` clones `~/code/stackops` first when that checkout does not already exist, then installs it editable.
-- Without a local checkout, the default path installs the published tool package.
+- Without `--dev`, it installs the published tool package from PyPI.
+- Either way, it then creates or configures the default shell profile.
 
 Examples:
 
@@ -120,7 +123,7 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `--remote`, `-r` | Git remote URL to clone from |
-| `--ssh` | Use the built-in SSH remote instead of HTTPS |
+| `--ssh`, `-s` | Use the built-in SSH remote instead of HTTPS |
 | `--branch`, `-b` | Branch or tag to check out |
 | `--depth`, `-d` | Create a shallow clone with the given depth |
 | `--pull`, `-p` | Pull an existing checkout with `--ff-only` |
@@ -145,7 +148,9 @@ devops self build-installer
 devops self build-installer --upload-to-cloud
 ```
 
-Use `--upload-to-cloud` to upload the generated archive to the mirrored path on the configured default rclone remote, generate a shared URL, and update the JSON URL map consumed by `scripts_dynamic/download_stackops_offline_installer.py`.
+The installer folder and zip archive are written under `~/.config/stackops/offline_installers` unless `--output-dir`, `-o` is given. `--no-include-configs`, `-c` leaves out the StackOps config tree, `--no-include-uv-bundle`, `-b` leaves out the uv-managed runtime bundle, `--keep-unpacked`, `-k` keeps the unpacked installer directory after the zip is written, and `--json`, `-j` prints the artifact receipt as JSON.
+
+Use `--upload-to-cloud`, `-u` to upload the generated archive to the mirrored path on the configured default rclone remote, generate a shared URL, and update the JSON URL map consumed by `scripts_dynamic/download_stackops_offline_installer.py`. It requires an editable install backed by the `~/code/stackops` checkout.
 
 ### download-installer
 
@@ -153,11 +158,14 @@ Download and extract an offline installer published in `download_stackops_offlin
 
 ```bash
 devops self download-installer
+devops self download-installer --list
 devops self download-installer --target linux-x64
-devops self download-installer --target macos-arm --output-dir ~/.config/stackops/offline_installers/stackops-offline-installer-macos-arm
+devops self download-installer --target linux-x64 --output-dir ~/stackops-offline-installer-linux-x64
 ```
 
-When `--target` is omitted, StackOps prompts for one of the configured OS/architecture pairs. By default, the installer is extracted to `~/.config/stackops/offline_installers/stackops-offline-installer-<target>`.
+Valid targets are `linux-x64`, `linux-arm`, `macos-x64`, `macos-arm`, `windows-x64`, and `windows-arm`. The checked-in URL map currently publishes only `linux-x64`; the other targets are accepted but exit with `No Google Drive URL is configured yet for <target>`. An existing output directory is deleted before extraction.
+
+When `--target`, `-t` is omitted, StackOps prompts for one of the configured OS/architecture pairs. `--list`, `-l` prints the targets and whether each has a published installer, without downloading. By default, the installer is extracted to `~/.config/stackops/offline_installers/stackops-offline-installer-<target>`; `--output-dir`, `-o` overrides it. `--json`, `-j` prints the target list or the downloaded artifact as JSON.
 
 ### explore-cli
 
@@ -172,6 +180,7 @@ Current `devops self explore-cli --help` exposes:
 | Command | Description |
 |---------|-------------|
 | `search` | Search all `cli_graph.json` command entries |
+| `run` | Pick a command, fill its arguments and options, then type, run, or print it |
 | `tree` | Render a rich tree view in the terminal |
 | `dot` | Export the graph as Graphviz DOT |
 | `view` | Render a Plotly hierarchy chart (`sunburst`, `treemap`, or `icicle`) |
@@ -179,24 +188,42 @@ Current `devops self explore-cli --help` exposes:
 
 #### search
 
-Interactive fuzzy-search over the generated CLI graph JSON. By default it shows a
-rendered Markdown summary for the selected command or group; use `--json` or `-j`
-to print the raw graph entry.
+Interactive fuzzy-search over the generated CLI graph JSON. The optional `QUERY`
+narrows the entries by command name, description, and source path. By default it
+shows a rendered Markdown summary for the selected command or group; use `--json`
+or `-j` to print every matching entry as a JSON array without a picker.
 
 ```bash
-devops self explore-cli search [OPTIONS]
+devops self explore-cli search [OPTIONS] [QUERY]
 ```
 
-Key option:
+Key options:
 
 | Option | Description |
 |--------|-------------|
 | `--graph-path`, `-g` | Override the path to `cli_graph.json` |
-| `--json`, `-j` | Print the selected `cli_graph.json` entry instead of the rendered summary |
+| `--json`, `-j` | Print all matching `cli_graph.json` entries as a JSON array, without prompts or a picker |
+| `--non-interactive`, `-N` | List the matching commands without opening a picker |
+
+#### run
+
+Pick a command from the graph, answer prompts for its arguments and options, then act on the built command line.
+
+```bash
+devops self explore-cli run [OPTIONS] [QUERY]
+```
+
+Key options from current help:
+
+| Option | Description |
+|--------|-------------|
+| `--action`, `-a` | `type` (default) pre-types the command in your shell prompt, `run` executes it now, `print` prints it to stdout |
+| `--skip-prompts`, `-s` | Skip the argument and option prompts and use the bare command |
+| `--graph-path`, `-g` | Override the path to `cli_graph.json` |
 
 #### tree
 
-Render the graph as a terminal tree.
+Render the graph as a terminal tree. Help text is shown in each node label by default.
 
 ```bash
 devops self explore-cli tree [OPTIONS]
@@ -206,8 +233,8 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `--show-help` | Include help text in each node label |
-| `--show-aliases` | Include hidden aliases in labels |
+| `--no-show-help`, `-H` | Hide help text in node labels |
+| `--show-aliases`, `-a` | Include aliases in labels |
 | `--max-depth`, `-d` | Limit the rendered depth |
 
 Example:
@@ -218,7 +245,7 @@ devops self explore-cli tree --max-depth 2
 
 #### dot
 
-Export the graph as Graphviz DOT text.
+Export the graph as Graphviz DOT text. Help text is included in labels by default.
 
 ```bash
 devops self explore-cli dot [OPTIONS]
@@ -229,7 +256,7 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `--output`, `-o` | Write DOT output to a file |
-| `--include-help` | Include help text in labels |
+| `--no-include-help`, `-H` | Hide help text in labels |
 | `--max-depth`, `-d` | Limit the exported depth |
 
 Example:
@@ -260,9 +287,9 @@ Key options from current help:
 |--------|-------------|
 | `--output`, `-o` | Write HTML or image output |
 | `--max-depth`, `-d` | Limit depth of the graph |
-| `--template` | Plotly template name |
-| `--height` | Static image height |
-| `--width` | Static image width |
+| `--template`, `-t` | Plotly template name (default `plotly_dark`) |
+| `--height`, `-H` | Static image height (default 900) |
+| `--width`, `-w` | Static image width (default 1200) |
 
 Examples:
 
@@ -321,6 +348,8 @@ Current `devops self explore-python-api --help` exposes:
 | `dump` | Write the generated Python API graph JSON |
 | `explain-filter` | Explain how API files and members are selected |
 
+`search`, `tree`, `dot`, and `view` take the same options as their `explore-cli` counterparts (`tree` has no `--show-aliases`), and each accepts `--graph-path`, `-g` to read an existing Python API graph JSON file. `dump` requires the output path.
+
 The API graph starts from `docs/api` instead of the raw source tree. It includes modules named by mkdocstrings directives and explicit docs imports, then uses AST inspection to include public classes, functions, async functions, and uppercase constants. Private names and common CLI wiring helpers such as `main`, `get_app`, `app`, and `cli_app` are skipped.
 
 Examples:
@@ -332,25 +361,38 @@ devops self explore-python-api dump /tmp/stackops-python-api.json
 devops self explore-python-api explain-filter
 ```
 
-### build-docker
+### release
 
-Build the repo Docker image variants through the checked-in shell wrapper. The local image is built first as `stackops-VARIANT:latest` without reading Docker credentials. If registry upload is confirmed after the build, the command looks up Docker publish credentials with `search_logins`, passes the matched `keyValues` only to the publish process, and uses the matched login's `entries[].username` as the remote image namespace.
+Bump the calendar version and update the StackOps version references in the `~/code/stackops` Git checkout, then reinstall the editable tool so `stackops --version` reports the new version.
 
 ```bash
-devops self build-docker [VARIANT]
+devops self release [--publish]
 ```
 
-Supported variants from current help:
+Without `--publish`, the release changes are left uncommitted for review. `--publish`, `-p` commits them and pushes `main` with its version tag to origin; it requires a clean `main` branch synchronized with origin.
+
+This command is only registered when `~/code/stackops` is a StackOps Git checkout.
+
+### build-docker
+
+Build the repo Docker image variants through the checked-in shell wrapper. The local image is built as `stackops-VARIANT:latest`; without `--publish`, no Docker credentials are read. With `--publish`, `-P`, the command first looks up Docker publish credentials with `search_logins`, builds the image, then passes the matched `keyValues` only to the publish process and uses the matched login's `entries[].username` as the remote image namespace. `--json`, `-j` prints an image/result receipt as JSON.
+
+```bash
+devops self build-docker VARIANT [OPTIONS]
+```
+
+Supported variants from current help (`VARIANT` is required):
 
 | Variant | Meaning |
 |---------|---------|
 | `slim` | Build the slim image |
 | `ai` | Build the AI-oriented image |
 
-Example:
+Examples:
 
 ```bash
 devops self build-docker ai
+devops self build-docker ai --publish
 ```
 
 By default, Docker credentials are selected from the login named `docker` with one of these token env keys: `DOCKER_TOKEN`, `DOCKERHUB_TOKEN`, `DOCKER_PASSWORD`, or `DOCKER_PAT`. Use `--docker-login-name`/`-n`, `--docker-account-name`/`-a`, `--docker-secret-name`/`-N`, `--docker-secret-tag`/`-T`, `--docker-scope`/`-S`, `--docker-token-key`/`-k`, or `--docker-secrets-path`/`-p` to narrow the match.
@@ -370,16 +412,20 @@ Security is a top-level group. Current `devops security --help` exposes:
 | Command | Description |
 |---------|-------------|
 | `scan` | Scan installed apps or a single file with VirusTotal |
+| `status` | Show installed apps with their latest scan verdict |
 | `list` | List installed apps, optionally filtered by name |
-| `upload` | Upload a local file to the project cloud storage |
+| `upload` | Upload a local file to cloud storage and print its share link |
 | `download` | Download a file from Google Drive |
-| `install` | Install safe apps from the saved app metadata report |
-| `repo-licenses` | Download GitHub repo license files for installer entries |
-| `report` | Inspect saved scan reports, raw rows, or summary statistics |
+| `install` | Install safe apps from one saved scan run |
+| `report` | Inspect one saved run; defaults to the latest started run |
+| `history` | List saved scan runs, newest first |
+| `export` | Export one run to a new directory |
+
+`scan`, `status`, `install`, `report`, `history`, and `export` accept `--records-dir`, `-d` to use another scan history directory; the default is `~/.config/stackops/profile/records/<os>/security`.
 
 #### scan
 
-Scan installed apps or one local file path with VirusTotal.
+Scan installed apps or one local file path with VirusTotal. Exactly one of `APPS`, `--path`, or `--all` is required. Every scan is saved as a separate history run unless `--no-record` is passed.
 
 ```bash
 devops security scan [OPTIONS] [APPS]
@@ -389,21 +435,32 @@ Key options from current help:
 
 | Option | Description |
 |--------|-------------|
-| `APPS` | Optional comma-separated app names to scan |
-| `--path` | Scan one explicit file path instead of installed apps |
-| `--record`, `--no-record` | Control whether the result is saved into the repo reports |
+| `APPS` | Comma-separated installed app names to scan |
+| `--path`, `-p` | Scan one explicit file path instead of installed apps |
+| `--all`, `-a` | Scan all installed apps |
+| `--no-record`, `-n` | Do not save this scan as a history run |
+| `--upload`, `-u` | Upload each file to cloud storage after its VirusTotal check completes |
+| `--concurrency`, `-c` | Maximum concurrent files; defaults to the number of configured VirusTotal accounts |
 
 Examples:
 
 ```bash
-devops security scan
+devops security scan --all
 devops security scan git,uv
 devops security scan --path ./downloads/tool.exe --no-record
 ```
 
+#### status
+
+Show the installed apps with their latest scan verdict. `--json`, `-j` prints the overview as JSON.
+
+```bash
+devops security status
+```
+
 #### list
 
-List the installed CLI apps that the security tooling knows how to inspect.
+List the installed CLI apps that the security tooling knows how to inspect. `--json`, `-j` prints their metadata as JSON.
 
 ```bash
 devops security list [APPS]
@@ -417,7 +474,7 @@ devops security list git,uv
 
 #### upload
 
-Upload one local file into the cloud storage used by the security workflow.
+Upload one local file to the configured default rclone remote and print its share link.
 
 ```bash
 devops security upload PATH
@@ -441,31 +498,17 @@ The argument can be a full Google Drive URL or a raw file id.
 
 #### install
 
-Install a safe app from the saved metadata report.
+Install safe apps from one saved scan run.
 
 ```bash
-devops security install NAME
+devops security install [OPTIONS] [NAME]
 ```
 
-`NAME` can be one app entry from the report or the special `essentials` bundle.
-
-#### repo-licenses
-
-Download GitHub license files for repos referenced by the installer metadata.
-
-```bash
-devops security repo-licenses [OPTIONS]
-```
-
-Key option:
-
-| Option | Description |
-|--------|-------------|
-| `--github-token` | GitHub token, also read from `STACKOPS_GITHUB_TOKEN`, `GITHUB_TOKEN`, or `GH_TOKEN` |
+Pass one app `NAME` from the run, or `--all`, `-a` for every eligible app; exactly one of the two is required. `--run`, `-R` selects an exact run ID and defaults to the latest started run. Only apps from a finished run with no positive detections and a saved download link are eligible.
 
 #### report
 
-Inspect saved report data in full, summary, table, or CSV form. The default invocation shows the full engine-level report.
+Inspect one saved run in full, summary, table, CSV, or JSON form. The default invocation shows the full engine-level report of the latest started run.
 
 ```bash
 devops security report [OPTIONS] [APPS]
@@ -476,8 +519,10 @@ Key options from current help:
 | Option | Description |
 |--------|-------------|
 | `APPS` | Optional comma-separated app names to filter on |
-| `--view`, `-v` | Choose `engines`, `app-summary`, `apps`, `options`, or `stats` |
-| `--format`, `-f` | Choose `table` or `csv` output for the raw `apps` and `engines` views |
+| `--run`, `-R` | Exact run ID; defaults to the latest started run |
+| `--view`, `-v` | Choose `engines`, `app-summary`, `apps`, `options`, `stats`, or `accounts` |
+| `--format`, `-f` | Choose `table` or `csv` output; CSV is supported for the `apps`, `engines`, and `accounts` views |
+| `--json`, `-j` | Print the run as JSON: its targets, engine results, and account statistics |
 
 Examples:
 
@@ -487,6 +532,22 @@ devops security report --view app-summary
 devops security report --view stats
 devops security report uv --view apps --format csv
 devops security report git --view engines
+```
+
+#### history
+
+List saved scan runs, newest first. `APPS` limits the list to runs targeting those apps, `--limit`, `-l` caps the number of runs (default 20), and `--format`, `-f` (`table` or `csv`) or `--json`, `-j` changes the output.
+
+```bash
+devops security history [OPTIONS] [APPS]
+```
+
+#### export
+
+Write one run to a new directory as `run.json`, `apps.csv`, `engines.csv`, and `accounts.csv`. `--output`, `-o` is required and must not exist yet; `--run`, `-R` defaults to the latest started run.
+
+```bash
+devops security export --output ./scan-export
 ```
 
 ### docs
@@ -570,7 +631,7 @@ This command is only registered when `~/code/stackops` exists locally.
 
 ### readme
 
-Render the project README in the terminal. When `~/code/stackops` exists, it reads the local `README.md`; otherwise it fetches the upstream README from GitHub.
+Render the project README in the terminal. When the `~/code/stackops` checkout exists, it reads the local `README.md`; otherwise it reads the README stored in the installed `stackops` package metadata.
 
 ```bash
 devops self readme

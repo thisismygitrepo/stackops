@@ -32,7 +32,8 @@ These are intentionally small, but they show up throughout the CLI and helper la
 
 Current behavior:
 
-- accepts any iterable of options
+- requires an interactive terminal: it first calls `require_interactive()` from `stackops.utils.cli_utils.interaction`, which raises a usage error when stdin or stdout is not a TTY or `STACKOPS_NON_INTERACTIVE` is set
+- accepts any iterable of options and returns `None` when the list is empty or nothing is selected
 - supports a numbered prompt fallback
 - can use Television when `tv=True` and `tv` is installed
 - supports `preview="bat"` for Television-backed previews
@@ -85,14 +86,16 @@ print(preview_choice)
 
 ## Preview selection
 
-`stackops.utils.options_utils.tv_options.choose_from_dict_with_preview()` is the lower-level preview helper used by AST search, semantic search, and other payload-preview flows.
+`stackops.utils.options_utils.tv_options.choose_from_dict_with_preview()` is the lower-level preview helper used by AST search, the interactive installer picker, session pickers, and other payload-preview flows.
 
-It takes:
+It takes four required arguments:
 
-- a mapping from option label to preview content
-- an optional extension hint
+- `options_to_preview_mapping`, a mapping from option label to preview content
+- `extension`, an extension hint or `None`
 - `multi=True` or `False`
-- a preview size percentage
+- `preview_size_percent`
+
+Like `choose_from_options()`, it calls `require_interactive()` first. An empty mapping returns `[]` when `multi=True` and `None` otherwise.
 
 The implementation dispatches to Windows- or Unix-specific Television helpers. Unix preview scratch files are written under
 `~/tmp_results/tmp_files` by default; set `STACKOPS_TV_TEMP_DIR` to override that location.
@@ -128,6 +131,14 @@ The implementation dispatches to Windows- or Unix-specific Television helpers. U
 ## Textual options form
 
 ::: stackops.utils.options_utils.textual_options_form
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Textual options form types
+
+::: stackops.utils.options_utils.textual_options_form_types
     options:
       show_root_heading: true
       show_source: false

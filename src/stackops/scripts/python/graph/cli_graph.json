@@ -13898,6 +13898,10 @@
                     "                    text: Annotated[str | None, typer.Option(\"--text\", \"-t\", help=\"Send some text\")] = None,",
                     "                    qrcode: Annotated[bool, typer.Option(\"--qrcode\", \"--qr\", \"-q\", help=\"Show receive code as a qrcode\")] = False,",
                     "                    backend: Annotated[Literal[\"wormhole\", \"w\", \"croc\", \"c\"], typer.Option(\"--backend\", \"-b\", help=\"Backend to use\")] = \"croc\",",
+                    "                    local_relay: Annotated[bool, typer.Option(\"--local-relay\", \"-l\", help=\"Relay through this machine's LAN address (port 443) instead of croc's public relay\")] = False,",
+                    "                    encryption: Annotated[EncryptionModeChoice | None, typer.Option(\"--encryption\", \"-e\", help=\"GPG-encrypt the file or directory before sending: symmetric/s (password) or asymmetric/a (keys). Unlike --code, it stays encrypted after the transfer.\")] = None,",
+                    "                    pwd: Annotated[str | None, typer.Option(\"--password\", \"-p\", help=\"Symmetric GPG password. Prompts with a hidden prompt when omitted.\")] = None,",
+                    "                    recipient: Annotated[str | None, typer.Option(\"--recipient\", \"-r\", help=\"Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key.\")] = None,",
                     "                    install_missing_dependencies: Annotated[bool, typer.Option(\"--install-dep\", \"-D\", help=\"Install missing dependencies\", show_default=False)] = False,",
                     "                    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"Emit JSON Lines with transfer code/PID, then completion status.\")] = False,",
                     "                    timeout: Annotated[float | None, typer.Option(\"--timeout\", \"-T\", min=1, help=\"Maximum seconds to wait for transfer completion.\")] = None,",
@@ -14030,6 +14034,94 @@
                           "-b"
                         ],
                         "help": "Backend to use"
+                      }
+                    },
+                    {
+                      "name": "local_relay",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--local-relay', '-l', help=\"Relay through this machine's LAN address (port 443) instead of croc's public relay\")]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--local-relay",
+                          "-l"
+                        ],
+                        "long_flags": [
+                          "--local-relay"
+                        ],
+                        "short_flags": [
+                          "-l"
+                        ],
+                        "help": "Relay through this machine's LAN address (port 443) instead of croc's public relay"
+                      }
+                    },
+                    {
+                      "name": "encryption",
+                      "kind": "positional_or_keyword",
+                      "type": "EncryptionModeChoice | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[EncryptionModeChoice | None, typer.Option('--encryption', '-e', help='GPG-encrypt the file or directory before sending: symmetric/s (password) or asymmetric/a (keys). Unlike --code, it stays encrypted after the transfer.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--encryption",
+                          "-e"
+                        ],
+                        "long_flags": [
+                          "--encryption"
+                        ],
+                        "short_flags": [
+                          "-e"
+                        ],
+                        "help": "GPG-encrypt the file or directory before sending: symmetric/s (password) or asymmetric/a (keys). Unlike --code, it stays encrypted after the transfer."
+                      }
+                    },
+                    {
+                      "name": "pwd",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--password', '-p', help='Symmetric GPG password. Prompts with a hidden prompt when omitted.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--password",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--password"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Symmetric GPG password. Prompts with a hidden prompt when omitted."
+                      }
+                    },
+                    {
+                      "name": "recipient",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--recipient', '-r', help='Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--recipient",
+                          "-r"
+                        ],
+                        "long_flags": [
+                          "--recipient"
+                        ],
+                        "short_flags": [
+                          "-r"
+                        ],
+                        "help": "Asymmetric GPG recipient key (id, email, or fingerprint). Defaults to your own key."
                       }
                     },
                     {
@@ -31568,10 +31660,10 @@
                 "name": "autostart-add",
                 "fullPath": "utils machine autostart-add",
                 "shortPath": "u m A",
-                "help": "➕ <A> Start one of your scripts every time you sign in.",
+                "help": "➕ <A> Start one of your scripts every time you sign in, or when the computer starts.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.machine_utils_app",
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.autostart_script_cli",
                   "callable": "add_autostart_script"
                 },
                 "signature": {
@@ -31583,6 +31675,14 @@
                     "        typer.Argument(help=\"Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows.\"),",
                     "    ],",
                     "    source: Annotated[LocalScriptSource, typer.Option(\"--source\", \"-s\", help=\"Source to search for the script.\")] = \"all\",",
+                    "    when: Annotated[",
+                    "        Literal[\"login\", \"boot\"],",
+                    "        typer.Option(\"--when\", \"-w\", help=\"login: when you sign in. boot: when the computer starts, before anyone signs in, which can be set up on Linux only.\"),",
+                    "    ] = \"login\",",
+                    "    other_systems: Annotated[",
+                    "        str | None,",
+                    "        typer.Option(\"--os\", \"-o\", help=\"Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a script in your dotfiles.\"),",
+                    "    ] = None,",
                     ") -> None:"
                   ],
                   "name": "add_autostart_script",
@@ -31631,6 +31731,50 @@
                         ],
                         "help": "Source to search for the script."
                       }
+                    },
+                    {
+                      "name": "when",
+                      "kind": "positional_or_keyword",
+                      "type": "Literal['login', 'boot']",
+                      "default": "login",
+                      "required": false,
+                      "annotation_raw": "Annotated[Literal['login', 'boot'], typer.Option('--when', '-w', help='login: when you sign in. boot: when the computer starts, before anyone signs in, which can be set up on Linux only.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--when",
+                          "-w"
+                        ],
+                        "long_flags": [
+                          "--when"
+                        ],
+                        "short_flags": [
+                          "-w"
+                        ],
+                        "help": "login: when you sign in. boot: when the computer starts, before anyone signs in, which can be set up on Linux only."
+                      }
+                    },
+                    {
+                      "name": "other_systems",
+                      "kind": "positional_or_keyword",
+                      "type": "str | None",
+                      "default": null,
+                      "required": false,
+                      "annotation_raw": "Annotated[str | None, typer.Option('--os', '-o', help='Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a script in your dotfiles.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--os",
+                          "-o"
+                        ],
+                        "long_flags": [
+                          "--os"
+                        ],
+                        "short_flags": [
+                          "-o"
+                        ],
+                        "help": "Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a script in your dotfiles."
+                      }
                     }
                   ],
                   "return": "None"
@@ -31650,10 +31794,10 @@
                 "name": "autostart-remove",
                 "fullPath": "utils machine autostart-remove",
                 "shortPath": "u m R",
-                "help": "➖ <R> Stop starting a script when you sign in.",
+                "help": "➖ <R> Stop starting a script on its own.",
                 "source": {
-                  "file": "src/stackops/scripts/python/helpers/helpers_utils/machine_utils_app.py",
-                  "module": "stackops.scripts.python.helpers.helpers_utils.machine_utils_app",
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.autostart_script_cli",
                   "callable": "remove_autostart_script"
                 },
                 "signature": {
@@ -31688,6 +31832,63 @@
                 "aliases": [
                   {
                     "name": "R",
+                    "hidden": true
+                  }
+                ]
+              },
+              {
+                "kind": "command",
+                "name": "autostart-apply",
+                "fullPath": "utils machine autostart-apply",
+                "shortPath": "u m P",
+                "help": "🔁 <P> Start here the scripts your startup.yaml lists for this system.",
+                "source": {
+                  "file": "src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py",
+                  "module": "stackops.scripts.python.helpers.helpers_utils.autostart_script_cli",
+                  "callable": "apply_autostart_file"
+                },
+                "signature": {
+                  "raw_lines": [
+                    "def apply_autostart_file(",
+                    "    prune: Annotated[",
+                    "        bool,",
+                    "        typer.Option(\"--prune\", \"-p\", help=\"Also stop the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone.\"),",
+                    "    ] = False,",
+                    ") -> None:"
+                  ],
+                  "name": "apply_autostart_file",
+                  "parameters": [
+                    {
+                      "name": "prune",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--prune', '-p', help='Also stop the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--prune",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--prune"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Also stop the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone."
+                      }
+                    }
+                  ],
+                  "return": "None"
+                },
+                "typer": {
+                  "no_args_is_help": false
+                },
+                "aliases": [
+                  {
+                    "name": "P",
                     "hidden": true
                   }
                 ]

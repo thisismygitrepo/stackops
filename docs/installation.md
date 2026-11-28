@@ -1,6 +1,6 @@
 # Installation
 
-StackOps supports Python 3.14+ and is easiest to install with [uv](https://docs.astral.sh/uv/).
+StackOps requires Python 3.14 (the package declares `>=3.14,<=3.15`) and is easiest to install with [uv](https://docs.astral.sh/uv/).
 
 ## Install with uv
 
@@ -44,17 +44,17 @@ This installs nine commands: `devops`, `cloud`, `terminal`, `agents`, `utils`, `
 stackops --help
 ```
 
+`stackops` routes into the other eight and adds `stackops webui`, a local web UI for commands, dashboards, and terminals.
+
 Alpine support covers native APK package-manager paths. Portable Linux assets built for glibc and offline bundles produced on another Linux libc are not guaranteed to run on Alpine.
 
 ## Report the installed version
 
-The current source supports `stackops --version`. Published release `26.9` predates that option; for that release, inspect the installed package with:
-
 ```bash
-uv tool list
+stackops --version
 ```
 
-When reporting behavior from a source checkout, include its Git commit as well as the package version. Source changes can precede the next release.
+`uv tool list` also shows the installed package version. When reporting behavior from a source checkout, include its Git commit as well as the package version. Source changes can precede the next release.
 
 ## Upgrade or remove
 

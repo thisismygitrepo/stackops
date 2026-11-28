@@ -20,7 +20,9 @@ Current top-level commands:
 | `transfer` | Transfer files through SSH using `machine:path` endpoints |
 | `onedrive` | Access OneDrive accounts and files through Microsoft Graph |
 
-The command also defines hidden one-letter aliases for the same actions: `s`, `c`, `m`, `f`, and `o`.
+The command also defines hidden one-letter aliases for the same actions: `s`, `c`, `m`, `t`, and `o`.
+
+`cloud --non-interactive`/`-N` (or `STACKOPS_NON_INTERACTIVE`) never prompts or opens a picker; it is enabled automatically without a terminal.
 
 ---
 
@@ -47,12 +49,13 @@ Current options from live help:
 
 | Option | Meaning |
 | --- | --- |
-| `--transfers`, `-T` | Number of concurrent sync transfers |
+| `--transfers`, `-T` | Number of concurrent sync transfers (default `10`) |
 | `--root`, `-R` | Remote root |
 | `--bisync`, `-b` | Bidirectional sync |
 | `--resync`, `-r` | Initialize or recover bidirectional sync state; requires `--bisync` |
 | `--delete`, `-D` | Delete destination-only files during one-way sync; with bisync, changes deletion timing rather than enabling deletion |
 | `--verbose`, `-v` | Show the rclone command being executed |
+| `--json`, `-j` | Print a completion receipt as JSON |
 
 Example:
 
@@ -76,20 +79,23 @@ Current options from live help:
 
 | Option | Meaning |
 | --- | --- |
-| `--transfers`, `-T` | Number of concurrent file transfers |
+| `--transfers`, `-T` | Number of concurrent file transfers (default `32`) |
 | `--overwrite`, `-o` | Overwrite an existing destination file |
 | `--share-scope`, `-s` | Share link scope: `anonymous`/`a` or `organization`/`o`; implies sharing |
 | `--share-type`, `-t` | Share link type: `view`/`v`, `edit`/`e`, or `embed`/`m`; implies sharing |
-| `--record-group`, `-g` | Group name for the recorded upload; used when `--record-name` is passed |
+| `--record-group`, `-g` | Group name for the recorded upload (default `default`); used when `--record-name` is passed |
 | `--record-name`, `-n` | Record the upload in `mapper/data.yaml` with this entry name |
-| `--record-os`, `-F` | OS filter for recorded uploads; defaults to all supported OS values |
+| `--record-os`, `-F` | Comma-separated OS filter for recorded uploads; defaults to `linux,darwin,windows` |
 | `--relative-to-home`, `-r` | Treat remote paths as relative to `myhome` |
 | `--root`, `-R` | Remote root |
 | `--password`, `-p` | Symmetric GPG encryption password; implies symmetric encryption when no mode is specified |
 | `--password-name`, `-P` | StackOps secret containing the symmetric password; implies symmetric encryption when no mode is specified |
+| `--password-file`, `-f` | Read the encryption password from a file; `-` reads standard input |
+| `--password-env`, `-E` | Environment variable containing the encryption password |
 | `--encryption`, `-e` | Enable encryption with `symmetric`/`s` or `asymmetric`/`a`; defaults to symmetric with a password, otherwise plaintext |
 | `--zip`, `-z` | Compress uploads and extract downloads |
 | `--os-specific`, `-O` | Choose a path specific to the current OS |
+| `--json`, `-j` | Print resolved paths and share links as JSON |
 
 Example:
 
@@ -102,9 +108,9 @@ cloud copy ./report.pdf remote:reports/report.pdf --share-type v --record-name r
 cloud copy ./report.pdf remote:reports/report.pdf -s o -t v
 ```
 
-`--record-name` saves the upload in `mapper/data.yaml`. Its required `encryption` field is persisted as `symmetric`, `asymmetric`, or `null` for plaintext. When `--share-scope` or `--share-type` is present, the generated URL is stored in that entry instead of writing a `.share_url_*` sidecar file.
+`--record-name` saves the upload in `mapper/data.yaml`. Its required `encryption` field is persisted as `symmetric`, `asymmetric`, or `null` for plaintext. When `--share-scope` or `--share-type` is present, the generated URL is printed and stored in that entry.
 `--share-scope` and `--share-type` are generic StackOps options. StackOps resolves the rclone config name to its backend type and maps supported providers internally; for OneDrive this becomes `--onedrive-link-scope` and `--onedrive-link-type`. Backends without provider-specific scope/type controls use plain `rclone link` for `anonymous` + `view`, and reject unsupported stronger options.
-Use `--encryption symmetric`/`s` for password-based GPG or `--encryption asymmetric`/`a` for GPG public/private keys. `--password` and `--password-name` imply symmetric encryption when the mode is omitted. Omit both encryption and password options for plaintext.
+Use `--encryption symmetric`/`s` for password-based GPG or `--encryption asymmetric`/`a` for GPG public/private keys. `--password` and `--password-name` imply symmetric encryption when the mode is omitted. Omit both encryption and password options for plaintext. Choose only one password source among `--password`, `--password-name`, `--password-file`, and `--password-env`.
 
 ---
 
@@ -120,14 +126,24 @@ Current options:
 | --- | --- |
 | `CLOUDS` | Cloud names, separated by spaces or commas; omit to select interactively |
 | `--destination`, `-d` | Mount destination |
-| `--network`, `-n` | Network mount target |
-| `--backend`, `-b` | Terminal backend on Linux/macOS: `tmux`/`t` or `auto`/`a` |
-| `--daemon`, `-D` | Keep Linux/macOS mounts running independently of tmux |
+| `--network`, `-n` | Windows network mount target, for example `X:` |
+| `--backend`, `-b` | Session multiplexer on Linux/macOS: `tmux`/`t` or `tuios`/`u` |
+| `--daemon`, `-D` | Keep mounts running in the background independently of a terminal |
+| `--timeout`, `-T` | Seconds to wait for each background mount (default `30`) |
+| `--json`, `-j` | Print background mount locations and process identities as JSON; requires `--daemon` and explicit cloud names |
 
 Current defaults:
 
-- backend: `tmux`
+- backend: `default_session_multiplexer` from the StackOps config, otherwise `tmux`
+- mount location: `~/data/rclone/<cloud>` unless `--destination` or `--network` is given
 - interactive selection: used when cloud names are omitted
+
+Example:
+
+```bash
+cloud mount drive,dropbox
+cloud mount drive --daemon --json
+```
 
 ---
 
@@ -147,6 +163,8 @@ Current options:
 | `--zip-first`, `-z` | Zip before sending |
 | `--cloud`, `-c` | Transfer through the cloud |
 | `--overwrite`, `-o` | Overwrite existing remote files when sending local to remote |
+| `--password-file`, `-f` | Read the SSH password from a file; `-` reads standard input |
+| `--password-env`, `-E` | Environment variable containing the SSH password |
 
 Example:
 
@@ -177,7 +195,7 @@ This group manages OneDrive accounts and files directly through Microsoft Graph.
 | `delete` | Move a remote item to the recycle bin |
 | `config-path` | Print the global StackOps secrets path used for account configuration |
 
-File operations select an account with `--account/-a`. Omit it to use the only configured account or enter its name interactively. `add-account`, `auth`, and `status` take the account name as a positional argument:
+File operations select an account with `--account/-a`. Omit it to use the only configured account or enter its name interactively. Most commands accept `--json/-j` for JSON output, and `delete --yes/-y` skips the confirmation prompt. `add-account`, `auth`, and `status` take the account name as a positional argument:
 
 ```bash
 cloud onedrive add-account work --client-id <microsoft-client-id>

@@ -1,6 +1,6 @@
 # StackOps Source Map
 
-Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-11-14.
+Regenerated from `src/stackops/scripts/python/graph/cli_graph.json` on 2026-11-28.
 
 Use this map as a root source index. For command-level source details, inspect Typer registrations and verify the live command with `--help`.
 
@@ -15,6 +15,7 @@ Use this map as a root source index. For command-level source details, inspect T
 - `seek` -> `src/stackops/scripts/python/seek.py` -> `seek`
 - `fire` -> `src/stackops/scripts/python/stackops_entry.py` -> `stackops.scripts.python.fire_jobs.get_app` via `fire`
 - `preview` -> `src/stackops/scripts/python/stackops_entry.py` -> `preview`
+- `webui` -> `src/stackops/scripts/python/stackops_entry.py` -> `webui`
 
 ## Debugging and Validation Workflow
 

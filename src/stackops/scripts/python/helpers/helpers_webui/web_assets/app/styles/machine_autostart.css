@@ -148,5 +148,9 @@
 /* On a narrow window the Scripts page lets its list run down the page; here the list keeps scrolling inside the dialog. */
 .dialog.autostart-add .autostart-add-list { flex: 1; min-height: 96px; margin: 0 14px 0 16px; padding: 2px 6px 2px 2px; overflow-y: auto; }
 .autostart-add-blank:not(:empty) { padding: 0 22px 8px; }
+/* When the picked script starts and which other systems the startup list names it for. */
+.autostart-add-options { display: grid; gap: 12px; padding: 14px 22px 0; }
+.autostart-add-options .segmented { justify-self: start; }
+.autostart-add-options .field-hint:empty { display: none; }
 .autostart-add-hint { padding: 12px 22px 14px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); overflow-wrap: anywhere; }
 .autostart-add-hint:empty { display: none; }

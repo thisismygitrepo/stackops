@@ -122,7 +122,7 @@ Output JSON entry must use this exact shape:
 
 Requirements:
 
-- `categoryLabels` is required and must be non-empty. Pick from the `InstallerCategory` enum in `src/stackops/utils/schemas/installer/installer_data.schema.json`. `build_installer_config.py` does not emit it, so add it to `entry.json` before upserting.
+- `categoryLabels` is required and must be non-empty. Pick from the `InstallerCategory` values (a `oneOf` list of `const` labels) in `src/stackops/utils/schemas/installer/installer_data.schema.json`. `build_installer_config.py` does not emit it, so add it to the `entry` object in `entry.json` before upserting.
 - `lastCommitDate` and `lastCommitDateCheckDate` are optional; the commit-date refresh keeps them up to date.
 - `comment` is an optional maintainer note. Put notes there, never in YAML `#` comments: the catalog writers rewrite the whole file and drop them.
 - Quote YAML values that would otherwise parse as dates, numbers or booleans; the catalog loader rejects non-string values.

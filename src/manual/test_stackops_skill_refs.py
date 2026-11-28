@@ -101,7 +101,7 @@ def test_update_skill_refs_command_is_registered() -> None:
     result = CliRunner().invoke(cli_self_assets.get_app(), ["--help"])
 
     assert result.exit_code == 0
-    assert "update-skill-refs" in result.stdout
+    assert "skill-refs" in result.stdout
 
 
 def test_cli_graph_expands_static_loop_command_registrations() -> None:

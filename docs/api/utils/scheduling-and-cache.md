@@ -16,7 +16,7 @@ A `Scheduler` is constructed from:
 
 - `routine`, which receives the current scheduler instance
 - `wait_ms`
-- `logger`
+- `logger`, typed as the module's `LoggerTemplate` protocol
 - optional `sess_stats`
 - optional `exception_handler`
 - optional `max_cycles`
@@ -51,7 +51,7 @@ Current refresh semantics are important:
 - `fresh=True` always repopulates immediately
 - otherwise it refreshes only when the cached age is greater than `expire`
 
-`tolerance_seconds` is passed to `__call__` and controls refresh behavior when `fresh=True`: the cache refreshes only if the cached age exceeds `tolerance_seconds`.
+`__call__(fresh, tolerance_seconds)` requires both arguments, but `CacheMemory` does not use `tolerance_seconds` to decide anything: it only appears in the cache-hit log message. Tolerance-aware refresh is a `Cache` behavior.
 
 `CacheMemory.as_decorator(...)` returns a `CacheMemory` wrapper object around the decorated function.
 
@@ -94,11 +94,12 @@ By default, `Cache` uses `to_pickle()` and `from_pickle()`, but you can swap in 
 ```python
 from datetime import timedelta
 from pathlib import Path
+from typing import cast
 
 from stackops.logger import get_logger
-from stackops.cluster.scheduler import Cache, CacheMemory, Scheduler
+from stackops.cluster.scheduler import Cache, CacheMemory, LoggerTemplate, Scheduler
 
-logger = get_logger("demo")
+logger = cast(LoggerTemplate, get_logger("demo"))
 
 
 def fetch_snapshot() -> dict[str, float]:

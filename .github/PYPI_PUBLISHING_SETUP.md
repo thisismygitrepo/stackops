@@ -4,7 +4,7 @@ This repository is configured with a GitHub Action that automatically builds and
 
 ## How it works
 
-The workflow triggers on every push to the `main` branch and:
+The workflow (`.github/workflows/publish-to-pypi.yml`) triggers on every push to the `main` branch and on pull requests targeting it:
 
 1. **Version Check**: Checks whether the version in `pyproject.toml` is already on PyPI
 2. **Build & Publish**: Runs checks and builds the package, then publishes an unpublished version to PyPI
@@ -15,7 +15,7 @@ The workflow triggers on every push to the `main` branch and:
 
 ### 1. Set up PyPI Token
 
-You need to configure a PyPI API token as a GitHub secret:
+Configure a PyPI API token as a GitHub secret (when `PYPI_TOKEN` is not set, the workflow publishes through PyPI trusted publishing instead):
 
 1. **Generate PyPI API Token**:
    - Go to [PyPI Account Settings](https://pypi.org/manage/account/token/)
@@ -42,7 +42,7 @@ To prepare a release for local review:
 devops self release
 ```
 
-This increments the calendar version through `uv`, updates the lockfile and managed source references, and syncs dependencies. Versions use `YY.M` for the first release of a month, followed by `YY.M.1`, `YY.M.2`, and so on.
+This increments the calendar version through `uv`, updates the lockfile and managed source references, and syncs dependencies. It finishes by reinstalling the editable `stackops` uv tool so `stackops --version` reports the new version. Versions use `YY.M` for the first release of a month, followed by `YY.M.1`, `YY.M.2`, and so on.
 
 To prepare and push a release in one command, start with a clean `main` branch synchronized with `origin`:
 
@@ -71,6 +71,6 @@ These are alternative flows: after preparing locally, review and commit those ch
 ## Troubleshooting
 
 - **Version already published**: Run `devops self release` to prepare the next version
-- **"PyPI token not found"**: Ensure `PYPI_TOKEN` secret is properly set in GitHub repository settings
+- **Publish step fails without a token**: When the `PYPI_TOKEN` secret is unset the workflow falls back to PyPI trusted publishing; set `PYPI_TOKEN` in GitHub repository settings if trusted publishing is not configured
 - **Build failures**: Check the Actions log for detailed error messages
 - **Permission errors**: Ensure your PyPI token has sufficient permissions for the package

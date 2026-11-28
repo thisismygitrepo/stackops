@@ -71,13 +71,17 @@ def seek(
     ] = 50,
 ) -> None:
     """seek across files, text matches, and code symbols."""
+    import os
     import subprocess
+    import sys
 
     from stackops.scripts.python.helpers.helpers_seek.seek_impl import seek as impl
     from stackops.utils.cli_utils.interaction import configure_interaction, require_interactive
 
+    explicitly_non_interactive = non_interactive or os.environ.get("STACKOPS_NON_INTERACTIVE", "").casefold() in {"1", "true", "yes"}
+    piped_text_search = not explicitly_non_interactive and not sys.stdin.isatty() and sys.stdout.isatty() and not (ast or semantic or file)
     configure_interaction(ctx=ctx, non_interactive=non_interactive)
-    if not json_output and not install_dependencies:
+    if not json_output and not install_dependencies and not piped_text_search:
         require_interactive("Search selection; use --json for noninteractive results")
 
     path, resolved_search_term = _resolve_seek_arguments(first_argument=path_or_search_term, search_term=search_term)

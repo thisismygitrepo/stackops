@@ -7,8 +7,7 @@ This part of the utility API is the filesystem and configuration layer that curr
 | `stackops.utils.path_core` | Core path operations such as copy, move, delete, symlink, download, temp-path creation, and safe naming |
 | `stackops.utils.path_reference` | Resolve package-relative asset paths from imported modules |
 | `stackops.utils.io` | JSON / INI / pickle IO plus GPG-backed file encryption helpers |
-
-Older wording around `PathExtended` has been removed here because the current repo centers these modules instead.
+| `stackops.utils.files.read` | Suffix-dispatched readers such as `read_json()`, `read_yaml()`, and `read_toml()` |
 
 ---
 
@@ -60,18 +59,20 @@ Main helpers:
 
 | Function or class | Purpose |
 | --- | --- |
-| `save_json()` / `read_json()` | Persist and read JSON |
+| `save_json()` | Persist JSON (the matching `read_json()` lives in `stackops.utils.files.read`) |
 | `save_ini()` / `read_ini()` | Persist and read INI files |
 | `save_pickle()` / `from_pickle()` | Persist and restore Python objects |
 | `encrypt_file_symmetric()` / `decrypt_file_symmetric()` | GPG symmetric encryption using loopback passphrase mode |
-| `encrypt_file_asymmetric()` / `decrypt_file_asymmetric()` | GPG public-key encryption and decryption |
+| `encrypt_file_asymmetric()` / `decrypt_file_asymmetric()` | GPG public-key encryption and decryption of files |
+| `encrypt_bytes_asymmetric()` / `decrypt_bytes_asymmetric()` | GPG public-key encryption and decryption of in-memory bytes |
 | `GpgCommandError` | Rich error wrapper for failed GPG subprocess calls |
 
 Current GPG behavior:
 
 - `build_gpg_environment()` populates `GPG_TTY` when possible
 - symmetric helpers stream the password through stdin with `--pinentry-mode loopback`
-- asymmetric helpers use `--default-recipient-self`
+- `encrypt_file_asymmetric(file_path, recipient=...)` passes `--recipient <recipient>`, or `--default-recipient-self` when `recipient` is `None`; `encrypt_bytes_asymmetric()` always uses `--default-recipient-self`
+- file helpers write next to the source: encryption appends `.gpg`, decryption strips it (or prefixes `decrypted_` when the name has no `.gpg` suffix)
 - `GpgCommandError` includes the command, exit code, stdout, stderr, and a tailored hint when it can infer one
 
 ---
@@ -143,7 +144,7 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
-## File wrapper
+## File mode literals
 
 ::: stackops.utils.files.f
     options:
@@ -151,7 +152,7 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
-## File headers
+## Terminal header and logo
 
 ::: stackops.utils.files.headers
     options:

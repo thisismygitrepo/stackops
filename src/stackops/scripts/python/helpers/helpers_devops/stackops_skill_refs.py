@@ -104,7 +104,12 @@ def render_cli_map(*, cli_graph_payload: JsonObject, project_scripts: Mapping[st
         ]
     )
     lines.append("- `UV_CACHE_DIR=/tmp/uv-cache uv run stackops --help`")
-    lines.extend(f"- `UV_CACHE_DIR=/tmp/uv-cache uv run {_name(child)} --help`" for child in _children(root))
+    lines.extend(
+        f"- `UV_CACHE_DIR=/tmp/uv-cache uv run {_name(child)} --help`"
+        if _name(child) in project_scripts
+        else f"- `UV_CACHE_DIR=/tmp/uv-cache uv run stackops {_name(child)} --help`"
+        for child in _children(root)
+    )
     lines.extend(["", "## Important Nuances", ""])
     lines.extend(_important_nuance_lines())
     lines.append("")
