@@ -9,6 +9,7 @@ The current modules are:
 | `stackops.utils.accessories` | Small shared helpers such as random strings, list/timeframe splitting, rich formatting, and git-root discovery |
 | `stackops.utils.options_utils.options` | Terminal choice helpers, plus cloud and SSH selectors |
 | `stackops.utils.options_utils.tv_options` | Preview-based selection from a mapping of names to payloads |
+| `stackops.utils.cli_utils.interaction` | The interactive-terminal check the pickers start with, and the `--non-interactive` callback |
 
 ---
 
@@ -120,7 +121,7 @@ The implementation dispatches to Windows- or Unix-specific Television helpers. U
       show_source: false
       members_order: source
 
-## Preview selection
+## Preview selection reference
 
 ::: stackops.utils.options_utils.tv_options
     options:
@@ -147,6 +148,16 @@ The implementation dispatches to Windows- or Unix-specific Television helpers. U
 ## Terminal helpers
 
 ::: stackops.utils.cli_utils.terminal
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Interaction guards
+
+`is_interactive()` is `True` only when stdin and stdout are both terminals and `STACKOPS_NON_INTERACTIVE` is not `1`, `true`, or `yes`. `require_interactive(action)` raises a usage error naming `action` otherwise. `configure_interaction(ctx, non_interactive)` is the Typer callback behind `--non-interactive`: when the flag is set or the session is not interactive, it sets `STACKOPS_NON_INTERACTIVE=1`, `GIT_TERMINAL_PROMPT=0`, and `GCM_INTERACTIVE=never` until the command finishes.
+
+::: stackops.utils.cli_utils.interaction
     options:
       show_root_heading: true
       show_source: false

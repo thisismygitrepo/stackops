@@ -3,14 +3,17 @@ import { state } from "/assets/scripts/state.js";
 import { agentButton } from "../../../agent_ask.js";
 import { confirmAction } from "../../../overlays.js";
 import { button, callout } from "../../../widgets.js";
-import { ADD_COMMAND, APPLY_COMMAND, REMOVE_COMMAND } from "./add_script.js";
+import { ADD_COMMAND, APPLY_COMMAND, REMOVE_COMMAND } from "./add_entry.js";
 import { applyRemembered, readRemembered } from "./api.js";
 
 const NOTHING = { file: "", missing: [], unlisted: [], problem: "" };
 const named = (names) => new Intl.ListFormat("en", { type: "conjunction" }).format(names);
+// A script is called by its file, a layout by the word and its name.
+const called = (entry) => (entry.kind === "layout" ? `the layout ${entry.name}` : entry.name);
+const capital = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
-// The startup list in the dotfiles, where the scripts StackOps starts are kept for the person's other machines, set against this machine:
-// what the list names for this system and is not started here, and the scripts of the dotfiles that start here without being on it. Each
+// The startup list in the dotfiles, where what StackOps starts is kept for the person's other machines, set against this machine:
+// what the list names for this system and is not started here, and what starts here out of the dotfiles without being on it. Each
 // side has its way to be settled, which is what `utils machine autostart-apply` does. Nothing is shown when the two agree.
 // `reload` reads the page again once something was changed.
 export function createStartupList({ activity, outcome, reload }) {
@@ -18,15 +21,15 @@ export function createStartupList({ activity, outcome, reload }) {
   let kept = NOTHING;
   let applying = false;
 
-  // With `prune` the scripts that start here without being on the list are stopped as well, which is asked first.
+  // With `prune` what starts here without being on the list is stopped as well, which is asked first.
   async function match(prune) {
     const { missing, unlisted } = kept;
     if (applying) return;
     if (prune) {
       const one = unlisted.length === 1;
       const sure = await confirmAction({
-        title: `Stop starting ${named(unlisted)} here?`, confirm: "Stop starting here", tone: "danger",
-        body: `Your startup list does not name ${one ? "it" : "them"} for this system, so ${one ? "it" : "they"} will no longer start on ${one ? "its" : "their"} own on this machine. The ${one ? "script itself is" : "scripts themselves are"} kept.${missing.length > 0 ? ` What the list does name is started here as well: ${named(missing.map((script) => script.name))}.` : ""}`,
+        title: `Stop starting ${named(unlisted.map(called))} here?`, confirm: "Stop starting here", tone: "danger",
+        body: `Your startup list does not name ${one ? "it" : "them"} for this system, so ${one ? "it" : "they"} will no longer start on ${one ? "its" : "their"} own on this machine. ${one ? "It is" : "They are"} not deleted.${missing.length > 0 ? ` What the list does name is started here as well: ${named(missing.map(called))}.` : ""}`,
       });
       if (!sure) return;
     }
@@ -34,7 +37,7 @@ export function createStartupList({ activity, outcome, reload }) {
     paint();
     try {
       const done = await applyRemembered(prune);
-      const said = [done.added.length > 0 && `${named(done.added)} ${done.added.length === 1 ? "starts" : "start"} here from now on.`, done.removed.length > 0 && `${named(done.removed)} no longer ${done.removed.length === 1 ? "starts" : "start"} here.`].filter(Boolean);
+      const said = [done.added.length > 0 && `${capital(named(done.added))} ${done.added.length === 1 ? "starts" : "start"} here from now on.`, done.removed.length > 0 && `${capital(named(done.removed))} no longer ${done.removed.length === 1 ? "starts" : "start"} here.`].filter(Boolean);
       if (said.length > 0) outcome.show({ said: said.join(" ") });
       for (const failure of done.failures) toast(failure);
     } catch (error) {
@@ -49,13 +52,13 @@ export function createStartupList({ activity, outcome, reload }) {
     if (problem) return element.replaceChildren(callout({ tone: "warn", title: "Your startup list could not be read", text: problem }));
     if (missing.length === 0 && unlisted.length === 0) return element.replaceChildren();
     const lines = [
-      missing.length > 0 && `${named(missing.map((script) => (script.when === "boot" ? `${script.name} (with the computer)` : script.name)))} ${missing.length === 1 ? "is" : "are"} on the list for this system and ${missing.length === 1 ? "does" : "do"} not start here yet.`,
-      unlisted.length > 0 && `${named(unlisted)} ${unlisted.length === 1 ? "starts" : "start"} here without being on the list.`,
+      missing.length > 0 && `${capital(named(missing.map((entry) => (entry.when === "boot" ? `${called(entry)} (with the computer)` : called(entry)))))} ${missing.length === 1 ? "is" : "are"} on the list for this system and ${missing.length === 1 ? "does" : "do"} not start here yet.`,
+      unlisted.length > 0 && `${capital(named(unlisted.map(called)))} ${unlisted.length === 1 ? "starts" : "start"} here without being on the list.`,
     ].filter(Boolean);
     const start = button({ label: missing.length === 1 ? "Start it here" : "Start them here", glyph: "power", tone: "primary", small: true, onclick: () => match(false) });
     const stop = button({ label: unlisted.length === 1 ? "Stop it here" : "Stop them here", small: true, onclick: () => match(true) });
     start.disabled = stop.disabled = applying;
-    const ask = agentButton(activity, { title: "The startup list", commands: [APPLY_COMMAND, ADD_COMMAND, REMOVE_COMMAND], about: `The list of scripts that start on their own on the person's machines, kept in ${tildify(file, state.boot.home)} in their dotfiles, and how this machine differs from it.` }, { small: true });
+    const ask = agentButton(activity, { title: "The startup list", commands: [APPLY_COMMAND, ADD_COMMAND, REMOVE_COMMAND], about: `The list of scripts and terminal layouts that start on their own on the person's machines, kept in ${tildify(file, state.boot.home)} in their dotfiles, and how this machine differs from it.` }, { small: true });
     element.replaceChildren(callout({ tone: "", title: "This machine and your startup list differ", text: lines.join(" "), where: file, extra: h("div", { class: "view-actions" }, missing.length > 0 && start, unlisted.length > 0 && stop, ask) }));
   }
 

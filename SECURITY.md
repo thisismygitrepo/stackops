@@ -17,6 +17,7 @@ operation is safe or reversible.
 | Global StackOps secrets | `~/dotfiles/stackops/secrets/secrets.json` | Plaintext JSON. On POSIX, the canonical writer creates a `0700` directory and `0600` file, but other edit paths and pre-existing files may retain broader permissions. StackOps does not configure Windows ACLs. |
 | Project-local StackOps secrets | `<project>/.stackops/secrets/secrets.json`, or an explicit `--custom-path` | Plaintext JSON. Do not commit it; a repository is not guaranteed to ignore this path. |
 | Secret shell handoff | `~/tmp_results/tmp_scripts/stackops/*.secrets.env.sh` or `*.secrets.env.ps1` | Temporary plaintext, set to mode `0600` on POSIX and intended to be deleted after it is sourced. StackOps does not configure a private Windows ACL. An interruption can leave it behind. Under the Nushell wrapper, every handoff also writes the complete shell environment beside the handoff script as `*.before` and `*.after` snapshots (created under `umask 077` on POSIX) and removes them afterwards; the `.after` snapshot includes the loaded values. Values then remain in the current shell environment and are inherited by child processes. |
+| Other shell handoff scripts | `~/tmp_results/tmp_scripts/stackops/*.sh` or `*.ps1` | Written with the default umask and not deleted by the shell wrappers after they are run. Most hold only commands, but the handoff of `devops network receive`, and of `devops network send --code`, contains the croc transfer code (`export CROC_SECRET=...` on POSIX, a `croc` argument on Windows). Delete it after a sensitive transfer. |
 | Bitwarden login material | The global StackOps secrets file | `BW_CLIENTID`, `BW_CLIENTSECRET`, and `BW_PASSWORD` are plaintext at rest in that file and are placed in the `bw` child-process environment during login. |
 | Bitwarden session and search cache | `~/tmp_results/cache/pwdmgr/cache.json.gpg` | GPG-encrypted to the user's default self-recipient. The cache contains `BW_SESSION` and raw cached `bw list items` results. At runtime, the session is passed to `bw` in its environment and may appear in shell state or command output; retrieved credential data can also be copied to the clipboard. |
 | OneDrive CLI authentication | The global StackOps secrets file | Client IDs and refresh tokens are plaintext JSON. Rotated refresh tokens are written back to this file. |
@@ -159,6 +160,10 @@ third-party agent tools are not a guarantee about those products.
 - `devops network device open-wsl-port` creates a Windows inbound TCP allow
   rule for the requested ports without restricting it to a firewall profile
   or remote address. StackOps has no command that removes the rule.
+- `devops network device bind-wsl-port` adds a Windows `netsh interface
+  portproxy` listener on `0.0.0.0` that forwards the port to the WSL address.
+  It replaces an existing listener for the same port; StackOps has no command
+  that removes it.
 - Browser automation binds to loopback by default. `--lan` on
   `agents browser launch` or `batch-launch` exposes the automation relay on
   `0.0.0.0` with no StackOps authentication layer. Anyone able to reach that

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stackops.scripts.python.helpers.helpers_utils.autostart_script_constants import MACOS_LABEL_PREFIX
+from stackops.scripts.python.helpers.helpers_utils.autostart_script_constants import MACOS_LABEL_PREFIX, MACOS_LAYOUT_LABEL_PREFIX
 
 LAUNCHCTL = "/bin/launchctl"
 PLUTIL = "/usr/bin/plutil"
@@ -38,8 +38,9 @@ MAKERS_BY_LABEL_START: dict[str, str] = {
     "us.zoom.": "Zoom",
     "org.pqrs.": "Karabiner-Elements",
     "com.openssh.": "OpenSSH",
-    # The scripts `utils machine autostart-add` adds, so each one is shown by the script's own name.
+    # The scripts and layouts `utils machine autostart-add` adds, so each one is shown by its own name.
     MACOS_LABEL_PREFIX: "StackOps",
+    MACOS_LAYOUT_LABEL_PREFIX: "StackOps",
 }
 
 # Where a package manager keeps the programs it installs, for a program that says nothing else about who it belongs to.

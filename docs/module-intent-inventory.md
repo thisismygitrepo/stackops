@@ -6,7 +6,7 @@ This is intentionally a filter, not the final truth. Use the `Manual review queu
 
 Scope: `src/stackops/**/*.py` only. This excludes `src/manual`, which is not part of the installed `stackops` package surface.
 
-Snapshot: regenerated on 2026-11-28 from the working tree at commit `6f9b50643` plus uncommitted changes. Every table and count below comes from that single pass; the `api-doc` signal reflects `docs/api` as it was on disk at that moment.
+Snapshot: regenerated on 2026-11-28 from the working tree at commit `7386c014f` plus uncommitted changes. Every table and count below comes from that single pass; the `api-doc` signal reflects `docs/api` as it was on disk at that moment.
 
 ## Classification Rules
 
@@ -69,36 +69,36 @@ These marker values are suggestions for a later source-level pass, for example `
 
 ## Counts
 
-Total installed `stackops` Python modules: **1376**
+Total installed `stackops` Python modules: **1380**
 
 | First-pass label | Count |
 | --- | ---: |
-| `api-cli-bridge` | 22 |
+| `api-cli-bridge` | 23 |
 | `cli-entrypoint` | 9 |
-| `cli-helper` | 716 |
-| `cli-module` | 158 |
+| `cli-helper` | 719 |
+| `cli-module` | 159 |
 | `config-asset` | 3 |
 | `installer-script-asset` | 30 |
-| `manual-review` | 56 |
+| `manual-review` | 55 |
 | `package-marker` | 178 |
-| `python-api` | 135 |
-| `python-api-candidate` | 57 |
+| `python-api` | 138 |
+| `python-api-candidate` | 54 |
 | `script-asset` | 12 |
 
 | Suggested marker | Count |
 | --- | ---: |
-| `api` | 214 |
+| `api` | 215 |
 | `api-or-cli-helper` | 37 |
-| `api-or-script` | 19 |
+| `api-or-script` | 18 |
 | `asset` | 3 |
-| `cli` | 167 |
-| `cli-helper` | 716 |
+| `cli` | 168 |
+| `cli-helper` | 719 |
 | `package` | 178 |
 | `script-asset` | 42 |
 
 | Confidence | Count |
 | --- | ---: |
-| `high` | 513 |
+| `high` | 517 |
 | `low` | 37 |
 | `medium` | 826 |
 
@@ -116,6 +116,7 @@ These **78** modules need a human decision before source markers are added.
 | `stackops.jobs.installer.checks.status_cli` | `api` | `api-cli-bridge` | api-doc, typer, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.cloud.onedrive.auth` | `api` | `api-cli-bridge` | api-doc, typer, classes:1, funcs:10 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.cloud.onedrive.file_ops` | `api` | `api-cli-bridge` | api-doc, typer, funcs:3 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
+| `stackops.utils.files.ascii_art` | `api` | `api-cli-bridge` | api-doc, __main__, classes:3, funcs:4 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.files.read` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:18 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.installer_utils.installer_bulk_worker` | `api` | `api-cli-bridge` | api-doc, __main__, funcs:1 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
 | `stackops.utils.installer_utils.installer_cli` | `api` | `api-cli-bridge` | api-doc, typer, funcs:9 | Referenced by API docs but also has CLI/script signals; review marker wording. |  |
@@ -177,7 +178,6 @@ These **78** modules need a human decision before source markers are added.
 | `stackops.utils.cloud.onedrive.errors` | `api-or-script` | `manual-review` | typer, classes:1, funcs:1 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.cloud.onedrive.output` | `api-or-script` | `manual-review` | typer, funcs:2 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.file_editor_cli` | `api-or-script` | `manual-review` | typer, funcs:2 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
-| `stackops.utils.files.ascii_art` | `api-or-script` | `manual-review` | __main__, classes:3, funcs:4 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.files.dbms` | `api-or-script` | `manual-review` | __main__, classes:1, funcs:3 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.files.download` | `api-or-script` | `manual-review` | typer, __main__, funcs:1 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
 | `stackops.utils.managed_file_cli` | `api-or-script` | `manual-review` | typer, funcs:2 | Library-tree module has CLI/script signals; decide if those are demos, probes, or user-facing CLI. |  |
@@ -262,7 +262,7 @@ These **192** modules are the strongest candidates for `api` markers after manua
 | `stackops.secrets.search` | `python-api` | `high` | api-doc, classes:2, funcs:7 | src/stackops/secrets/search.py |  |
 | `stackops.secrets.writer` | `python-api` | `high` | api-doc, funcs:3 | src/stackops/secrets/writer.py |  |
 | `stackops.utils.accessories` | `python-api` | `high` | api-doc, funcs:8 | src/stackops/utils/accessories.py |  |
-| `stackops.utils.cloud.default_remote` | `python-api-candidate` | `medium` | classes:1, funcs:2 | src/stackops/utils/cloud/default_remote.py |  |
+| `stackops.utils.cloud.default_remote` | `python-api` | `high` | api-doc, classes:1, funcs:2 | src/stackops/utils/cloud/default_remote.py |  |
 | `stackops.utils.cloud.defaults` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud/defaults.py | Was `utils.cloud_defaults`; moved under `cloud/`. |
 | `stackops.utils.cloud.encryption` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/utils/cloud/encryption.py | Was `utils.encryption`; moved under `cloud/`. |
 | `stackops.utils.cloud.onedrive.accounts` | `python-api-candidate` | `medium` | classes:2, funcs:6 | src/stackops/utils/cloud/onedrive/accounts.py |  |
@@ -282,7 +282,7 @@ These **192** modules are the strongest candidates for `api` markers after manua
 | `stackops.utils.default_multiplexer` | `python-api-candidate` | `medium` | funcs:3 | src/stackops/utils/default_multiplexer.py |  |
 | `stackops.utils.files.compression` | `python-api` | `high` | api-doc, __all__, funcs:19 | src/stackops/utils/files/compression.py |  |
 | `stackops.utils.files.compression_constants` | `python-api-candidate` | `medium` | - | src/stackops/utils/files/compression_constants.py |  |
-| `stackops.utils.files.f` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/files/f.py |  |
+| `stackops.utils.files.f` | `python-api-candidate` | `medium` | classes:1, funcs:1 | src/stackops/utils/files/f.py |  |
 | `stackops.utils.files.headers` | `python-api` | `high` | api-doc, funcs:6 | src/stackops/utils/files/headers.py |  |
 | `stackops.utils.files.notebook` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/utils/files/notebook.py |  |
 | `stackops.utils.files.ouch.decompress` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/utils/files/ouch/decompress.py |  |
@@ -347,12 +347,12 @@ These **192** modules are the strongest candidates for `api` markers after manua
 | `stackops.utils.schemas.config.config_types` | `python-api` | `high` | api-doc, classes:2 | src/stackops/utils/schemas/config/config_types.py |  |
 | `stackops.utils.schemas.config.constants` | `python-api-candidate` | `medium` | - | src/stackops/utils/schemas/config/constants.py |  |
 | `stackops.utils.schemas.config.migration_until_2028_01_json_to_yaml` | `python-api-candidate` | `medium` | funcs:1 | src/stackops/utils/schemas/config/migration_until_2028_01_json_to_yaml.py |  |
-| `stackops.utils.schemas.config.multiplexer_types` | `python-api-candidate` | `medium` | - | src/stackops/utils/schemas/config/multiplexer_types.py |  |
+| `stackops.utils.schemas.config.multiplexer_types` | `python-api` | `high` | api-doc | src/stackops/utils/schemas/config/multiplexer_types.py |  |
 | `stackops.utils.schemas.fire_agents.fire_agents_types` | `python-api-candidate` | `medium` | classes:2 | src/stackops/utils/schemas/fire_agents/fire_agents_types.py |  |
 | `stackops.utils.schemas.installer.installer_categories` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/schemas/installer/installer_categories.py |  |
 | `stackops.utils.schemas.installer.installer_types` | `python-api` | `high` | api-doc, classes:11, funcs:2 | src/stackops/utils/schemas/installer/installer_types.py |  |
 | `stackops.utils.schemas.installer.package_groups` | `python-api` | `high` | api-doc | src/stackops/utils/schemas/installer/package_groups.py |  |
-| `stackops.utils.schemas.json_schema` | `python-api-candidate` | `medium` | funcs:1 | src/stackops/utils/schemas/json_schema.py |  |
+| `stackops.utils.schemas.json_schema` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/utils/schemas/json_schema.py |  |
 | `stackops.utils.schemas.layouts.layout_arrangement` | `python-api` | `high` | api-doc, funcs:1 | src/stackops/utils/schemas/layouts/layout_arrangement.py |  |
 | `stackops.utils.schemas.layouts.layout_constants` | `python-api` | `high` | api-doc | src/stackops/utils/schemas/layouts/layout_constants.py |  |
 | `stackops.utils.schemas.layouts.layout_enabled` | `python-api` | `high` | api-doc, funcs:2 | src/stackops/utils/schemas/layouts/layout_enabled.py |  |
@@ -363,7 +363,7 @@ These **192** modules are the strongest candidates for `api` markers after manua
 | `stackops.utils.schemas.startup.startup_constants` | `python-api-candidate` | `medium` | - | src/stackops/utils/schemas/startup/startup_constants.py |  |
 | `stackops.utils.schemas.startup.startup_file` | `python-api-candidate` | `medium` | funcs:2 | src/stackops/utils/schemas/startup/startup_file.py |  |
 | `stackops.utils.schemas.startup.startup_types` | `python-api-candidate` | `medium` | classes:2 | src/stackops/utils/schemas/startup/startup_types.py |  |
-| `stackops.utils.schemas.yaml_document` | `python-api-candidate` | `medium` | classes:1, funcs:1 | src/stackops/utils/schemas/yaml_document.py |  |
+| `stackops.utils.schemas.yaml_document` | `python-api` | `high` | api-doc, classes:1, funcs:1 | src/stackops/utils/schemas/yaml_document.py |  |
 | `stackops.utils.schemas.yaml_schema` | `python-api` | `high` | api-doc, funcs:4 | src/stackops/utils/schemas/yaml_schema.py | Was `utils.yaml_schema`; moved under `schemas/`. |
 | `stackops.utils.ssh_utils.abc` | `python-api` | `high` | api-doc, classes:1 | src/stackops/utils/ssh_utils/abc.py |  |
 | `stackops.utils.ssh_utils.connection_target` | `python-api` | `high` | api-doc, classes:2, funcs:9 | src/stackops/utils/ssh_utils/connection_target.py |  |
@@ -388,7 +388,7 @@ These **192** modules are the strongest candidates for `api` markers after manua
 
 ## Clear CLI And CLI Helpers
 
-These **883** modules are likely direct CLI modules or CLI-only implementation helpers.
+These **887** modules are likely direct CLI modules or CLI-only implementation helpers.
 
 | Module | Marker | Label | Confidence | Signals | Path | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -862,6 +862,7 @@ These **883** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_devops.devops_status_repos` | `cli-helper` | `cli-helper` | `medium` | classes:2, funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/devops_status_repos.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.devops_status_tui` | `cli-helper` | `cli-helper` | `medium` | classes:1 | src/stackops/scripts/python/helpers/helpers_devops/devops_status_tui.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.devops_update_repos` | `cli-helper` | `cli-helper` | `medium` | main, __main__, funcs:4 | src/stackops/scripts/python/helpers/helpers_devops/devops_update_repos.py |  |
+| `stackops.scripts.python.helpers.helpers_devops.file_receive_proposal` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/file_receive_proposal.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.file_send_encryption` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/file_send_encryption.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.file_send_runtime` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/file_send_runtime.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.interactive` | `cli-helper` | `cli-helper` | `medium` | main, __main__, funcs:4 | src/stackops/scripts/python/helpers/helpers_devops/interactive.py |  |
@@ -1039,12 +1040,15 @@ These **883** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_sessions.zellij_export` | `cli-helper` | `cli-helper` | `medium` | funcs:4 | src/stackops/scripts/python/helpers/helpers_sessions/zellij_export.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.zellij_summary` | `cli` | `cli-module` | `high` | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_sessions/zellij_summary.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart` | `cli` | `cli-module` | `high` | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_apply` | `cli-helper` | `cli-helper` | `medium` | classes:3, funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_apply.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_common` | `cli-helper` | `cli-helper` | `medium` | classes:1, funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_common.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_entry` | `cli-helper` | `cli-helper` | `medium` | classes:3, funcs:4 | src/stackops/scripts/python/helpers/helpers_utils/autostart_entry.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_layout` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_layout.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_linux` | `cli-helper` | `cli-helper` | `medium` | funcs:9 | src/stackops/scripts/python/helpers/helpers_utils/autostart_linux.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_macos` | `cli-helper` | `cli-helper` | `medium` | funcs:4 | src/stackops/scripts/python/helpers/helpers_utils/autostart_macos.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_macos_login` | `cli` | `cli-module` | `high` | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_utils/autostart_macos_login.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_remembered` | `cli-helper` | `cli-helper` | `medium` | classes:3, funcs:7 | src/stackops/scripts/python/helpers/helpers_utils/autostart_remembered.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_script` | `cli-helper` | `cli-helper` | `medium` | classes:3, funcs:5 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_remembered` | `cli-helper` | `cli-helper` | `medium` | classes:1, funcs:5 | src/stackops/scripts/python/helpers/helpers_utils/autostart_remembered.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_script` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_script_cli` | `cli` | `cli-module` | `high` | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_script_constants` | `cli-helper` | `cli-helper` | `medium` | - | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_constants.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_script_entries` | `cli-helper` | `cli-helper` | `medium` | funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_entries.py |  |
@@ -1131,7 +1135,7 @@ These **883** modules are likely direct CLI modules or CLI-only implementation h
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_naming` | `cli-helper` | `cli-helper` | `medium` | funcs:3 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_naming.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_read` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_read.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_routes` | `cli-helper` | `cli-helper` | `medium` | funcs:2 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_routes.py |  |
-| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts` | `cli-helper` | `cli-helper` | `medium` | classes:3, funcs:4 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_scripts.py |  |
+| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts` | `cli-helper` | `cli-helper` | `medium` | classes:6, funcs:7 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_scripts.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_windows` | `cli-helper` | `cli-helper` | `medium` | funcs:5 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_windows.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_devices_actions` | `cli-helper` | `cli-helper` | `medium` | funcs:5 | src/stackops/scripts/python/helpers/helpers_webui/machine_devices_actions.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_devices_linux` | `cli-helper` | `cli-helper` | `medium` | funcs:3 | src/stackops/scripts/python/helpers/helpers_webui/machine_devices_linux.py |  |
@@ -2114,7 +2118,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_devops.cli_data` | `cli` | `cli-module` | `high` | 2 | 298 | typer, typer-app, cli-registration, get_app, funcs:7 | src/stackops/scripts/python/helpers/helpers_devops/cli_data.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_data_display` | `cli` | `cli-module` | `high` | 1 | 124 | typer, funcs:2 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_display.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_data_edit` | `cli` | `cli-module` | `high` | 1 | 16 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_edit.py |  |
-| `stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt` | `cli` | `cli-module` | `high` | 4 | 262 | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_encrypt.py |  |
+| `stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt` | `cli` | `cli-module` | `high` | 5 | 262 | typer, funcs:12 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_encrypt.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_data_encrypt_output` | `cli-helper` | `cli-helper` | `medium` | 2 | 49 | funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_encrypt_output.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_data_subset` | `cli` | `cli-module` | `high` | 1 | 186 | typer, funcs:8 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_subset.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_data_subset_io` | `cli` | `cli-module` | `high` | 1 | 86 | typer, funcs:4 | src/stackops/scripts/python/helpers/helpers_devops/cli_data_subset_io.py |  |
@@ -2138,7 +2142,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_devops.cli_self_info` | `cli` | `cli-module` | `high` | 1 | 224 | typer, funcs:6 | src/stackops/scripts/python/helpers/helpers_devops/cli_self_info.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_self_release` | `cli` | `cli-module` | `high` | 1 | 58 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/cli_self_release.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_self_repo` | `cli` | `cli-module` | `high` | 5 | 58 | typer, funcs:4 | src/stackops/scripts/python/helpers/helpers_devops/cli_self_repo.py |  |
-| `stackops.scripts.python.helpers.helpers_devops.cli_share_file` | `cli` | `cli-module` | `high` | 2 | 280 | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/cli_share_file.py |  |
+| `stackops.scripts.python.helpers.helpers_devops.cli_share_file` | `cli` | `cli-module` | `high` | 2 | 294 | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/cli_share_file.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_share_server` | `cli` | `cli-module` | `high` | 2 | 153 | typer, typer-app, cli-registration, __main__, funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/cli_share_server.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_share_temp` | `cli` | `cli-module` | `high` | 1 | 107 | typer, classes:1, funcs:5 | src/stackops/scripts/python/helpers/helpers_devops/cli_share_temp.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.cli_share_terminal` | `cli` | `cli-module` | `high` | 1 | 174 | typer, typer-app, cli-registration, __main__, funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/cli_share_terminal.py |  |
@@ -2167,6 +2171,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_devops.devops_status_repos` | `cli-helper` | `cli-helper` | `medium` | 2 | 94 | classes:2, funcs:3 | src/stackops/scripts/python/helpers/helpers_devops/devops_status_repos.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.devops_status_tui` | `cli-helper` | `cli-helper` | `medium` | 1 | 168 | classes:1 | src/stackops/scripts/python/helpers/helpers_devops/devops_status_tui.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.devops_update_repos` | `cli-helper` | `cli-helper` | `medium` | 0 | 235 | main, __main__, funcs:4 | src/stackops/scripts/python/helpers/helpers_devops/devops_update_repos.py |  |
+| `stackops.scripts.python.helpers.helpers_devops.file_receive_proposal` | `cli` | `cli-module` | `high` | 1 | 123 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/file_receive_proposal.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.file_send_encryption` | `cli` | `cli-module` | `high` | 1 | 32 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/file_send_encryption.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.file_send_runtime` | `cli` | `cli-module` | `high` | 1 | 92 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_devops/file_send_runtime.py |  |
 | `stackops.scripts.python.helpers.helpers_devops.interactive` | `cli-helper` | `cli-helper` | `medium` | 1 | 228 | main, __main__, funcs:4 | src/stackops/scripts/python/helpers/helpers_devops/interactive.py |  |
@@ -2213,7 +2218,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_fire_command.file_wrangler` | `cli-helper` | `cli-helper` | `medium` | 2 | 102 | funcs:3 | src/stackops/scripts/python/helpers/helpers_fire_command/file_wrangler.py |  |
 | `stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_args_helper` | `cli` | `cli-module` | `high` | 2 | 144 | typer, classes:1, funcs:4 | src/stackops/scripts/python/helpers/helpers_fire_command/fire_jobs_args_helper.py |  |
 | `stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_environment` | `cli-helper` | `cli-helper` | `medium` | 1 | 58 | classes:1, funcs:3 | src/stackops/scripts/python/helpers/helpers_fire_command/fire_jobs_environment.py |  |
-| `stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 363 | funcs:13 | src/stackops/scripts/python/helpers/helpers_fire_command/fire_jobs_impl.py |  |
+| `stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 372 | funcs:13 | src/stackops/scripts/python/helpers/helpers_fire_command/fire_jobs_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_route_helper` | `cli-helper` | `cli-helper` | `medium` | 2 | 107 | funcs:2 | src/stackops/scripts/python/helpers/helpers_fire_command/fire_jobs_route_helper.py |  |
 | `stackops.scripts.python.helpers.helpers_fire_command.fire_jobs_streamlit_helper` | `cli-helper` | `cli-helper` | `medium` | 0 | 0 | - | src/stackops/scripts/python/helpers/helpers_fire_command/fire_jobs_streamlit_helper.py |  |
 | `stackops.scripts.python.helpers.helpers_network` | `package` | `package-marker` | `high` | 2 | 0 | api-doc | src/stackops/scripts/python/helpers/helpers_network/__init__.py |  |
@@ -2299,7 +2304,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_seek.scripts_linux` | `package` | `package-marker` | `high` | 1 | 2 | - | src/stackops/scripts/python/helpers/helpers_seek/scripts_linux/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_seek.scripts_macos` | `package` | `package-marker` | `high` | 1 | 1 | - | src/stackops/scripts/python/helpers/helpers_seek/scripts_macos/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_seek.scripts_windows` | `package` | `package-marker` | `high` | 1 | 1 | - | src/stackops/scripts/python/helpers/helpers_seek/scripts_windows/__init__.py |  |
-| `stackops.scripts.python.helpers.helpers_seek.seek_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 406 | funcs:16 | src/stackops/scripts/python/helpers/helpers_seek/seek_impl.py |  |
+| `stackops.scripts.python.helpers.helpers_seek.seek_impl` | `cli-helper` | `cli-helper` | `medium` | 1 | 410 | funcs:16 | src/stackops/scripts/python/helpers/helpers_seek/seek_impl.py |  |
 | `stackops.scripts.python.helpers.helpers_seek.semantic` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/scripts/python/helpers/helpers_seek/semantic/__init__.py |  |
 | `stackops.scripts.python.helpers.helpers_seek.semantic.backend_ck` | `cli-helper` | `cli-helper` | `medium` | 1 | 64 | classes:2, funcs:2 | src/stackops/scripts/python/helpers/helpers_seek/semantic/backend_ck.py |  |
 | `stackops.scripts.python.helpers.helpers_seek.semantic.backend_grepai` | `cli-helper` | `cli-helper` | `medium` | 1 | 139 | classes:5, funcs:4 | src/stackops/scripts/python/helpers/helpers_seek/semantic/backend_grepai.py |  |
@@ -2391,15 +2396,18 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_sessions.zellij_export` | `cli-helper` | `cli-helper` | `medium` | 1 | 95 | funcs:4 | src/stackops/scripts/python/helpers/helpers_sessions/zellij_export.py |  |
 | `stackops.scripts.python.helpers.helpers_sessions.zellij_summary` | `cli` | `cli-module` | `high` | 1 | 81 | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_sessions/zellij_summary.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart` | `cli` | `cli-module` | `high` | 2 | 98 | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_apply` | `cli-helper` | `cli-helper` | `medium` | 2 | 94 | classes:3, funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_apply.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_common` | `cli-helper` | `cli-helper` | `medium` | 11 | 129 | classes:1, funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_common.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_entry` | `cli-helper` | `cli-helper` | `medium` | 6 | 156 | classes:3, funcs:4 | src/stackops/scripts/python/helpers/helpers_utils/autostart_entry.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_layout` | `cli-helper` | `cli-helper` | `medium` | 2 | 32 | funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_layout.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_linux` | `cli-helper` | `cli-helper` | `medium` | 2 | 185 | funcs:9 | src/stackops/scripts/python/helpers/helpers_utils/autostart_linux.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_macos` | `cli-helper` | `cli-helper` | `medium` | 2 | 145 | funcs:4 | src/stackops/scripts/python/helpers/helpers_utils/autostart_macos.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_macos_login` | `cli` | `cli-module` | `high` | 2 | 68 | typer, funcs:1 | src/stackops/scripts/python/helpers/helpers_utils/autostart_macos_login.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_remembered` | `cli-helper` | `cli-helper` | `medium` | 2 | 165 | classes:3, funcs:7 | src/stackops/scripts/python/helpers/helpers_utils/autostart_remembered.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_script` | `cli-helper` | `cli-helper` | `medium` | 3 | 178 | classes:3, funcs:5 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_script_cli` | `cli` | `cli-module` | `high` | 1 | 114 | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_script_constants` | `cli-helper` | `cli-helper` | `medium` | 4 | 11 | - | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_constants.py |  |
-| `stackops.scripts.python.helpers.helpers_utils.autostart_script_entries` | `cli-helper` | `cli-helper` | `medium` | 3 | 44 | funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_entries.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_remembered` | `cli-helper` | `cli-helper` | `medium` | 3 | 119 | classes:1, funcs:5 | src/stackops/scripts/python/helpers/helpers_utils/autostart_remembered.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_script` | `cli-helper` | `cli-helper` | `medium` | 2 | 42 | funcs:2 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_script_cli` | `cli` | `cli-module` | `high` | 1 | 120 | typer, funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_script_constants` | `cli-helper` | `cli-helper` | `medium` | 4 | 14 | - | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_constants.py |  |
+| `stackops.scripts.python.helpers.helpers_utils.autostart_script_entries` | `cli-helper` | `cli-helper` | `medium` | 3 | 50 | funcs:3 | src/stackops/scripts/python/helpers/helpers_utils/autostart_script_entries.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.autostart_windows` | `cli-helper` | `cli-helper` | `medium` | 1 | 55 | classes:1, funcs:1 | src/stackops/scripts/python/helpers/helpers_utils/autostart_windows.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog` | `cli-helper` | `cli-helper` | `medium` | 1 | 38 | - | src/stackops/scripts/python/helpers/helpers_utils/clean_drive_catalog.py |  |
 | `stackops.scripts.python.helpers.helpers_utils.clean_drive_catalog_dev` | `cli-helper` | `cli-helper` | `medium` | 1 | 127 | - | src/stackops/scripts/python/helpers/helpers_utils/clean_drive_catalog_dev.py |  |
@@ -2473,7 +2481,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_webui.field_choice_keywords` | `cli-helper` | `cli-helper` | `medium` | 1 | 48 | classes:1, funcs:1 | src/stackops/scripts/python/helpers/helpers_webui/field_choice_keywords.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.field_choices` | `cli-helper` | `cli-helper` | `medium` | 1 | 196 | classes:1, funcs:8 | src/stackops/scripts/python/helpers/helpers_webui/field_choices.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_actions` | `cli-helper` | `cli-helper` | `medium` | 2 | 106 | funcs:7 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_actions.py |  |
-| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants` | `cli-helper` | `cli-helper` | `medium` | 11 | 97 | - | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_constants.py |  |
+| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_constants` | `cli-helper` | `cli-helper` | `medium` | 11 | 98 | - | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_constants.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_detail` | `cli-helper` | `cli-helper` | `medium` | 2 | 78 | funcs:5 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_detail.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_launchd` | `cli-helper` | `cli-helper` | `medium` | 3 | 113 | classes:3, funcs:7 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_launchd.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_linux` | `cli-helper` | `cli-helper` | `medium` | 2 | 169 | funcs:7 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_linux.py |  |
@@ -2483,8 +2491,8 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_model` | `cli-helper` | `cli-helper` | `medium` | 11 | 79 | classes:6 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_model.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_naming` | `cli-helper` | `cli-helper` | `medium` | 1 | 38 | funcs:3 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_naming.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_read` | `cli-helper` | `cli-helper` | `medium` | 1 | 73 | funcs:2 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_read.py |  |
-| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_routes` | `cli-helper` | `cli-helper` | `medium` | 1 | 147 | funcs:2 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_routes.py |  |
-| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts` | `cli-helper` | `cli-helper` | `medium` | 1 | 104 | classes:3, funcs:4 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_scripts.py |  |
+| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_routes` | `cli-helper` | `cli-helper` | `medium` | 1 | 178 | funcs:2 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_routes.py |  |
+| `stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts` | `cli-helper` | `cli-helper` | `medium` | 1 | 149 | classes:6, funcs:7 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_scripts.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_autostart_windows` | `cli-helper` | `cli-helper` | `medium` | 2 | 126 | funcs:5 | src/stackops/scripts/python/helpers/helpers_webui/machine_autostart_windows.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_devices_actions` | `cli-helper` | `cli-helper` | `medium` | 1 | 89 | funcs:5 | src/stackops/scripts/python/helpers/helpers_webui/machine_devices_actions.py |  |
 | `stackops.scripts.python.helpers.helpers_webui.machine_devices_linux` | `cli-helper` | `cli-helper` | `medium` | 1 | 80 | funcs:3 | src/stackops/scripts/python/helpers/helpers_webui/machine_devices_linux.py |  |
@@ -2611,7 +2619,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.scripts.python.helpers.helpers_window.window_models` | `cli-helper` | `cli-helper` | `medium` | 7 | 15 | classes:1 | src/stackops/scripts/python/helpers/helpers_window/window_models.py |  |
 | `stackops.scripts.python.helpers.helpers_window.window_windows` | `cli-helper` | `cli-helper` | `medium` | 2 | 121 | classes:1, funcs:3 | src/stackops/scripts/python/helpers/helpers_window/window_windows.py |  |
 | `stackops.scripts.python.preview` | `cli` | `cli-entrypoint` | `high` | 1 | 134 | entry:preview, typer, typer-app, cli-registration, main, __main__, funcs:6 | src/stackops/scripts/python/preview.py |  |
-| `stackops.scripts.python.seek` | `cli` | `cli-entrypoint` | `high` | 1 | 135 | entry:seek, typer, typer-app, cli-registration, get_app, main, funcs:4 | src/stackops/scripts/python/seek.py |  |
+| `stackops.scripts.python.seek` | `cli` | `cli-entrypoint` | `high` | 1 | 139 | entry:seek, typer, typer-app, cli-registration, get_app, main, funcs:4 | src/stackops/scripts/python/seek.py |  |
 | `stackops.scripts.python.stackops_entry` | `cli` | `cli-entrypoint` | `high` | 0 | 191 | entry:stackops, typer, typer-app, cli-registration, get_app, main, __main__, classes:1, funcs:13 | src/stackops/scripts/python/stackops_entry.py |  |
 | `stackops.scripts.python.terminal` | `cli` | `cli-entrypoint` | `high` | 3 | 544 | entry:terminal, typer, typer-app, cli-registration, get_app, main, __main__, funcs:12 | src/stackops/scripts/python/terminal.py |  |
 | `stackops.scripts.python.terminal_layout_commands` | `cli` | `cli-module` | `high` | 1 | 164 | typer, funcs:2 | src/stackops/scripts/python/terminal_layout_commands.py |  |
@@ -2708,14 +2716,14 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.utils.cli_utils.command_lookup` | `cli-helper` | `cli-helper` | `medium` | 16 | 60 | funcs:2 | src/stackops/utils/cli_utils/command_lookup.py |  |
 | `stackops.utils.cli_utils.hierarchy` | `cli-helper` | `cli-helper` | `medium` | 0 | 1370 | - | src/stackops/utils/cli_utils/hierarchy.py |  |
 | `stackops.utils.cli_utils.hierarchy_types` | `cli-helper` | `cli-helper` | `medium` | 1 | 1626 | - | src/stackops/utils/cli_utils/hierarchy_types.py |  |
-| `stackops.utils.cli_utils.interaction` | `api-or-cli-helper` | `manual-review` | `low` | 80 | 38 | api-doc, typer, funcs:4 | src/stackops/utils/cli_utils/interaction.py |  |
+| `stackops.utils.cli_utils.interaction` | `api-or-cli-helper` | `manual-review` | `low` | 81 | 38 | api-doc, typer, funcs:4 | src/stackops/utils/cli_utils/interaction.py |  |
 | `stackops.utils.cli_utils.lazy_group` | `cli-helper` | `cli-helper` | `medium` | 1 | 90 | typer, funcs:8 | src/stackops/utils/cli_utils/lazy_group.py |  |
 | `stackops.utils.cli_utils.ordered_group` | `cli-helper` | `cli-helper` | `medium` | 5 | 15 | typer, funcs:1 | src/stackops/utils/cli_utils/ordered_group.py |  |
 | `stackops.utils.cli_utils.secret_input` | `cli-helper` | `cli-helper` | `medium` | 13 | 32 | typer, funcs:1 | src/stackops/utils/cli_utils/secret_input.py |  |
 | `stackops.utils.cli_utils.standard_streams` | `cli-helper` | `cli-helper` | `medium` | 9 | 8 | funcs:1 | src/stackops/utils/cli_utils/standard_streams.py |  |
 | `stackops.utils.cli_utils.terminal` | `api-or-cli-helper` | `manual-review` | `low` | 3 | 102 | api-doc, classes:2 | src/stackops/utils/cli_utils/terminal.py | Was `utils.terminal`; moved under `cli_utils/`. |
 | `stackops.utils.cloud` | `package` | `package-marker` | `high` | 6 | 1 | - | src/stackops/utils/cloud/__init__.py |  |
-| `stackops.utils.cloud.default_remote` | `api` | `python-api-candidate` | `medium` | 9 | 29 | classes:1, funcs:2 | src/stackops/utils/cloud/default_remote.py |  |
+| `stackops.utils.cloud.default_remote` | `api` | `python-api` | `high` | 9 | 29 | api-doc, classes:1, funcs:2 | src/stackops/utils/cloud/default_remote.py |  |
 | `stackops.utils.cloud.defaults` | `api` | `python-api` | `high` | 5 | 29 | api-doc, classes:1, funcs:1 | src/stackops/utils/cloud/defaults.py | Was `utils.cloud_defaults`; moved under `cloud/`. |
 | `stackops.utils.cloud.encryption` | `api` | `python-api` | `high` | 10 | 19 | api-doc, funcs:1 | src/stackops/utils/cloud/encryption.py | Was `utils.encryption`; moved under `cloud/`. |
 | `stackops.utils.cloud.onedrive` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/utils/cloud/onedrive/__init__.py |  |
@@ -2743,12 +2751,12 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.utils.file_editor_cli` | `api-or-script` | `manual-review` | `medium` | 2 | 31 | typer, funcs:2 | src/stackops/utils/file_editor_cli.py |  |
 | `stackops.utils.files` | `package` | `package-marker` | `high` | 1 | 1 | - | src/stackops/utils/files/__init__.py |  |
 | `stackops.utils.files.art` | `package` | `package-marker` | `high` | 0 | 4 | - | src/stackops/utils/files/art/__init__.py |  |
-| `stackops.utils.files.ascii_art` | `api-or-script` | `manual-review` | `medium` | 1 | 117 | __main__, classes:3, funcs:4 | src/stackops/utils/files/ascii_art.py |  |
+| `stackops.utils.files.ascii_art` | `api` | `api-cli-bridge` | `medium` | 1 | 117 | api-doc, __main__, classes:3, funcs:4 | src/stackops/utils/files/ascii_art.py |  |
 | `stackops.utils.files.compression` | `api` | `python-api` | `high` | 5 | 393 | api-doc, __all__, funcs:19 | src/stackops/utils/files/compression.py |  |
 | `stackops.utils.files.compression_constants` | `api` | `python-api-candidate` | `medium` | 3 | 14 | - | src/stackops/utils/files/compression_constants.py |  |
 | `stackops.utils.files.dbms` | `api-or-script` | `manual-review` | `medium` | 1 | 305 | __main__, classes:1, funcs:3 | src/stackops/utils/files/dbms.py |  |
 | `stackops.utils.files.download` | `api-or-script` | `manual-review` | `medium` | 4 | 157 | typer, __main__, funcs:1 | src/stackops/utils/files/download.py |  |
-| `stackops.utils.files.f` | `api` | `python-api` | `high` | 0 | 25 | api-doc, classes:1, funcs:1 | src/stackops/utils/files/f.py |  |
+| `stackops.utils.files.f` | `api` | `python-api-candidate` | `medium` | 0 | 25 | classes:1, funcs:1 | src/stackops/utils/files/f.py |  |
 | `stackops.utils.files.headers` | `api` | `python-api` | `high` | 1 | 109 | api-doc, funcs:6 | src/stackops/utils/files/headers.py |  |
 | `stackops.utils.files.notebook` | `api` | `python-api` | `high` | 0 | 48 | api-doc, funcs:1 | src/stackops/utils/files/notebook.py |  |
 | `stackops.utils.files.ouch` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/utils/files/ouch/__init__.py |  |
@@ -2816,7 +2824,7 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.utils.options_utils.textual_options_form` | `api` | `api-cli-bridge` | `medium` | 0 | 421 | api-doc, __main__, classes:5, funcs:14 | src/stackops/utils/options_utils/textual_options_form.py |  |
 | `stackops.utils.options_utils.textual_options_form_types` | `api` | `python-api` | `high` | 1 | 22 | api-doc, classes:2 | src/stackops/utils/options_utils/textual_options_form_types.py |  |
 | `stackops.utils.options_utils.tv_options` | `api` | `api-cli-bridge` | `medium` | 27 | 46 | api-doc, __main__, funcs:3 | src/stackops/utils/options_utils/tv_options.py |  |
-| `stackops.utils.path_core` | `api` | `python-api` | `high` | 29 | 425 | api-doc, __all__, funcs:22 | src/stackops/utils/path_core.py |  |
+| `stackops.utils.path_core` | `api` | `python-api` | `high` | 30 | 425 | api-doc, __all__, funcs:22 | src/stackops/utils/path_core.py |  |
 | `stackops.utils.path_reference` | `api` | `python-api` | `high` | 27 | 19 | api-doc, funcs:3 | src/stackops/utils/path_reference.py |  |
 | `stackops.utils.python` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/utils/python/__init__.py |  |
 | `stackops.utils.python.imports` | `api` | `python-api-candidate` | `medium` | 2 | 39 | funcs:2 | src/stackops/utils/python/imports.py |  |
@@ -2840,31 +2848,31 @@ These **223** modules are package markers, settings/config packages, or executab
 | `stackops.utils.schemas.config.config_types` | `api` | `python-api` | `high` | 6 | 18 | api-doc, classes:2 | src/stackops/utils/schemas/config/config_types.py |  |
 | `stackops.utils.schemas.config.constants` | `api` | `python-api-candidate` | `medium` | 3 | 6 | - | src/stackops/utils/schemas/config/constants.py |  |
 | `stackops.utils.schemas.config.migration_until_2028_01_json_to_yaml` | `api` | `python-api-candidate` | `medium` | 9 | 46 | funcs:1 | src/stackops/utils/schemas/config/migration_until_2028_01_json_to_yaml.py |  |
-| `stackops.utils.schemas.config.multiplexer_types` | `api` | `python-api-candidate` | `medium` | 30 | 10 | - | src/stackops/utils/schemas/config/multiplexer_types.py |  |
+| `stackops.utils.schemas.config.multiplexer_types` | `api` | `python-api` | `high` | 30 | 10 | api-doc | src/stackops/utils/schemas/config/multiplexer_types.py |  |
 | `stackops.utils.schemas.fire_agents` | `package` | `package-marker` | `high` | 0 | 1 | - | src/stackops/utils/schemas/fire_agents/__init__.py |  |
 | `stackops.utils.schemas.fire_agents.fire_agents_types` | `api` | `python-api-candidate` | `medium` | 43 | 76 | classes:2 | src/stackops/utils/schemas/fire_agents/fire_agents_types.py |  |
 | `stackops.utils.schemas.installer` | `package` | `package-marker` | `high` | 2 | 2 | api-doc | src/stackops/utils/schemas/installer/__init__.py |  |
 | `stackops.utils.schemas.installer.installer_categories` | `api` | `python-api` | `high` | 2 | 177 | api-doc, classes:1, funcs:1 | src/stackops/utils/schemas/installer/installer_categories.py |  |
 | `stackops.utils.schemas.installer.installer_types` | `api` | `python-api` | `high` | 56 | 168 | api-doc, classes:11, funcs:2 | src/stackops/utils/schemas/installer/installer_types.py |  |
-| `stackops.utils.schemas.installer.package_groups` | `api` | `python-api` | `high` | 5 | 316 | api-doc | src/stackops/utils/schemas/installer/package_groups.py |  |
-| `stackops.utils.schemas.json_schema` | `api` | `python-api-candidate` | `medium` | 1 | 54 | funcs:1 | src/stackops/utils/schemas/json_schema.py |  |
+| `stackops.utils.schemas.installer.package_groups` | `api` | `python-api` | `high` | 5 | 317 | api-doc | src/stackops/utils/schemas/installer/package_groups.py |  |
+| `stackops.utils.schemas.json_schema` | `api` | `python-api` | `high` | 1 | 54 | api-doc, funcs:1 | src/stackops/utils/schemas/json_schema.py |  |
 | `stackops.utils.schemas.layouts` | `package` | `package-marker` | `high` | 1 | 2 | api-doc | src/stackops/utils/schemas/layouts/__init__.py |  |
 | `stackops.utils.schemas.layouts.layout_arrangement` | `api` | `python-api` | `high` | 3 | 9 | api-doc, funcs:1 | src/stackops/utils/schemas/layouts/layout_arrangement.py |  |
 | `stackops.utils.schemas.layouts.layout_constants` | `api` | `python-api` | `high` | 8 | 8 | api-doc | src/stackops/utils/schemas/layouts/layout_constants.py |  |
 | `stackops.utils.schemas.layouts.layout_enabled` | `api` | `python-api` | `high` | 5 | 45 | api-doc, funcs:2 | src/stackops/utils/schemas/layouts/layout_enabled.py |  |
 | `stackops.utils.schemas.layouts.layout_enabled_edit` | `api` | `python-api` | `high` | 1 | 86 | api-doc, classes:2, funcs:1 | src/stackops/utils/schemas/layouts/layout_enabled_edit.py |  |
-| `stackops.utils.schemas.layouts.layout_file` | `api` | `python-api` | `high` | 8 | 126 | api-doc, funcs:6 | src/stackops/utils/schemas/layouts/layout_file.py |  |
+| `stackops.utils.schemas.layouts.layout_file` | `api` | `python-api` | `high` | 10 | 126 | api-doc, funcs:6 | src/stackops/utils/schemas/layouts/layout_file.py |  |
 | `stackops.utils.schemas.layouts.layout_types` | `api` | `python-api` | `high` | 40 | 62 | api-doc, classes:4, funcs:3 | src/stackops/utils/schemas/layouts/layout_types.py |  |
 | `stackops.utils.schemas.mapper` | `package` | `package-marker` | `high` | 3 | 4 | - | src/stackops/utils/schemas/mapper/__init__.py |  |
 | `stackops.utils.schemas.repos` | `package` | `package-marker` | `high` | 1 | 1 | - | src/stackops/utils/schemas/repos/__init__.py |  |
 | `stackops.utils.schemas.repos.repos_types` | `api` | `python-api` | `high` | 17 | 41 | api-doc, classes:5 | src/stackops/utils/schemas/repos/repos_types.py |  |
 | `stackops.utils.schemas.startup` | `package` | `package-marker` | `high` | 0 | 0 | - | src/stackops/utils/schemas/startup/__init__.py |  |
-| `stackops.utils.schemas.startup.startup_constants` | `api` | `python-api-candidate` | `medium` | 3 | 9 | - | src/stackops/utils/schemas/startup/startup_constants.py |  |
-| `stackops.utils.schemas.startup.startup_file` | `api` | `python-api-candidate` | `medium` | 1 | 55 | funcs:2 | src/stackops/utils/schemas/startup/startup_file.py |  |
-| `stackops.utils.schemas.startup.startup_types` | `api` | `python-api-candidate` | `medium` | 6 | 19 | classes:2 | src/stackops/utils/schemas/startup/startup_types.py |  |
-| `stackops.utils.schemas.yaml_document` | `api` | `python-api-candidate` | `medium` | 9 | 18 | classes:1, funcs:1 | src/stackops/utils/schemas/yaml_document.py |  |
+| `stackops.utils.schemas.startup.startup_constants` | `api` | `python-api-candidate` | `medium` | 5 | 9 | - | src/stackops/utils/schemas/startup/startup_constants.py |  |
+| `stackops.utils.schemas.startup.startup_file` | `api` | `python-api-candidate` | `medium` | 2 | 55 | funcs:2 | src/stackops/utils/schemas/startup/startup_file.py |  |
+| `stackops.utils.schemas.startup.startup_types` | `api` | `python-api-candidate` | `medium` | 10 | 19 | classes:2 | src/stackops/utils/schemas/startup/startup_types.py |  |
+| `stackops.utils.schemas.yaml_document` | `api` | `python-api` | `high` | 9 | 18 | api-doc, classes:1, funcs:1 | src/stackops/utils/schemas/yaml_document.py |  |
 | `stackops.utils.schemas.yaml_schema` | `api` | `python-api` | `high` | 9 | 43 | api-doc, funcs:4 | src/stackops/utils/schemas/yaml_schema.py | Was `utils.yaml_schema`; moved under `schemas/`. |
-| `stackops.utils.source_of_truth` | `api` | `api-cli-bridge` | `medium` | 103 | 154 | api-doc, __main__, funcs:9 | src/stackops/utils/source_of_truth.py |  |
+| `stackops.utils.source_of_truth` | `api` | `api-cli-bridge` | `medium` | 105 | 154 | api-doc, __main__, funcs:9 | src/stackops/utils/source_of_truth.py |  |
 | `stackops.utils.ssh_utils` | `package` | `package-marker` | `high` | 0 | 0 | api-doc | src/stackops/utils/ssh_utils/__init__.py |  |
 | `stackops.utils.ssh_utils.abc` | `api` | `python-api` | `high` | 7 | 28 | api-doc, classes:1 | src/stackops/utils/ssh_utils/abc.py |  |
 | `stackops.utils.ssh_utils.connection_target` | `api` | `python-api` | `high` | 3 | 242 | api-doc, classes:2, funcs:9 | src/stackops/utils/ssh_utils/connection_target.py |  |

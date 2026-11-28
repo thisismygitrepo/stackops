@@ -5,6 +5,9 @@ LAUNCHCTL = "/bin/launchctl"
 ENTRY_PREFIX = "stackops-autostart-"
 # The same on macOS, where a launch agent is named back to front.
 MACOS_LABEL_PREFIX = "com.stackops.autostart."
+# What the entry of a layout that is launched on its own is called, ahead of the layout's name. No script's entry can start this way.
+LAYOUT_ENTRY_PREFIX = "stackops-autolayout-"
+MACOS_LAYOUT_LABEL_PREFIX = "com.stackops.autolayout."
 # An account named here has its services started with the computer and kept after it signs out (lingering), so they wait for no sign-in.
 LINGERING_ACCOUNTS_FOLDER = Path("/var/lib/systemd/linger")
 # What a person calls each system `platform.system()` names.

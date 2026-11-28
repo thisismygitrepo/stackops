@@ -1,51 +1,46 @@
 import { h } from "/assets/scripts/dom.js";
-import { api, state } from "/assets/scripts/state.js";
+import { state } from "/assets/scripts/state.js";
 import { agentButton } from "../../../agent_ask.js";
 import { openDialog } from "../../../overlays.js";
 import { button, glyphTile, iconButton, notice, searchInput, segmented } from "../../../widgets.js";
-import { scriptRow } from "../../scripts/script_row.js";
-import { fileOf, haystackOf, keyOf } from "../../scripts/words.js";
-import { addScript } from "./api.js";
+import { KINDS, readItems } from "./add_entry_items.js";
 
 export const ADD_COMMAND = "utils machine autostart-add";
 export const REMOVE_COMMAND = "utils machine autostart-remove";
 export const APPLY_COMMAND = "utils machine autostart-apply";
 // The systems as the startup list names them, with what a person calls each. `state.boot.platform` is one of the names.
 const SYSTEMS = { linux: "Linux", darwin: "macOS", windows: "Windows" };
-// The place of the scripts in the dotfiles, as the server names it: the one place that is the same on every machine.
-const DOTFILES_PLACE = "user";
 // Only an administrator can have something start before a sign-in on macOS and Windows, so the choice is offered on Linux alone.
 const WHENS = [["login", "When you sign in"], ["boot", "When the computer starts"]];
-const SCRIPTS_HASH = "#/scripts";
 const STEP_KEYS = { ArrowDown: 1, ArrowUp: -1 };
-// What runs each kind of script when it starts on its own. A Python script is a file that names what it needs in itself, so uv runs it and
-// it is the same script on every system; a shell script is offered on the system it is written for.
-const RUNNERS = { ".py": "uv", ".sh": "bash", ".ps1": "PowerShell" };
-const startsHere = (script) => (state.boot.platform === "Windows" ? [".py", ".ps1"] : [".py", ".sh"]).includes(script.suffix);
-
-// The dialog a script is added to startup from: the scripts StackOps keeps that can start on this system, as the Scripts page lists them,
-// to pick one from. Adding is what `utils machine autostart-add` does. Nothing is started: the script first runs at the next sign-in.
-// A script of the dotfiles is also written to the startup list there, for this system and the others that are picked, so the person's
-// other machines can start it too. `onAdded` is handed the script's file name and when it starts once the system has taken it.
-export async function openAddScript({ activity, onAdded }) {
-  const { places } = await api.scripts(state.settings.workingDirectory);
-  const scripts = places
-    .flatMap((place) => place.scripts.map((script) => ({ ...script, source: place.name })))
-    .filter(startsHere)
-    .map((script) => ({ ...script, haystack: haystackOf(script) }));
-  const several = new Set(scripts.map((script) => script.source)).size > 1;
+// The dialog something is added to startup from: one of the scripts StackOps keeps that can start on this system, as the Scripts page
+// lists them, or one of the layouts saved in the dotfiles. Adding is what `utils machine autostart-add` does. Nothing is started: it first
+// runs at the next sign-in. A layout, or a script of the dotfiles, is also written to the startup list there, for this system and the
+// others that are picked, so the person's other machines can start it too. `onAdded` is handed what it is called and when it starts once
+// the system has taken it.
+export async function openAddEntry({ activity, onAdded }) {
+  const { items, problem: layoutsProblem } = await readItems();
+  let kind = "script";
   let term = "";
   let chosen = null;
   let when = "login";
   const elsewhere = new Set();
   const here = Object.keys(SYSTEMS).find((system) => SYSTEMS[system] === state.boot.platform);
 
-  const dialog = openDialog({ label: "Add a startup script", size: "autostart-add" });
-  const list = h("div", { class: "prompt-list autostart-add-list", role: "listbox", "aria-label": "Scripts that can start when you sign in" });
+  const dialog = openDialog({ label: "Add a startup entry", size: "autostart-add" });
+  const list = h("div", { class: "prompt-list autostart-add-list", role: "listbox" });
   const blank = h("div", { class: "autostart-add-blank" });
   const hint = h("p", { class: "autostart-add-hint" });
   const problem = h("span", { class: "tool-problem", role: "alert" });
   const add = button({ label: "Start at sign-in", glyph: "power", tone: "primary", onclick: store });
+  const kindPick = segmented(Object.keys(KINDS).map((id) => [id, KINDS[id].label]), (value) => {
+    kind = value;
+    term = "";
+    chosen = null;
+    search.input.value = "";
+    paint();
+    search.input.focus();
+  });
   const whenPick = segmented(WHENS, (value) => {
     when = value;
     paint();
@@ -57,40 +52,50 @@ export async function openAddScript({ activity, onAdded }) {
   const systemsField = h("div", { class: "field" }, h("span", { class: "field-label" }, h("span", { text: "Your other machines" })), h("div", { class: "chip-row" }, systemChips), h("span", { class: "field-hint" }));
   const options = h("div", { class: "autostart-add-options" }, whenField, systemsField);
   const search = searchInput({
-    placeholder: "Search your scripts",
+    placeholder: "",
     oninput: (value) => {
       term = value.trim().toLowerCase();
       paint();
     },
   });
-  const shown = () => scripts.filter((script) => !term || script.haystack.includes(term));
-  const toScripts = () => {
+  const ofKind = () => items.filter((item) => item.kind === kind);
+  const shown = () => ofKind().filter((item) => !term || item.haystack.includes(term));
+  const leaveFor = (hash) => {
     dialog.close();
-    location.hash = SCRIPTS_HASH;
+    location.hash = hash;
   };
 
-  function pick(script) {
-    chosen = script;
+  function pick(item) {
+    chosen = item;
     paint();
   }
 
   function paint() {
+    const words = KINDS[kind];
+    const all = ofKind();
     const found = shown();
-    // A script the search no longer shows is no longer the one picked: what is added is always on screen.
-    if (chosen && !found.some((script) => keyOf(script) === keyOf(chosen))) chosen = null;
-    list.replaceChildren(...found.map((script) => scriptRow(script, { term, several, chosen: chosen !== null && keyOf(script) === keyOf(chosen), onPick: pick })));
+    // What the search no longer shows is no longer the one picked: what is added is always on screen.
+    if (chosen && !found.some((item) => item.key === chosen.key)) chosen = null;
+    kindPick.set(kind);
+    search.element.hidden = all.length === 0;
+    search.input.placeholder = words.search;
+    search.input.setAttribute("aria-label", words.search);
+    list.setAttribute("aria-label", words.list);
+    list.replaceChildren(...found.map((item) => item.row({ term, chosen: chosen !== null && item.key === chosen.key, onPick: () => pick(item) })));
     list.hidden = found.length === 0;
     blank.replaceChildren(
-      ...(scripts.length === 0
-        ? [notice({ glyph: "terminal", title: "No script to add yet", body: "A startup script is one of the scripts StackOps keeps: a Python file, or a shell script written for this system. Write one on the Scripts page, then add it here.", action: button({ label: "Open Scripts", small: true, onclick: toScripts }) })]
-        : found.length === 0
-          ? [notice({ glyph: "search", title: "No script matches", body: "Try a different word." })]
-          : []),
+      ...(kind === "layout" && layoutsProblem
+        ? [notice({ glyph: "alert", tone: "bad", title: "Your layouts could not be read", body: layoutsProblem })]
+        : all.length === 0
+          ? [notice({ glyph: words.glyph, title: words.none, body: words.about, action: button({ label: words.open, small: true, onclick: () => leaveFor(words.hash) }) })]
+          : found.length === 0
+            ? [notice({ glyph: "search", title: "Nothing matches", body: "Try a different word." })]
+            : []),
     );
     problem.textContent = "";
     add.disabled = chosen === null;
     // Starting with the computer is this system's own way, so it cannot be asked of the other systems.
-    const listed = chosen !== null && chosen.source === DOTFILES_PLACE;
+    const listed = chosen !== null && chosen.listed;
     const others = listed && when === "login" ? systemChips.filter((chip) => elsewhere.has(chip.dataset.system)).map((chip) => chip.textContent) : [];
     whenPick.set(when);
     whenField.hidden = chosen === null || state.boot.platform !== "Linux";
@@ -102,16 +107,16 @@ export async function openAddScript({ activity, onAdded }) {
     add.lastChild.textContent = when === "boot" ? "Start with the computer" : "Start at sign-in";
     const moment = when === "boot" ? "each time this computer starts, from the next start on" : "each time you sign in, from your next sign-in on";
     const onlyHere = chosen !== null && !listed ? " It starts on this machine only, since it is not one of the scripts in your dotfiles." : "";
-    hint.textContent = chosen ? `${RUNNERS[chosen.suffix]} runs ${fileOf(chosen)} ${moment}. Nothing is started now.${onlyHere}` : scripts.length > 0 ? "Pick the script to start on its own." : "";
+    hint.textContent = chosen ? `${chosen.runs} ${moment}. Nothing is started now.${onlyHere}` : all.length > 0 ? words.pick : "";
   }
 
   async function store() {
     if (chosen === null || add.disabled) return;
     add.disabled = true;
     try {
-      await addScript(state.settings.workingDirectory, chosen.path, when, chosen.source === DOTFILES_PLACE && when === "login" ? [...elsewhere] : []);
+      await chosen.add(when, chosen.listed && when === "login" ? [...elsewhere] : []);
       dialog.close();
-      onAdded(fileOf(chosen), when);
+      onAdded(chosen.title, when);
     } catch (error) {
       add.disabled = false;
       problem.textContent = error.message;
@@ -125,7 +130,7 @@ export async function openAddScript({ activity, onAdded }) {
     const found = shown();
     if (move === undefined || found.length === 0) return;
     event.preventDefault();
-    const at = chosen ? found.findIndex((script) => keyOf(script) === keyOf(chosen)) : -1;
+    const at = chosen ? found.findIndex((item) => item.key === chosen.key) : -1;
     pick(found[Math.max(0, Math.min(found.length - 1, at + move))]);
     const row = list.querySelector(`[aria-selected="true"]`);
     row.scrollIntoView({ block: "nearest" });
@@ -139,10 +144,10 @@ export async function openAddScript({ activity, onAdded }) {
       "header",
       { class: "file-head" },
       glyphTile("power", 252, 46),
-      h("div", { class: "file-title" }, h("span", { class: "overline", text: "Startup programs" }), h("h2", { text: "Add a script" })),
+      h("div", { class: "file-title" }, h("span", { class: "overline", text: "Startup programs" }), h("h2", { text: "Add an entry" })),
       iconButton("close", "Close", () => dialog.dismiss()),
     ),
-    ...(scripts.length > 0 ? [h("div", { class: "autostart-add-tools" }, search.element)] : []),
+    h("div", { class: "autostart-add-tools" }, kindPick.element, search.element),
     list,
     blank,
     options,
@@ -151,12 +156,12 @@ export async function openAddScript({ activity, onAdded }) {
     h(
       "footer",
       { class: "vault-form-foot" },
-      agentButton(activity, { title: "Add a startup script", commands: [ADD_COMMAND, REMOVE_COMMAND, APPLY_COMMAND], about: "Where one of the scripts StackOps keeps is set to start every time the person signs in or, on Linux, when the computer starts, and is written to the startup list in the dotfiles for the person's other machines." }, { small: true }),
+      agentButton(activity, { title: "Add a startup entry", commands: [ADD_COMMAND, REMOVE_COMMAND, APPLY_COMMAND], about: "Where one of the scripts StackOps keeps, or one of the terminal layouts saved in the dotfiles, is set to start every time the person signs in or, on Linux, when the computer starts, and is written to the startup list in the dotfiles for the person's other machines." }, { small: true }),
       problem,
       button({ label: "Cancel", onclick: () => dialog.dismiss() }),
       add,
     ),
   );
   paint();
-  if (scripts.length > 0) search.input.focus();
+  if (ofKind().length > 0) search.input.focus();
 }

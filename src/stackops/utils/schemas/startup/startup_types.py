@@ -2,7 +2,7 @@ from typing import Literal, TypedDict
 
 from stackops.profile.dotfiles_constants import OsName
 
-type StartupKind = Literal["script"]
+type StartupKind = Literal["script", "layout"]
 type StartupWhen = Literal["login", "boot"]
 type StartupFileVersion = Literal["0.1"]
 

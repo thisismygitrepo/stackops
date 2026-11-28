@@ -74,7 +74,7 @@ Set `max_stagger` to add a random startup delay of up to that many seconds to ea
 
 In `"script"` mode each tab runs a generated script whose top-level code is the body of the function. With `import_module=True` that script first imports everything from the file that defines the function (`from <module> import *`, adding the file's folder to `sys.path` when the plain import fails), so the body can use the module's other names.
 
-Keep the functions in a module that is safe to import. A function defined in the launching script itself makes every tab import that script, which runs its top-level code again, the launch included, unless that code sits under `if __name__ == "__main__":`.
+So keep the functions in a module that is safe to import. With `import_module=True`, a function defined in the launching script itself makes every tab import that script, which runs its top-level code again, the launch included, unless that code sits under `if __name__ == "__main__":`.
 
 ### Example
 

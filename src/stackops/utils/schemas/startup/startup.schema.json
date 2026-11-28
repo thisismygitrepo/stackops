@@ -28,14 +28,14 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["script"],
-          "description": "What is started. A script is one of your own scripts, in the scripts folder of your dotfiles."
+          "enum": ["script", "layout"],
+          "description": "What is started. A script is one of your own scripts, in the scripts folder of your dotfiles. A layout is one of the terminal layouts in the layout.yaml of your dotfiles, launched as `terminal run --source user --choose-layouts` launches it."
         },
         "name": {
           "type": "string",
           "minLength": 1,
-          "description": "The script's path inside the scripts folder of your dotfiles, with forward slashes: what `devops scripts run --source user` takes.",
-          "examples": ["backup_photos.py", "linux/mount_drives.sh"]
+          "description": "A script's path inside the scripts folder of your dotfiles, with forward slashes: what `devops scripts run --source user` takes. A layout's layoutName in the layout.yaml of your dotfiles.",
+          "examples": ["backup_photos.py", "linux/mount_drives.sh", "work"]
         },
         "os": {
           "type": "array",

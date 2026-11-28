@@ -1,12 +1,14 @@
 # Scheduling and Cache
 
-`stackops.cluster.scheduler` currently contains three distinct utilities:
+`stackops.cluster.scheduler` currently contains three distinct utilities and two supporting names they share:
 
 | API | Role |
 | --- | --- |
 | `Scheduler` | Repeatedly run a routine with lifecycle logging and session recording |
 | `CacheMemory[T]` | Keep an in-memory cached value around a source function |
 | `Cache[T]` | Add disk-backed cache-file reuse on top of similar refresh logic |
+| `LoggerTemplate` | Protocol for the `logger` argument of all three: `trace`, `success`, `debug`, `info`, `warning`, `error`, and `critical` methods |
+| `to_pickle(obj, path)` | Writes an object to a file with `pickle`; the default `saver` of `Cache` |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: make-github-installer-config
-description: Add, edit, or remove GitHub binary installer entries in StackOps software catalogs. Use when changing a bundled or user installer definition, or deriving a new definition from GitHub release assets.
+description: Add, edit, or remove GitHub binary installer entries in StackOps software catalogs. Use when changing a library (bundled) or user installer definition, or deriving a new definition from GitHub release assets.
 ---
 
 Change the requested entry in the selected catalog's `installers` array, using the live `InstallerData` schema.
@@ -13,16 +13,16 @@ Mandatory execution rule:
 ## Select the Catalog and Operation
 
 - Resolve the StackOps checkout before using the helper paths below; run them from that checkout. Discover current commands with `uv run devops software --help`.
-- Run `uv run devops software path --source all` to locate the user and bundled catalogs and schemas. For an explicit custom catalog, use `uv run devops software path --source user --custom-path '<catalog-path>'`.
-- Use the user catalog for personal definitions and overrides. Edit the bundled catalog only when the request concerns StackOps's shared definitions, using `src/stackops/utils/schemas/installer/installer_data.yaml` in the verified checkout rather than an installed package copy. Carry the chosen absolute catalog path through every edit and validation command.
+- Run `uv run devops software path --source all` to locate the `user` and `library` catalogs and schemas; `library` is the CLI's name for the catalog bundled with StackOps. For an explicit custom catalog, use `uv run devops software path --source user --custom-path '<catalog-path>'`.
+- Use the user catalog for personal definitions and overrides. Edit the library catalog only when the request concerns StackOps's shared definitions, using `src/stackops/utils/schemas/installer/installer_data.yaml` in the verified checkout rather than an installed package copy. Carry the chosen absolute catalog path through every edit and validation command.
 - Respect repository and session path restrictions before reading or writing a resolved path. Initialize a missing permitted user catalog with `uv run devops software init --custom-path '<catalog-path>'` only when adding an entry.
-- Locate an existing entry by `appName` and `repoURL` before choosing add, edit, or remove. Runtime names are case-insensitive; user entries replace bundled entries with the same name when `--source all` is used.
+- Locate an existing entry by `appName` and `repoURL` before choosing add, edit, or remove. Runtime names are case-insensitive; user entries replace library entries with the same name when `--source all` is used.
 
 ## Edit or Remove an Existing Entry
 
-- Edit the selected row in place, changing only the requested fields and preserving optional metadata and all other entries. For a personal override of a bundled entry, copy that complete entry into the user catalog and apply the requested changes there.
+- Edit the selected row in place, changing only the requested fields and preserving optional metadata and all other entries. For a personal override of a library entry, copy that complete entry into the user catalog and apply the requested changes there.
 - Scan releases only when the requested edit requires new asset patterns or repository information. Do not rebuild an entire entry for a description, category, or other isolated field change.
-- For removal, delete the exact requested row from the selected catalog. Do not scan releases, invoke the upsert helper, or uninstall software. Removing a user override reveals the bundled definition again under `--source all`; removing a bundled definition requires a change to the shared catalog.
+- For removal, delete the exact requested row from the selected catalog. Do not scan releases, invoke the upsert helper, or uninstall software. Removing a user override reveals the library definition again under `--source all`; removing a library definition requires a change to the shared catalog.
 - Validate the selected file with `uv run devops software validate --custom-path '<catalog-path>'`. This checks its schema and runtime catalog rules. Report the target path and the resulting catalog behavior.
 
 ## Add a GitHub Release Installer
@@ -67,6 +67,8 @@ uv run .github/skills/make-github-installer-config/scripts/build_installer_confi
   --output ./.ai/tmp_scripts/make-github-installer-config/entry.json
 ```
 
+Optional `--strict-latest-check`: the builder stops with an error and writes no output when a selected pattern matches no asset of the latest release. Without it, each miss is recorded in `checks.latestPatternChecks` and the output is still written.
+
 5. Verify checks from `entry.json` before writing:
 
 - If `checks.latestPatternChecks` is non-empty, treat as warning and explain why.
@@ -81,6 +83,8 @@ uv run .github/skills/make-github-installer-config/scripts/upsert_installer_data
   --entry-json ./.ai/tmp_scripts/make-github-installer-config/entry.json \
   --dry-run
 ```
+
+Optional `--fail-on-check-warnings`, on the dry run or the actual upsert: the helper refuses, before writing anything, an entry whose `checks.latestPatternChecks` is non-empty or whose `checks.licenseWarning` is set. Without it, the upsert goes ahead and prints those warnings after its result line.
 
 7. If dry-run output is correct, run actual upsert:
 
@@ -149,3 +153,5 @@ Helper scripts available in this skill:
 - `.github/skills/make-github-installer-config/scripts/scan_github_releases.py`
 - `.github/skills/make-github-installer-config/scripts/build_installer_config.py`
 - `.github/skills/make-github-installer-config/scripts/upsert_installer_data.py`
+
+`scripts/skill_lib.py` in the same folder is the module the scan and build helpers import; it is not run on its own.

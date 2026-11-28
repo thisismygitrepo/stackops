@@ -18,12 +18,21 @@ hyperfine --warmup 2 --runs 10 \
   'uv run --no-dev my-cli group --help'
 ```
 
-Record peak resident memory:
+Record peak resident memory. On Linux, with GNU `time`:
 
 ```bash
 /usr/bin/time -f 'elapsed=%e max_rss_kb=%M' \
   uv run --no-dev my-cli group --help >/dev/null
 ```
+
+macOS ships BSD `time`, which rejects `-f`. Use `-l` there and read the `real` and `maximum resident set size` lines; that size is in bytes, not kilobytes:
+
+```bash
+/usr/bin/time -l \
+  uv run --no-dev my-cli group --help >/dev/null
+```
+
+To keep the GNU format on macOS, install GNU time (`brew install gnu-time`) and call it as `gtime -f ...`.
 
 Measure at least:
 

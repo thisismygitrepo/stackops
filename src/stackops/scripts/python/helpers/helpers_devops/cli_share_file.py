@@ -11,7 +11,9 @@ def _quote_powershell_argument(value: str) -> str:
     return f"""'{escaped_value}'"""
 
 
-def share_file_receive(code_args: Annotated[list[str], typer.Argument(help="Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'")],
+def share_file_receive(code_args: Annotated[list[str] | None, typer.Argument(help="Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'. Leave out with --propose.")] = None,
+    propose: Annotated[bool, typer.Option("--propose", "-p", help="Make up the code and the encryption password here, show them as a QR code holding the matching send command, then wait for the file and decrypt it.")] = False,
+    output_json: Annotated[bool, typer.Option("--json", "-j", help="With --propose: print the code, password and send command as JSON instead of a QR code.")] = False,
     install_missing_dependencies: Annotated[bool, typer.Option("--install-dep", "-D", help="Install missing dependencies", show_default=False)] = False,
     ) -> None:
     """Receive a file using croc with relay server.
@@ -19,10 +21,22 @@ Usage examples:
     devops network receive 7121-donor-olympic-bicycle
     devops network receive -- --relay 10.17.62.206:443 7121-donor-olympic-bicycle
     devops network receive -- croc --relay 10.17.62.206:443 7121-donor-olympic-bicycle
+    devops network receive --propose
 """
+    if output_json and not propose:
+        typer.echo("❌ Error: --json requires --propose.", err=True)
+        raise typer.Exit(code=1)
+    if propose and code_args:
+        typer.echo("❌ Error: --propose makes up its own code; do not pass one.", err=True)
+        raise typer.Exit(code=1)
     if install_missing_dependencies:
         from stackops.utils.installer_utils.installer_cli import install_if_missing
         install_if_missing(which="croc", binary_name=None, verbose=True)
+    if propose:
+        from stackops.scripts.python.helpers.helpers_devops.file_receive_proposal import receive_with_proposed_secrets
+
+        receive_with_proposed_secrets(output_json=output_json)
+        return
     import platform
     import shlex
     import sys
@@ -38,7 +52,7 @@ Usage examples:
                 code_args = sys.argv[i + 1:]
                 break
 
-    input_str = " ".join(code_args)
+    input_str = " ".join(code_args or [])
     try:
         tokens = shlex.split(input_str)
     except ValueError as exc:

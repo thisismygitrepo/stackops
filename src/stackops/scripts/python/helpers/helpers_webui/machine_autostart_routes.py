@@ -16,7 +16,14 @@ from stackops.scripts.python.helpers.helpers_webui.machine_autostart_linux_actio
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_login_items import remove_login_item, restore_login_item
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_model import ProblemReason, RemovedLoginItem, StartupProblem
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_read import read_startup
-from stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts import add_tracked_script, apply_remembered, read_remembered, remove_startup_agent
+from stackops.scripts.python.helpers.helpers_webui.machine_autostart_scripts import (
+    add_saved_layout,
+    add_tracked_script,
+    apply_remembered,
+    read_remembered,
+    read_saved_layouts,
+    remove_startup_agent,
+)
 from stackops.scripts.python.helpers.helpers_webui.machine_autostart_windows import switch_windows_entry
 from stackops.utils.schemas.startup.startup_constants import STARTUP_WHENS
 from stackops.utils.schemas.startup.startup_types import StartupWhen
@@ -114,6 +121,28 @@ def machine_autostart_routes() -> list[Route]:
         problem = await run_in_threadpool(add_tracked_script, base, script, when, tuple(system for system in ALL_OS_VALUES if system in systems))
         return _refusal(problem) if problem is not None else Response(status_code=204)
 
+    # The layouts in the layout.yaml of the dotfiles, to pick the one to launch on its own from.
+    def layouts(_request: Request) -> JSONResponse:
+        result = read_saved_layouts()
+        match result:
+            case StartupProblem():
+                return _refusal(result)
+            case _:
+                return JSONResponse(result)
+
+    # One of those layouts, added to what starts on its own. `when` and `systems` are as for a script.
+    async def add_layout(request: Request) -> Response:
+        if request.headers.get("content-type") != "application/json":
+            return JSONResponse({"error": "Send the layout as application/json."}, status_code=415)
+        body = await request.json()
+        fields = cast(dict[str, object], body) if isinstance(body, dict) else {}
+        name, systems = fields.get("name"), fields.get("systems")
+        when: StartupWhen | None = next((choice for choice in STARTUP_WHENS if choice == fields.get("when")), None)
+        if not isinstance(name, str) or when is None or not isinstance(systems, list) or any(system not in ALL_OS_VALUES for system in cast(list[object], systems)):
+            return JSONResponse({"error": "Name the layout, say when it starts and which other systems it is listed for."}, status_code=400)
+        problem = await run_in_threadpool(add_saved_layout, name, when, tuple(system for system in ALL_OS_VALUES if system in systems))
+        return _refusal(problem) if problem is not None else Response(status_code=204)
+
     def remembered(_request: Request) -> JSONResponse:
         result = read_remembered()
         match result:
@@ -141,6 +170,8 @@ def machine_autostart_routes() -> list[Route]:
         Route("/api/machine/autostart", read),
         Route("/api/machine/autostart/detail", detail),
         Route("/api/machine/autostart/scripts", add_script, methods=["POST"]),
+        Route("/api/machine/autostart/layouts", layouts),
+        Route("/api/machine/autostart/layouts", add_layout, methods=["POST"]),
         Route("/api/machine/autostart/remembered", remembered),
         Route("/api/machine/autostart/apply", apply, methods=["POST"]),
         Route("/api/machine/autostart/{action}", act, methods=["POST"]),

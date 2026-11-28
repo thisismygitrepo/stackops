@@ -77,6 +77,7 @@ A tab can hold several panes; `paneName` must be unique within the tab, and an o
 Finish with `terminal validate --custom-path /absolute/layout.yaml`. This validates the schema and parser without launching sessions. An added tab using existing fields requires only the data edit. If the request introduces a new field or changes launch behavior, trace these source owners:
 
 - `src/stackops/scripts/python/terminal.py`: registrations and launch callbacks.
+- `src/stackops/scripts/python/terminal_layout_commands.py`: list and edit commands.
 - `src/stackops/scripts/python/terminal_layout_files.py`: path, init, and validate commands.
 - `src/stackops/scripts/python/helpers/helpers_sessions/sessions_layout_source.py`: source selection and layout-name resolution.
 - `src/stackops/scripts/python/helpers/helpers_sessions/sessions_impl.py`: layout selection and backend dispatch.

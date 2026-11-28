@@ -285,15 +285,15 @@ def get_app() -> typer.Typer:
     )(list_autostart)
     machine_app.command(name="a", no_args_is_help=False, hidden=True)(list_autostart)
     machine_app.command(
-        name="autostart-add", no_args_is_help=True, help="➕ <A> Start one of your scripts every time you sign in, or when the computer starts.",
+        name="autostart-add", no_args_is_help=True, help="➕ <A> Start one of your scripts or layouts every time you sign in, or when the computer starts.",
     )(add_autostart_script)
     machine_app.command(name="A", no_args_is_help=True, hidden=True)(add_autostart_script)
     machine_app.command(
-        name="autostart-remove", no_args_is_help=True, help="➖ <R> Stop starting a script on its own.",
+        name="autostart-remove", no_args_is_help=True, help="➖ <R> Stop starting a script or layout on its own.",
     )(remove_autostart_script)
     machine_app.command(name="R", no_args_is_help=True, hidden=True)(remove_autostart_script)
     machine_app.command(
-        name="autostart-apply", no_args_is_help=False, help="🔁 <P> Start here the scripts your startup.yaml lists for this system.",
+        name="autostart-apply", no_args_is_help=False, help="🔁 <P> Start here what your startup.yaml lists for this system.",
     )(apply_autostart_file)
     machine_app.command(name="P", no_args_is_help=False, hidden=True)(apply_autostart_file)
     machine_app.command(name="mount", no_args_is_help=True, help="🔌 <m> Mount a device to a mount point.")(mount_device)

@@ -144,17 +144,19 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
       show_source: false
       members_order: source
 
-## File mode literals
+## Terminal header and logo
 
-::: stackops.utils.files.f
+::: stackops.utils.files.headers
     options:
       show_root_heading: true
       show_source: false
       members_order: source
 
-## Terminal header and logo
+## ASCII art helpers
 
-::: stackops.utils.files.headers
+`stackops.utils.files.ascii_art` is what `print_logo()` above draws with. `get_art()` renders a comment through `figlet` and `boxes`, or through `cowsay`; `font_box_color()`, `character_color()` (Windows only), and `character_or_box_color()` (Linux and macOS only) print a logo coloured by `lolcatjs`. Every function shells out to those tools, so they have to be installed.
+
+::: stackops.utils.files.ascii_art
     options:
       show_root_heading: true
       show_source: false
@@ -187,6 +189,26 @@ print(read_ini(Path("settings.ini")) if Path("settings.ini").exists() else "no i
 ## YAML schema helpers
 
 ::: stackops.utils.schemas.yaml_schema
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## YAML document text
+
+`yaml_document_text(document)` dumps a mapping as the YAML text StackOps writes to its own files: keys in insertion order, block style, list items indented under their key, no anchors or aliases, no line wrapping, and Unicode kept as written.
+
+::: stackops.utils.schemas.yaml_document
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## JSON schema document text
+
+`json_schema_document_text(content, schema_reference)` is the JSON counterpart of `yaml_schema_document_text()`. It returns the JSON text with its top-level `"$schema"` set to `schema_reference`: an existing string value is replaced, and a missing key is inserted as the first one. `//` and `/* */` comments are tolerated, and text that does not start with an object is returned unchanged.
+
+::: stackops.utils.schemas.json_schema
     options:
       show_root_heading: true
       show_source: false

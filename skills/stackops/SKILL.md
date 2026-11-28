@@ -101,7 +101,8 @@ Run configuration discovery from the user's target project: local paths can depe
 - For code changes, trace registration, callback, helper, and any parser/schema together. Update only the layers required by the requested behavior; removal must include the corresponding aliases and callers.
 
 6. Refresh generated references after CLI shape changes.
-- Run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets skill-refs` from the resolved StackOps checkout, then refresh the generated references in installed skill copies.
+- Run `UV_CACHE_DIR=/tmp/uv-cache uv run devops self build-assets skill-refs` from the resolved StackOps checkout. It rewrites `references/cli-map.md` and `references/source-map.md` in the checkout's `skills/stackops/` folder.
+- Copies of the skill do not follow on their own. A workspace copy is `.agents/skills/stackops/` at the workspace root, written by `agents add-skill stackops`. Refresh it by running `UV_CACHE_DIR=/tmp/uv-cache uv run agents add-skill stackops --directory /absolute/workspace` from the checkout, which copies the skill folder again over the existing files. The copy inside an installed StackOps package changes only when a build that contains the regenerated files is installed. A copy added with `--backend bunx` or `--backend npx`, or with `--scope user`, comes from the StackOps GitHub repository through the upstream `skills` CLI, so it follows only what has been pushed there.
 
 7. Run safely.
 - Commands that install, update, configure, sync, share, mount, or edit local files may mutate system state.

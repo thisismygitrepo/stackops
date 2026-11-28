@@ -4854,7 +4854,7 @@
                         "        typer.Option(",
                         "            \"--which\",",
                         "            \"-w\",",
-                        "            help=\"Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine.\",",
+                        "            help=\"Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Collectable groups line lists the groups collectable on this machine.\",",
                         "        ),",
                         "    ] = None,",
                         "    interactive: Annotated[bool, typer.Option(\"--interactive\", \"-i\", help=\"Pick the groups to collect from the plan interactively.\")] = False,",
@@ -4890,7 +4890,7 @@
                           "type": "str | None",
                           "default": null,
                           "required": false,
-                          "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine.\")]",
+                          "annotation_raw": "Annotated[str | None, typer.Option('--which', '-w', help=\"Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Collectable groups line lists the groups collectable on this machine.\")]",
                           "typer": {
                             "kind": "option",
                             "param_decls": [
@@ -4903,7 +4903,7 @@
                             "short_flags": [
                               "-w"
                             ],
-                            "help": "Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Group column lists the groups collectable on this machine."
+                            "help": "Groups to collect, comma-separated, or 'all'. Run without options to print the plan: its Collectable groups line lists the groups collectable on this machine."
                           }
                         },
                         {
@@ -14218,7 +14218,9 @@
                 },
                 "signature": {
                   "raw_lines": [
-                    "def share_file_receive(code_args: Annotated[list[str], typer.Argument(help=\"Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'\")],",
+                    "def share_file_receive(code_args: Annotated[list[str] | None, typer.Argument(help=\"Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'. Leave out with --propose.\")] = None,",
+                    "    propose: Annotated[bool, typer.Option(\"--propose\", \"-p\", help=\"Make up the code and the encryption password here, show them as a QR code holding the matching send command, then wait for the file and decrypt it.\")] = False,",
+                    "    output_json: Annotated[bool, typer.Option(\"--json\", \"-j\", help=\"With --propose: print the code, password and send command as JSON instead of a QR code.\")] = False,",
                     "    install_missing_dependencies: Annotated[bool, typer.Option(\"--install-dep\", \"-D\", help=\"Install missing dependencies\", show_default=False)] = False,",
                     "    ) -> None:"
                   ],
@@ -14227,16 +14229,60 @@
                     {
                       "name": "code_args",
                       "kind": "positional_or_keyword",
-                      "type": "list[str]",
+                      "type": "list[str] | None",
                       "default": null,
-                      "required": true,
-                      "annotation_raw": "Annotated[list[str], typer.Argument(help=\"Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'\")]",
+                      "required": false,
+                      "annotation_raw": "Annotated[list[str] | None, typer.Argument(help=\"Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'. Leave out with --propose.\")]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'"
+                        "help": "Receive code or relay command. Examples: '7121-donor-olympic-bicycle' or '--relay 10.17.62.206:443 7121-donor-olympic-bicycle'. Leave out with --propose."
+                      }
+                    },
+                    {
+                      "name": "propose",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--propose', '-p', help='Make up the code and the encryption password here, show them as a QR code holding the matching send command, then wait for the file and decrypt it.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--propose",
+                          "-p"
+                        ],
+                        "long_flags": [
+                          "--propose"
+                        ],
+                        "short_flags": [
+                          "-p"
+                        ],
+                        "help": "Make up the code and the encryption password here, show them as a QR code holding the matching send command, then wait for the file and decrypt it."
+                      }
+                    },
+                    {
+                      "name": "output_json",
+                      "kind": "positional_or_keyword",
+                      "type": "bool",
+                      "default": false,
+                      "required": false,
+                      "annotation_raw": "Annotated[bool, typer.Option('--json', '-j', help='With --propose: print the code, password and send command as JSON instead of a QR code.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--json",
+                          "-j"
+                        ],
+                        "long_flags": [
+                          "--json"
+                        ],
+                        "short_flags": [
+                          "-j"
+                        ],
+                        "help": "With --propose: print the code, password and send command as JSON instead of a QR code."
                       }
                     },
                     {
@@ -14267,7 +14313,7 @@
                 "typer": {
                   "no_args_is_help": true
                 },
-                "doc": "Receive a file using croc with relay server.\nUsage examples:\n    devops network receive 7121-donor-olympic-bicycle\n    devops network receive -- --relay 10.17.62.206:443 7121-donor-olympic-bicycle\n    devops network receive -- croc --relay 10.17.62.206:443 7121-donor-olympic-bicycle",
+                "doc": "Receive a file using croc with relay server.\nUsage examples:\n    devops network receive 7121-donor-olympic-bicycle\n    devops network receive -- --relay 10.17.62.206:443 7121-donor-olympic-bicycle\n    devops network receive -- croc --relay 10.17.62.206:443 7121-donor-olympic-bicycle\n    devops network receive --propose",
                 "aliases": [
                   {
                     "name": "r",
@@ -23092,7 +23138,7 @@
             "name": "attach",
             "fullPath": "terminal attach",
             "shortPath": "t a",
-            "help": "attach",
+            "help": "Choose a session or deeper target to attach to.",
             "source": {
               "file": "src/stackops/scripts/python/terminal.py",
               "module": "stackops.scripts.python.terminal",
@@ -23242,10 +23288,12 @@
             "typer": {
               "no_args_is_help": false
             },
+            "doc": "Choose a session or deeper target to attach to.",
             "aliases": [
               {
                 "name": "a",
-                "hidden": true
+                "hidden": true,
+                "help": "Choose a session or deeper target to attach to."
               }
             ]
           },
@@ -25902,7 +25950,7 @@
               "callable": "computer_group"
             },
             "app": {
-              "help": "🖥️ <u> Desktop control for agent CLIs through MCP",
+              "help": "🖥️ <c> Desktop control for agent CLIs through MCP",
               "no_args_is_help": true,
               "add_help_option": true,
               "add_completion": false,
@@ -29626,7 +29674,7 @@
                 "            ...,",
                 "            \"--reasoning\",",
                 "            \"-r\",",
-                "            help=\"Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.\",",
+                "            help=\"Reasoning effort for codex, copilot, cortex, muse, pi, and prime-agent agents. Unsupported agents ignore it and use their default.\",",
                 "        ),",
                 "    ] = None,",
                 "    context: Annotated[str | None, typer.Option(..., \"--context\", \"-c\", help=\"Context string. Mutually exclusive with --context-path.\")] = None,",
@@ -29891,7 +29939,7 @@
                   "type": "ReasoningEffort | None",
                   "default": null,
                   "required": false,
-                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.')]",
+                  "annotation_raw": "Annotated[ReasoningEffort | None, typer.Option(..., '--reasoning', '-r', help='Reasoning effort for codex, copilot, cortex, muse, pi, and prime-agent agents. Unsupported agents ignore it and use their default.')]",
                   "typer": {
                     "kind": "option",
                     "param_decls": [
@@ -29904,7 +29952,7 @@
                     "short_flags": [
                       "-r"
                     ],
-                    "help": "Reasoning effort for codex, copilot, cortex, pi, and prime-agent agents. Unsupported agents ignore it and use their default.",
+                    "help": "Reasoning effort for codex, copilot, cortex, muse, pi, and prime-agent agents. Unsupported agents ignore it and use their default.",
                     "default": "..."
                   }
                 },
@@ -31660,7 +31708,7 @@
                 "name": "autostart-add",
                 "fullPath": "utils machine autostart-add",
                 "shortPath": "u m A",
-                "help": "➕ <A> Start one of your scripts every time you sign in, or when the computer starts.",
+                "help": "➕ <A> Start one of your scripts or layouts every time you sign in, or when the computer starts.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.autostart_script_cli",
@@ -31672,16 +31720,19 @@
                     "    ctx: typer.Context,",
                     "    name: Annotated[",
                     "        str,",
-                    "        typer.Argument(help=\"Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows.\"),",
+                    "        typer.Argument(",
+                    "            help=\"A script's name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows. With --kind layout, the name of a layout in your layout.yaml.\"",
+                    "        ),",
                     "    ],",
-                    "    source: Annotated[LocalScriptSource, typer.Option(\"--source\", \"-s\", help=\"Source to search for the script.\")] = \"all\",",
+                    "    kind: Annotated[StartupKindOption, typer.Option(\"--kind\", \"-k\", help=\"What NAME is: one of your scripts, or one of the terminal layouts in the layout.yaml of your dotfiles.\")] = \"script\",",
+                    "    source: Annotated[LocalScriptSource, typer.Option(\"--source\", \"-s\", help=\"Source to search for the script. Layouts are always the ones of your dotfiles.\")] = \"all\",",
                     "    when: Annotated[",
                     "        Literal[\"login\", \"boot\"],",
                     "        typer.Option(\"--when\", \"-w\", help=\"login: when you sign in. boot: when the computer starts, before anyone signs in, which can be set up on Linux only.\"),",
                     "    ] = \"login\",",
                     "    other_systems: Annotated[",
                     "        str | None,",
-                    "        typer.Option(\"--os\", \"-o\", help=\"Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a script in your dotfiles.\"),",
+                    "        typer.Option(\"--os\", \"-o\", help=\"Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a layout, or a script in your dotfiles.\"),",
                     "    ] = None,",
                     ") -> None:"
                   ],
@@ -31701,13 +31752,35 @@
                       "type": "str",
                       "default": null,
                       "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows.')]",
+                      "annotation_raw": "Annotated[str, typer.Argument(help=\"A script's name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows. With --kind layout, the name of a layout in your layout.yaml.\")]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "Script name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows."
+                        "help": "A script's name or file path, as `devops scripts run` takes it: a .py (run by uv), a .sh on macOS and Linux, or a .ps1 on Windows. With --kind layout, the name of a layout in your layout.yaml."
+                      }
+                    },
+                    {
+                      "name": "kind",
+                      "kind": "positional_or_keyword",
+                      "type": "StartupKindOption",
+                      "default": "script",
+                      "required": false,
+                      "annotation_raw": "Annotated[StartupKindOption, typer.Option('--kind', '-k', help='What NAME is: one of your scripts, or one of the terminal layouts in the layout.yaml of your dotfiles.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--kind",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--kind"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "What NAME is: one of your scripts, or one of the terminal layouts in the layout.yaml of your dotfiles."
                       }
                     },
                     {
@@ -31716,7 +31789,7 @@
                       "type": "LocalScriptSource",
                       "default": "all",
                       "required": false,
-                      "annotation_raw": "Annotated[LocalScriptSource, typer.Option('--source', '-s', help='Source to search for the script.')]",
+                      "annotation_raw": "Annotated[LocalScriptSource, typer.Option('--source', '-s', help='Source to search for the script. Layouts are always the ones of your dotfiles.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -31729,7 +31802,7 @@
                         "short_flags": [
                           "-s"
                         ],
-                        "help": "Source to search for the script."
+                        "help": "Source to search for the script. Layouts are always the ones of your dotfiles."
                       }
                     },
                     {
@@ -31760,7 +31833,7 @@
                       "type": "str | None",
                       "default": null,
                       "required": false,
-                      "annotation_raw": "Annotated[str | None, typer.Option('--os', '-o', help='Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a script in your dotfiles.')]",
+                      "annotation_raw": "Annotated[str | None, typer.Option('--os', '-o', help='Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a layout, or a script in your dotfiles.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -31773,7 +31846,7 @@
                         "short_flags": [
                           "-o"
                         ],
-                        "help": "Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a script in your dotfiles."
+                        "help": "Other systems to list it for in startup.yaml as well, comma-separated from linux,darwin,windows. This system is always listed. For a layout, or a script in your dotfiles."
                       }
                     }
                   ],
@@ -31794,7 +31867,7 @@
                 "name": "autostart-remove",
                 "fullPath": "utils machine autostart-remove",
                 "shortPath": "u m R",
-                "help": "➖ <R> Stop starting a script on its own.",
+                "help": "➖ <R> Stop starting a script or layout on its own.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.autostart_script_cli",
@@ -31803,7 +31876,8 @@
                 "signature": {
                   "raw_lines": [
                     "def remove_autostart_script(",
-                    "    name: Annotated[str, typer.Argument(help=\"The script as it was added: its name or file path. The script itself is kept.\")],",
+                    "    name: Annotated[str, typer.Argument(help=\"The script as it was added, by its name or file path, or with --kind layout the layout's name. The script or layout itself is kept.\")],",
+                    "    kind: Annotated[StartupKindOption, typer.Option(\"--kind\", \"-k\", help=\"What NAME is: a script, or a layout.\")] = \"script\",",
                     ") -> None:"
                   ],
                   "name": "remove_autostart_script",
@@ -31814,13 +31888,35 @@
                       "type": "str",
                       "default": null,
                       "required": true,
-                      "annotation_raw": "Annotated[str, typer.Argument(help='The script as it was added: its name or file path. The script itself is kept.')]",
+                      "annotation_raw": "Annotated[str, typer.Argument(help=\"The script as it was added, by its name or file path, or with --kind layout the layout's name. The script or layout itself is kept.\")]",
                       "typer": {
                         "kind": "argument",
                         "param_decls": [],
                         "long_flags": [],
                         "short_flags": [],
-                        "help": "The script as it was added: its name or file path. The script itself is kept."
+                        "help": "The script as it was added, by its name or file path, or with --kind layout the layout's name. The script or layout itself is kept."
+                      }
+                    },
+                    {
+                      "name": "kind",
+                      "kind": "positional_or_keyword",
+                      "type": "StartupKindOption",
+                      "default": "script",
+                      "required": false,
+                      "annotation_raw": "Annotated[StartupKindOption, typer.Option('--kind', '-k', help='What NAME is: a script, or a layout.')]",
+                      "typer": {
+                        "kind": "option",
+                        "param_decls": [
+                          "--kind",
+                          "-k"
+                        ],
+                        "long_flags": [
+                          "--kind"
+                        ],
+                        "short_flags": [
+                          "-k"
+                        ],
+                        "help": "What NAME is: a script, or a layout."
                       }
                     }
                   ],
@@ -31841,7 +31937,7 @@
                 "name": "autostart-apply",
                 "fullPath": "utils machine autostart-apply",
                 "shortPath": "u m P",
-                "help": "🔁 <P> Start here the scripts your startup.yaml lists for this system.",
+                "help": "🔁 <P> Start here what your startup.yaml lists for this system.",
                 "source": {
                   "file": "src/stackops/scripts/python/helpers/helpers_utils/autostart_script_cli.py",
                   "module": "stackops.scripts.python.helpers.helpers_utils.autostart_script_cli",
@@ -31852,7 +31948,7 @@
                     "def apply_autostart_file(",
                     "    prune: Annotated[",
                     "        bool,",
-                    "        typer.Option(\"--prune\", \"-p\", help=\"Also stop the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone.\"),",
+                    "        typer.Option(\"--prune\", \"-p\", help=\"Also stop the layouts and the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone.\"),",
                     "    ] = False,",
                     ") -> None:"
                   ],
@@ -31864,7 +31960,7 @@
                       "type": "bool",
                       "default": false,
                       "required": false,
-                      "annotation_raw": "Annotated[bool, typer.Option('--prune', '-p', help='Also stop the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone.')]",
+                      "annotation_raw": "Annotated[bool, typer.Option('--prune', '-p', help='Also stop the layouts and the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone.')]",
                       "typer": {
                         "kind": "option",
                         "param_decls": [
@@ -31877,7 +31973,7 @@
                         "short_flags": [
                           "-p"
                         ],
-                        "help": "Also stop the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone."
+                        "help": "Also stop the layouts and the scripts of your dotfiles that start here without being listed in startup.yaml. Scripts kept elsewhere are left alone."
                       }
                     }
                   ],

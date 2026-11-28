@@ -15,6 +15,7 @@ The environment helpers in `stackops` now live across `stackops.scripts.python.h
 | `build_virtualenv_activation_line(virtualenv_root)` | Builds the platform-specific shell line that activates a virtualenv |
 | `CloudConfig` | Typed cloud metadata for keys such as `cloud`, `root`, `rel2home`, `pwd`, `encryption`, `os_specific`, `zip`, `share`, and `overwrite` |
 | `read_default_cloud_config()` | Returns the default `CloudConfig` payload used by callers as a baseline |
+| `read_default_rclone_remote()` | In `stackops.utils.cloud.default_remote`: returns the `default_rclone_config` value of the StackOps config file, or raises `DefaultRcloneRemoteConfigError` (a `ValueError`) with setup instructions when the file is missing, invalid, or lacks that key |
 
 ---
 
@@ -85,6 +86,14 @@ machine-local symlink changes are command implementation modules, not general-pu
 ## API reference
 
 ::: stackops.utils.cloud.defaults
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Default rclone remote
+
+::: stackops.utils.cloud.default_remote
     options:
       show_root_heading: true
       show_source: false
@@ -199,6 +208,16 @@ machine-local symlink changes are command implementation modules, not general-pu
 ## StackOps config schema
 
 ::: stackops.utils.schemas.config.config_types
+    options:
+      show_root_heading: true
+      show_source: false
+      members_order: source
+
+## Multiplexer names
+
+`stackops.utils.schemas.config.multiplexer_types` holds the literal types the config schema uses for its multiplexer settings: `SessionMultiplexer` (`tmux`, `herdr`, `tuios`, `aoe`, `zellij`), `SessionMultiplexerOption` (the same names plus the one-letter forms `t`, `h`, `u`, `e`, `z`), `AgentMultiplexer` (`tuios`, `herdr`, `aoe`), and `AgentStatusBackend` (an `AgentMultiplexer` or `t3`). `SESSION_MULTIPLEXERS` and `AGENT_MULTIPLEXERS` are the same names as tuples.
+
+::: stackops.utils.schemas.config.multiplexer_types
     options:
       show_root_heading: true
       show_source: false
